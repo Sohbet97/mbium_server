@@ -1,36 +1,47 @@
-const { DataTypes } = require("sequelize")
+const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize, Sequelize) => {
     const Notification = sequelize.define("notifications", {
         id: {
-            type:DataTypes.INTEGER,
-            autoIncrement:true,
-            primaryKey:true
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
         },
-        type:{
-            type:DataTypes.SMALLINT
+        type: {
+            type: DataTypes.SMALLINT
         },
-        target_id:{
-            type:DataTypes.STRING(100),
-            allowNull:false
+        target_id: {
+            type: DataTypes.STRING(100),
+            allowNull: false
         },
-        user: {
+        user_id: {
             type: DataTypes.UUID,
-            onDelete: "SET NULL",
+            allowNull: false,
+            onDelete: "CASCADE",
             references: {
                 model: "users",
-                key: 'id'
+                key: "id"
             }
         },
-        status:{
-            type:DataTypes.SMALLINT,
-            defaultValue:0
+        status: {
+            type: DataTypes.SMALLINT,
+            defaultValue: 0
         },
-        content:{
-            type:DataTypes.STRING(255)
+        content: {
+            type: DataTypes.STRING(255),
+            allowNull: true
+        },
+        read_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null
         }
     }, {
-        timestamps: true
-    })
-    return Notification
-}
+        timestamps: true,
+        indexes: [
+            { fields: ["user_id"] },
+            { fields: ["status"] },
+        ]
+    });
+    return Notification;
+};

@@ -14,6 +14,9 @@ const cookieParser = require("../middlewares/cookie-parser-middleware");
 const loggerMiddleware = require("../middlewares/logger-middleware");
 const configMiddleware = require("../middlewares/config-middleware");
 
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("../swagger");
+
 const adminRouter = require("../routes/admin");
 const authRouter = require("../routes/auth/auth");
 
@@ -83,6 +86,13 @@ app.use(
     redirect: "/",
   })
 );
+
+// API documentation
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "mbium API Docs",
+    swaggerOptions: { persistAuthorization: true },
+}));
+app.get("/api-docs.json", (req, res) => res.json(swaggerSpec));
 
 // Authenticate user by accesstoken
 app.use("/auth", authRouter);

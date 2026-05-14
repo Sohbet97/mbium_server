@@ -1,58 +1,62 @@
 const { DataTypes } = require("sequelize");
 
-module.exports  = (sequelize, Sequelize) =>{
+module.exports = (sequelize, Sequelize) => {
     const Model = sequelize.define("chat_messages", {
         id: {
-            type:DataTypes.INTEGER,
-            autoIncrement:true,
-            primaryKey:true
+            type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
         },
-        text:{
-            type:DataTypes.STRING(500),
-            allowNull:true
-        },
-        file:{
-            type:DataTypes.STRING(500),
-            allowNull:true
-        },
-        isVoice:{
-            type:DataTypes.BOOLEAN,
-            defaultValue:false
-        },
-        chatroom:{
-            type:DataTypes.INTEGER,
-            allowNull:false,
+        chatroom_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
             references: {
-                model: 'chat_rooms',
-                key: 'id'
-            }
+                model: "chat_rooms",
+                key: "id"
+            },
+            onDelete: "CASCADE"
         },
-        status:{
-            type:DataTypes.SMALLINT,
-            defaultValue:0,
+        text: {
+            type: DataTypes.STRING(500),
+            allowNull: true
         },
-        type:{
-            type:DataTypes.SMALLINT,
-            defaultValue:0,
+        file: {
+            type: DataTypes.STRING(500),
+            allowNull: true
         },
-        target:{
-            type:DataTypes.ARRAY(DataTypes.STRING(100)),
-            defaultValue:[]
+        is_voice: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
         },
-        read:{
-            type:DataTypes.ARRAY(DataTypes.STRING(100)),
-            defaultValue:[]
+        status: {
+            type: DataTypes.SMALLINT,
+            defaultValue: 0
         },
-        createdBy:{
-            type:DataTypes.UUID,
-            allowNull:false,
+        type: {
+            type: DataTypes.SMALLINT,
+            defaultValue: 0
+        },
+        createdBy: {
+            type: DataTypes.UUID,
+            allowNull: false,
             references: {
-                model: 'users',
-                key: 'id'
+                model: "users",
+                key: "id"
             }
         }
     }, {
-        timestamps:true
+        timestamps: true,
+        indexes: [
+            { fields: ["chatroom_id"] },
+            { fields: ["createdBy"] },
+        ]
     });
+
+    Model.associate = (db) => {
+        Model.belongsTo(db.ChatRoom, { foreignKey: "chatroom_id", as: "room" });
+        Model.belongsTo(db.User, { foreignKey: "createdBy", as: "sender" });
+        Model.hasMany(db.ChatMessageRead, { foreignKey: "message_id", as: "reads" });
+    };
+
     return Model;
-}
+};

@@ -21,7 +21,7 @@ class UserDTO {
         this.name = model?.name;
         this.surname = model?.surname;
         this.second_name = model?.second_name;
-        this.role = assignment?.position?.role_id || model?.role;
+        this.role = assignment?.position?.role_id || model?.role_id;
         this._role = assignment?.position?.role ?? model._role ?? null;
         this._department = assignment?.position?._department || model?._department;
         this.department = assignment?.position?.department || model?.department;

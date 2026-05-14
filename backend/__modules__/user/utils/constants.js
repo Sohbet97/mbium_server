@@ -15,7 +15,8 @@ class USER_CONSTANTS {
     static USER_LOGIN_BLOCK_DURATION = 3;
 
     static STATUS_NOT_ACTIVATED = 0;
-    static STATUS_ACTIVATED = 0;
+    static STATUS_ACTIVATED = 1;
+    static STATUS_ACTIVE = 1;
     static STATUS_BLOCKED = 90;
     static STATUS_DELETED = 99;
 

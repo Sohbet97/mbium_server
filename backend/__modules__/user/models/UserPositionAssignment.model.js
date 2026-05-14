@@ -42,7 +42,7 @@ module.exports = (sequelize) => {
         },
         is_active: {
             type: DataTypes.BOOLEAN,
-            defaultValue: false
+            defaultValue: true
         },
     }, {
         timestamps: true,

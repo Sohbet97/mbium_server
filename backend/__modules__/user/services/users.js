@@ -131,7 +131,7 @@ class UserService {
       email: req.body?.email,
       birth_date: req.body?.birth_date,
       status: req.body?.status,
-      role: req.body?.role,
+      role_id: req.body?.role_id,
       password: await FUNCTIONS.getHashedPassword(req.body?.password?.toString()),
     });
   }

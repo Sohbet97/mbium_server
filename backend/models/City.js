@@ -1,19 +1,20 @@
-const { DataTypes } = require("sequelize")
-const STATUSES = require("../utils/statuses")
+const { DataTypes } = require("sequelize");
+const STATUSES = require("../utils/statuses");
 
 module.exports = (sequelize, Sequelize) => {
     const City = sequelize.define("cities", {
-        id:{
-            type:DataTypes.INTEGER,
-            autoIncrement:true,
-            primaryKey:true
-        },
-        region: {
+        id: {
             type: DataTypes.INTEGER,
+            autoIncrement: true,
+            primaryKey: true
+        },
+        region_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
             onDelete: "CASCADE",
             references: {
                 model: "regions",
-                key: 'id'
+                key: "id"
             }
         },
         code: {
@@ -22,27 +23,31 @@ module.exports = (sequelize, Sequelize) => {
         },
         name: {
             type: DataTypes.STRING(100),
-            allowNull: false,
-            unique: true
+            allowNull: false
         },
-        order:{
-            type:DataTypes.SMALLINT,
-            allowNull:true
+        order: {
+            type: DataTypes.SMALLINT,
+            allowNull: true
         },
-        status:{
-            type:DataTypes.SMALLINT,
-            defaultValue:STATUSES.STATUSE_ACTIVE
+        status: {
+            type: DataTypes.SMALLINT,
+            defaultValue: STATUSES.STATUSE_ACTIVE
         },
         createdBy: {
             type: DataTypes.UUID,
+            allowNull: true,
             onDelete: "SET NULL",
             references: {
                 model: "users",
-                key: 'id'
+                key: "id"
             }
         }
     }, {
-        timestamps: true
-    })
-    return City
-}
+        timestamps: true,
+        indexes: [
+            { fields: ["region_id"] },
+            { unique: true, fields: ["region_id", "name"] },
+        ]
+    });
+    return City;
+};

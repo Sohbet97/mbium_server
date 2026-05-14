@@ -1,54 +1,112 @@
 const { DataTypes } = require("sequelize");
 const STATUSES = require("../../../utils/statuses");
-const SHOP_STATUSES = require("../utils/shop.statuses");
 
 module.exports = (sequelize) => {
-    const Model = sequelize.define("roles", {
+    const Model = sequelize.define("shops", {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true
         },
+        owner_id: {
+            type: DataTypes.UUID,
+            allowNull: false,
+            references: { model: "users", key: "id" },
+            onDelete: "CASCADE"
+        },
         type_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            references: {
-                model: 'shop_types',
-                key: 'id'
-            }
+            references: { model: "shop_types", key: "id" }
         },
         name: {
             type: DataTypes.STRING(255),
             allowNull: false
         },
         name_ru: {
-            type: DataTypes.STRING(500)
+            type: DataTypes.STRING(500),
+            allowNull: true
         },
         name_eng: {
-            type: DataTypes.STRING(500)
+            type: DataTypes.STRING(500),
+            allowNull: true
+        },
+        description: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        logo: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        address: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        city_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "cities", key: "id" }
+        },
+        region_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "regions", key: "id" }
+        },
+        phone: {
+            type: DataTypes.STRING(20),
+            allowNull: true
+        },
+        email: {
+            type: DataTypes.STRING(100),
+            allowNull: true
         },
         order: {
             type: DataTypes.SMALLINT,
             allowNull: true
         },
+        status: {
+            type: DataTypes.SMALLINT,
+            allowNull: false,
+            defaultValue: STATUSES.STATUSE_ACTIVE
+        },
         is_active: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
+        is_verified: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
+        rating: {
+            type: DataTypes.DECIMAL(3, 2),
+            defaultValue: 0
+        },
         createdBy: {
             type: DataTypes.UUID,
-            references: {
-                model: 'users',
-                key: 'id'
-            }
+            allowNull: true,
+            references: { model: "users", key: "id" }
         }
     }, {
         timestamps: true,
-        paranoid: true
+        paranoid: true,
+        indexes: [
+            { fields: ["owner_id"] },
+            { fields: ["type_id"] },
+            { fields: ["status"] },
+            { fields: ["is_active"] },
+            { fields: ["region_id"] },
+            { fields: ["city_id"] },
+        ]
     });
+
     Model.associate = (db) => {
+        Model.belongsTo(db.User, { as: "owner", foreignKey: "owner_id" });
         Model.belongsTo(db.User, { as: "creator", foreignKey: "createdBy" });
         Model.belongsTo(db.ShopType, { as: "type", foreignKey: "type_id" });
-    }
+        Model.belongsTo(db.Region, { as: "region", foreignKey: "region_id" });
+        Model.belongsTo(db.City, { as: "city", foreignKey: "city_id" });
+    };
+
     return Model;
-}
+};
