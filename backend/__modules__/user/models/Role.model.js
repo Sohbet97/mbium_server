@@ -45,7 +45,7 @@ module.exports = (sequelize) => {
         paranoid: true
     });
     Model.associate = (db) => {
-        Model.hasMany(db.User, { as: "users", foreignKey: "role" });
+        Model.hasMany(db.User, { as: "users", foreignKey: "role_id" });
     }
     return Model;
 }

@@ -53,7 +53,7 @@ module.exports = (sequelize) => {
 
     Model.associate = (db) => {
         Model.belongsTo(db.Role, { foreignKey: "role_id", as: "role" });
-        Model.hasMany(db.User, { foreignKey: "position", as: "users" });
+        Model.hasMany(db.UserPositionAssignment, { foreignKey: "position_id", as: "assignments" });
     }
 
     return Model;

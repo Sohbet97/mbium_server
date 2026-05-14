@@ -35,6 +35,8 @@ db.Street = require("./Street")(sequelize, Sequelize);
 // Chat
 db.ChatRoom = require("./ChatRoom")(sequelize, Sequelize);
 db.ChatMessage = require("./ChatMessage")(sequelize, Sequelize);
+db.ChatRoomParticipant = require("./ChatRoomParticipant")(sequelize, Sequelize);
+db.ChatMessageRead = require("./ChatMessageRead")(sequelize, Sequelize);
 
 
 db.Notification = require("./Notification")(sequelize, Sequelize);
@@ -66,17 +68,17 @@ Object.values(db).forEach((model) => {
 //     console.log("Synching job is OK");
 // });
 
-db.User.sync({ alter: true });
-db.UserOtpSession.sync({ alter: true });
-db.Config.sync({ alter: true });
+// db.User.sync({ alter: true });
+// db.UserOtpSession.sync({ alter: true });
+// db.Config.sync({ alter: true });
 
-// Object.keys(db)?.map(async (modelKey) => {
-//   try {
-//     if (db[modelKey] && db[modelKey] != null) await db[modelKey]?.sync({ alter: true }).catch((e) => console.log(e));
-//   } catch (e) {
-//     console.error(`Error while trying to sync ${modelKey} model: `, e);
-//   }
-// });
+Object.keys(db)?.map(async (modelKey) => {
+  try {
+    if (db[modelKey] && db[modelKey] != null) await db[modelKey]?.sync({ alter: true }).catch((e) => console.log(e));
+  } catch (e) {
+    console.error(`Error while trying to sync ${modelKey} model: `, e);
+  }
+});
 //#endregion
 
 module.exports = db;

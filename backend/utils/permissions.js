@@ -29,6 +29,26 @@ class Permissions {
     static COUNTRY_POST = 22
     static COUNTRY_PUT = 23
     static COUNTRY_DELETE = 24
+
+    static CATEGORY_GET = 25
+    static CATEGORY_POST = 26
+    static CATEGORY_PUT = 27
+    static CATEGORY_DELETE = 28
+
+    static PRODUCT_GET = 29
+    static PRODUCT_POST = 30
+    static PRODUCT_PUT = 31
+    static PRODUCT_DELETE = 32
+
+    static ORDER_GET = 33
+    static ORDER_POST = 34
+    static ORDER_PUT = 35
+    static ORDER_DELETE = 36
+
+    static REVIEW_GET = 37
+    static REVIEW_POST = 38
+    static REVIEW_PUT = 39
+    static REVIEW_DELETE = 40
 }
 
 module.exports = Permissions

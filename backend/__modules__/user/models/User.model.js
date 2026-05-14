@@ -60,9 +60,11 @@ module.exports = (sequelize) => {
                 defaultValue: USER_CONSTANTS.STATUS_NOT_ACTIVATED,
             },
 
-            role: {
-                type: DataTypes.STRING(10),
+            role_id: {
+                type: DataTypes.INTEGER,
                 allowNull: true,
+                references: { model: "roles", key: "id" },
+                onDelete: "SET NULL"
             },
 
             last_login_date: {
@@ -88,11 +90,13 @@ module.exports = (sequelize) => {
     );
 
     Model.associate = (db) => {
+        Model.belongsTo(db.Role, { foreignKey: "role_id", as: "_role" });
         Model.hasMany(db.UserSession, { foreignKey: "user_id", sourceKey: "id", as: "sessions" });
         Model.hasMany(db.UserLogin, { foreignKey: "user_id", sourceKey: "id", as: "last_logins" });
         Model.hasMany(db.UserLoginFail, { foreignKey: "user_id", sourceKey: "id", as: "login_fails" });
         Model.hasMany(db.UserNote, { foreignKey: "createdBy", as: "notes" });
         Model.hasMany(db.UserOtpSession, { foreignKey: "user_id", sourceKey: "id", as: "otp_sessions" });
+        Model.hasMany(db.UserPositionAssignment, { foreignKey: "user_id", as: "position_assignments" });
     };
 
     return Model;

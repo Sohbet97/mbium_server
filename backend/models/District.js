@@ -8,13 +8,13 @@ module.exports = (sequelize, Sequelize) => {
             autoIncrement: true,
             primaryKey: true
         },
-        region: {
+        region_id: {
             type: DataTypes.INTEGER,
-            onDelete: "CASCADE",
             allowNull: true,
+            onDelete: "CASCADE",
             references: {
                 model: "regions",
-                key: 'id'
+                key: "id"
             }
         },
         name: {
@@ -43,14 +43,18 @@ module.exports = (sequelize, Sequelize) => {
         },
         createdBy: {
             type: DataTypes.UUID,
+            allowNull: true,
             onDelete: "SET NULL",
             references: {
                 model: "users",
-                key: 'id'
+                key: "id"
             }
         }
     }, {
-        timestamps: true
-    })
-    return Model
-}
+        timestamps: true,
+        indexes: [
+            { fields: ["region_id"] },
+        ]
+    });
+    return Model;
+};
