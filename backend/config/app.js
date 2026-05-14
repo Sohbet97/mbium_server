@@ -26,7 +26,7 @@ const app = express();
 // const { createRedisClient, redisMiddleware, bindRedisClient } = require("../utils/redis/redis-client");
 
 // Uncomment this for set up cors security
-var allowlist = ["http://192.168.1.100", "http://localhost:3000", "http://localhost:3001"];
+var allowlist = ["http://localhost:3000"];
 var corsOptionsDelegate = function (req, callback) {
   var corsOptions = {
     origin: false,
