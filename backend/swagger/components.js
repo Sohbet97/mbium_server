@@ -32,6 +32,17 @@ module.exports = {
                 password: { type: "string", example: "secret123" },
             },
         },
+        GoogleLoginRequest: {
+            type: "object",
+            required: ["id_token"],
+            properties: {
+                id_token: {
+                    type: "string",
+                    description: "Google ID token (`credential`) returned by Google Identity Services after the user signs in",
+                    example: "eyJhbGciOiJSUzI1NiIsImtpZCI6...",
+                },
+            },
+        },
         RegisterRequest: {
             type: "object",
             required: ["phone_number", "password", "name"],

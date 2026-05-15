@@ -21,7 +21,15 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING(100),
             allowNull: true
         },
+        barcode: {
+            type: DataTypes.STRING(100),
+            allowNull: true
+        },
         price: {
+            type: DataTypes.DECIMAL(12, 2),
+            allowNull: true
+        },
+        compare_at_price: {
             type: DataTypes.DECIMAL(12, 2),
             allowNull: true
         },

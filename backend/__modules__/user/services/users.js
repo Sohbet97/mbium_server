@@ -1,6 +1,7 @@
 const db = require("../../../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const { CONSTANTS } = require("../../../config/constants");
 const ApiError = require("../../../exceptions/api-error");
 const UserDTO = require("../../../dtos/user");
@@ -134,6 +135,35 @@ class UserService {
       role_id: req.body?.role_id,
       password: await FUNCTIONS.getHashedPassword(req.body?.password?.toString()),
     });
+  }
+
+  /**
+   * Finds an existing user by google_id or email, or creates a new Google-authenticated user.
+   * Links google_id to an existing account when matched by email.
+   * @returns {{ user: Model, isNew: boolean }}
+   */
+  static async findOrCreateByGoogle({ google_id, email, given_name, family_name }) {
+    let user = await db.User.findOne({ where: { google_id } });
+    if (user) return { user, isNew: false };
+
+    if (email) {
+      user = await db.User.findOne({ where: { email } });
+      if (user) {
+        await user.update({ google_id });
+        return { user, isNew: false };
+      }
+    }
+
+    user = await db.User.create({
+      name: given_name || "User",
+      surname: family_name || null,
+      email: email || null,
+      google_id,
+      status: USER_CONSTANTS.STATUS_ACTIVE,
+      password: await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 10),
+    });
+
+    return { user, isNew: true };
   }
 
   /** Self-registration: always starts as STATUS_NOT_ACTIVATED. */

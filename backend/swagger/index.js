@@ -18,7 +18,7 @@ const swaggerSpec = {
         contact: { name: "mbium dev", email: "dovletli.dev@gmail.com" },
     },
     servers: [
-        { url: "http://localhost:8811", description: "Local dev" },
+        { url: "http://localhost:5000", description: "Local dev" },
     ],
     security: [],
     components: {

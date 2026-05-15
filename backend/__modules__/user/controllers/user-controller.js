@@ -6,8 +6,11 @@ const bcrypt = require("bcryptjs");
 const { CONSTANTS } = require("../../../config/constants");
 const { Op } = require("sequelize");
 const { default: captchapng } = require("typed-captchapng");
+const { OAuth2Client } = require("google-auth-library");
 const db = require("../../../models");
 const USER_CONSTANTS = require("../utils/constants");
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 class UserController {
   // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -31,6 +34,34 @@ class UserController {
 
   static async login(req, res, next) {
     this.loginFunction(req, res, next);
+  }
+
+  /**
+   * POST /auth/google
+   * Body: { id_token }  — the credential returned by Google Identity Services
+   */
+  static async googleLogin(req, res, next) {
+    try {
+      const { id_token } = req.body;
+      if (!id_token) throw ApiError.BadRequest("id_token is required");
+
+      const ticket = await googleClient.verifyIdToken({
+        idToken: id_token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+
+      const { user } = await UserService.findOrCreateByGoogle({
+        google_id: payload.sub,
+        email: payload.email,
+        given_name: payload.given_name,
+        family_name: payload.family_name,
+      });
+
+      return this._issueTokenResponse(req, res, user, null);
+    } catch (e) {
+      next(e);
+    }
   }
 
   static async loginFunction(req, res, next, isForce = false) {

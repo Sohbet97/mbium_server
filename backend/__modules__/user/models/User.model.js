@@ -30,7 +30,7 @@ module.exports = (sequelize) => {
             // Primary login credential — unique, validated TM format
             phone_number: {
                 type: DataTypes.STRING(8),
-                allowNull: false,
+                allowNull: true,
                 unique: true,
                 validate: {
                     is: {
@@ -51,7 +51,13 @@ module.exports = (sequelize) => {
 
             password: {
                 type: DataTypes.STRING(255),
-                allowNull: false,
+                allowNull: true,
+            },
+
+            google_id: {
+                type: DataTypes.STRING(100),
+                allowNull: true,
+                unique: true,
             },
 
             status: {

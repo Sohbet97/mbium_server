@@ -39,6 +39,14 @@ module.exports = (sequelize) => {
             type: DataTypes.SMALLINT,
             allowNull: true
         },
+        seo_title: {
+            type: DataTypes.STRING(255),
+            allowNull: true
+        },
+        seo_description: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
         status: {
             type: DataTypes.SMALLINT,
             allowNull: false,
