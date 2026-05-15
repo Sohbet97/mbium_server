@@ -4,6 +4,7 @@ const Permissions = require('../../utils/permissions');
 
 const shopRouter = require('./routes/shop');
 const shopTypeRouter = require('./routes/shop-type');
+const shopMemberRouter = require('./routes/shop-member');
 
 const shopModuleRouter = require('express').Router();
 
@@ -16,5 +17,6 @@ shopModuleRouter.use(authorizationMiddleware, routeGuard({
 
 shopModuleRouter.use('/shops', shopRouter);
 shopModuleRouter.use('/shop-types', shopTypeRouter);
+shopModuleRouter.use('/shop-members', shopMemberRouter);
 
 module.exports = shopModuleRouter;

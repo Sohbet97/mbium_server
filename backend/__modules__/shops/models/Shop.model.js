@@ -78,6 +78,25 @@ module.exports = (sequelize) => {
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
+        verification_status: {
+            type: DataTypes.SMALLINT,
+            allowNull: false,
+            defaultValue: 0,
+        },
+        verification_note: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        verified_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        verified_by: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            references: { model: "users", key: "id" },
+            onDelete: "SET NULL",
+        },
         rating: {
             type: DataTypes.DECIMAL(3, 2),
             defaultValue: 0
@@ -97,6 +116,7 @@ module.exports = (sequelize) => {
             { fields: ["is_active"] },
             { fields: ["region_id"] },
             { fields: ["city_id"] },
+            { fields: ["verification_status"] },
         ]
     });
 
@@ -106,6 +126,7 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.ShopType, { as: "type", foreignKey: "type_id" });
         Model.belongsTo(db.Region, { as: "region", foreignKey: "region_id" });
         Model.belongsTo(db.City, { as: "city", foreignKey: "city_id" });
+        Model.belongsTo(db.User, { as: "verifier", foreignKey: "verified_by" });
     };
 
     return Model;
