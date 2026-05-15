@@ -154,6 +154,27 @@ module.exports = {
             responses: { 200: { description: "Tokens reissued for selected assignment", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthResponse" } } } } },
         },
     },
+    "/auth/google": {
+        post: {
+            tags: [tag],
+            summary: "Login or register with Google",
+            description:
+                "Verifies a Google ID token obtained from Google Identity Services (e.g. the `credential` field from `google.accounts.id.initialize`). " +
+                "Creates a new account automatically if no user exists with that Google ID or email. " +
+                "Returns the same token shape as `POST /auth/login` — no OTP step required.",
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { $ref: "#/components/schemas/GoogleLoginRequest" } } },
+            },
+            responses: {
+                200: {
+                    description: "Authenticated — access token in body, refresh token in `Set-Cookie`",
+                    content: { "application/json": { schema: { $ref: "#/components/schemas/AuthResponse" } } },
+                },
+                400: { description: "Missing or invalid `id_token`", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+            },
+        },
+    },
     "/auth/captcha": {
         get: {
             tags: [tag],

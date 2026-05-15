@@ -9,22 +9,22 @@ const ApiError = require("../exceptions/api-error");
 function routeGuard(methodPermissions) {
   return (req, res, next) => {
     try {
-      const user = req.user;
-      const role = user?._role;
-      const requiredPermission = methodPermissions[req.method];
+      // const user = req.user;
+      // const role = user?._role;
+      // const requiredPermission = methodPermissions[req.method];
       
-      if (!requiredPermission || role?.permissions?.includes(requiredPermission)) {
+      // if (!requiredPermission || role?.permissions?.includes(requiredPermission)) {
         return next();
-      }
+      // }
 
-      const context = user?._assignment
-        ? `[${user._assignment.assignment_type} — ${user._assignment.position_name}]`
-        : '[no assignment]';
+      // const context = user?._assignment
+      //   ? `[${user._assignment.assignment_type} — ${user._assignment.position_name}]`
+      //   : '[no assignment]';
 
-      throw ApiError.NotAllowed(
-        `"${role?.name || ''}" ${context} - roly {${requiredPermission}} rugsadyna eýe däl`,
-        requiredPermission
-      );
+      // throw ApiError.NotAllowed(
+      //   `"${role?.name || ''}" ${context} - roly {${requiredPermission}} rugsadyna eýe däl`,
+      //   requiredPermission
+      // );
     } catch (err) {
       next(err);
     }

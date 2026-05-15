@@ -44,14 +44,46 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: "TMT"
         },
+        compare_at_price: {
+            type: DataTypes.DECIMAL(12, 2),
+            allowNull: true
+        },
         sku: {
             type: DataTypes.STRING(100),
             allowNull: true
+        },
+        barcode: {
+            type: DataTypes.STRING(100),
+            allowNull: true
+        },
+        weight: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            comment: "Weight in grams"
         },
         stock: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0
+        },
+        tags: {
+            type: DataTypes.ARRAY(DataTypes.STRING),
+            allowNull: true,
+            defaultValue: []
+        },
+        handle: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+            unique: true,
+            comment: "URL-friendly slug for storefront"
+        },
+        seo_title: {
+            type: DataTypes.STRING(255),
+            allowNull: true
+        },
+        seo_description: {
+            type: DataTypes.TEXT,
+            allowNull: true
         },
         rating: {
             type: DataTypes.DECIMAL(3, 2),

@@ -49,6 +49,11 @@ class Permissions {
     static REVIEW_POST = 38
     static REVIEW_PUT = 39
     static REVIEW_DELETE = 40
+
+    static DISCOUNT_GET = 41
+    static DISCOUNT_POST = 42
+    static DISCOUNT_PUT = 43
+    static DISCOUNT_DELETE = 44
 }
 
 module.exports = Permissions
