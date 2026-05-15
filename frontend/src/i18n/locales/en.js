@@ -11,6 +11,7 @@ export default {
     active: 'Active', inactive: 'Inactive', verified: 'Verified', unverified: 'Unverified',
     status: 'Status', name: 'Name', description: 'Description', createdAt: 'Created',
     optional: 'optional', all: 'All', approve: 'Approve', reject: 'Reject',
+    deleted: 'Deleted',
   },
 
   nav: {
@@ -44,10 +45,19 @@ export default {
 
   users: {
     title: 'Users', totalCount: '{{count}} total users', addUser: 'Add User',
-    searchPlaceholder: 'Search by name or phone…',
+    createUser: 'Create User',
+    searchPlaceholder: 'Search by name, surname or email…',
     colUser: 'User', colPhone: 'Phone', colRole: 'Role', colStatus: 'Status', colLastLogin: 'Last Login',
-    viewDetails: 'View details', editUser: 'Edit user', blockUser: 'Block user', unblockUser: 'Unblock user',
+    editUser: 'Edit user', blockUser: 'Block user', unblockUser: 'Unblock user',
+    unlockUser: 'Unlock (clear login block)', deleteUser: 'Delete user',
     statusNotActivated: 'Not Activated', statusActive: 'Active', statusBlocked: 'Blocked',
+    filterStatus: 'All Statuses', filterRole: 'All Roles',
+    surname: 'Surname', email: 'Email', phone: 'Phone Number',
+    birthDate: 'Birth Date', role: 'Role', noRole: 'No role assigned',
+    password: 'Password', passwordHint: 'Leave blank to keep current password',
+    confirmDelete: 'Delete this user?',
+    confirmBlock: 'Block this user?',
+    confirmUnblock: 'Unblock this user?',
   },
 
   shops: {
@@ -60,6 +70,8 @@ export default {
     name: 'Shop Name', type: 'Shop Type', owner: 'Owner (User ID)',
     phone: 'Phone', email: 'Email', address: 'Address', logo: 'Logo URL',
     isActive: 'Active', isVerified: 'Verified', order: 'Display Order', noType: 'Select type…',
+    filterStatus: 'All Statuses', showDeleted: 'Show Deleted',
+    confirmRestore: 'Restore this shop?', confirmForceDelete: 'Permanently delete this shop?',
   },
 
   categories: {

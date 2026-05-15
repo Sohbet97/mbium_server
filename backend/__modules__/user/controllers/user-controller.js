@@ -117,12 +117,12 @@ class UserController {
       const { session_id, otp } = req.body;
       if (!session_id || !otp) throw ApiError.BadRequest("session_id and otp are required");
 
-    const { userId, purpose } = await UserService.validateOtpSession(session_id, otp);
+      const { userId, purpose } = await UserService.validateOtpSession(session_id, otp);
       if (!userId) throw ApiError.BadRequest("Invalid or expired OTP");
 
-    if (purpose === USER_CONSTANTS.OTP_PURPOSES.REGISTER) {
-      await UserService.activateUser(userId);
-    }
+      if (purpose === USER_CONSTANTS.OTP_PURPOSES.REGISTER) {
+        await UserService.activateUser(userId);
+      }
 
       const user = await UserService.getById(userId);
       if (!user) throw ApiError.NotFound("User not found");
@@ -155,44 +155,44 @@ class UserController {
    * Creates an inactive user account; email verification / admin approval follows.
    */
   static async register(req, res, next) {
-  try {
-    const { name, surname, phone_number, password, email, birth_date } = req.body;
+    try {
+      const { name, surname, phone_number, password, email, birth_date } = req.body;
 
-    if (!name || !phone_number || !password)
-      throw ApiError.BadRequest("name, phone_number and password are required");
+      if (!name || !phone_number || !password)
+        throw ApiError.BadRequest("name, phone_number and password are required");
 
-    if (password.length < 8)
-      throw ApiError.BadRequest("Password must be at least 8 characters");
+      if (password.length < 8)
+        throw ApiError.BadRequest("Password must be at least 8 characters");
 
-    const existingPhone = await UserService.getByPhone(phone_number);
-    if (existingPhone)
-      throw ApiError.BadRequest("An account with this phone number already exists");
+      const existingPhone = await UserService.getByPhone(phone_number);
+      if (existingPhone)
+        throw ApiError.BadRequest("An account with this phone number already exists");
 
-    if (email) {
-      const existingEmail = await UserService.getByEmail(email);
-      if (existingEmail)
-        throw ApiError.BadRequest("An account with this email already exists");
+      if (email) {
+        const existingEmail = await UserService.getByEmail(email);
+        if (existingEmail)
+          throw ApiError.BadRequest("An account with this email already exists");
+      }
+
+      const model = await UserService.register({
+        name: FUNCTIONS.safeString(name),
+        surname: FUNCTIONS.safeString(surname),
+        phone_number: FUNCTIONS.safeString(phone_number),
+        email: email ? FUNCTIONS.safeString(email) : null,
+        password,
+        birth_date: birth_date ?? null,
+      });
+
+      const sessionId = await UserService.createOtpSession(
+        model.id,
+        USER_CONSTANTS.OTP_PURPOSES.REGISTER
+      );
+
+      return res.status(201).json({ session_id: sessionId });
+    } catch (e) {
+      next(e);
     }
-
-    const model = await UserService.register({
-      name: FUNCTIONS.safeString(name),
-      surname: FUNCTIONS.safeString(surname),
-      phone_number: FUNCTIONS.safeString(phone_number),
-      email: email ? FUNCTIONS.safeString(email) : null,
-      password,
-      birth_date: birth_date ?? null,
-    });
-
-    const sessionId = await UserService.createOtpSession(
-      model.id,
-      USER_CONSTANTS.OTP_PURPOSES.REGISTER
-    );
-
-    return res.status(201).json({ session_id: sessionId });
-  } catch (e) {
-    next(e);
   }
-}
 
   static async selectAssignment(req, res, next) {
     try {
@@ -304,6 +304,7 @@ class UserController {
       const filter = await this.getFilter(req.query);
       const data = await UserService.get(filter, limit, sort, skip, paranoid);
       const count = await UserService.getCount(filter, paranoid);
+
       return res.status(200).json({ data, count });
     } catch (e) {
       next(e);
