@@ -54,6 +54,26 @@ class Permissions {
     static DISCOUNT_POST = 42
     static DISCOUNT_PUT = 43
     static DISCOUNT_DELETE = 44
+
+    static BANNER_GET = 45
+    static BANNER_POST = 46
+    static BANNER_PUT = 47
+    static BANNER_DELETE = 48
+
+    static SHOP_MEMBER_GET = 49
+    static SHOP_MEMBER_POST = 50
+    static SHOP_MEMBER_PUT = 51
+    static SHOP_MEMBER_DELETE = 52
+
+    static PAYOUT_GET = 53
+    static PAYOUT_POST = 54
+    static PAYOUT_PUT = 55
+    static PAYOUT_DELETE = 56
+
+    static DISPUTE_GET = 65
+    static DISPUTE_POST = 66
+    static DISPUTE_PUT = 67
+    static DISPUTE_DELETE = 68
 }
 
 module.exports = Permissions

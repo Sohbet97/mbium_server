@@ -29,6 +29,7 @@ class ReviewService {
             include: [
                 { model: db.User, as: "author", attributes: ["id", "name", "surname"] },
                 { model: db.Product, as: "product", attributes: ["id", "name"] },
+                { model: db.ReviewReply, as: "reply", required: false },
             ],
         });
     }
@@ -63,6 +64,25 @@ class ReviewService {
 
     static async delete(id, force = false) {
         return db.Review.destroy({ where: { id }, force });
+    }
+
+    static async getReply(reviewId) {
+        return db.ReviewReply.findOne({
+            where: { review_id: reviewId },
+            include: [
+                { model: db.Shop, as: "shop", attributes: ["id", "name"], required: false },
+            ],
+        });
+    }
+
+    static async createReply(reviewId, shopId, content, userId) {
+        const existing = await db.ReviewReply.findOne({ where: { review_id: reviewId } });
+        if (existing) throw ApiError.Conflict("Bu teswire eýýäm jogap berildi");
+        return db.ReviewReply.create({ review_id: reviewId, shop_id: shopId, content, createdBy: userId });
+    }
+
+    static async deleteReply(reviewId, force = false) {
+        return db.ReviewReply.destroy({ where: { review_id: reviewId }, force });
     }
 }
 

@@ -3,7 +3,7 @@ const ApiError = require("../../../exceptions/api-error");
 const { FUNCTIONS } = require("../../../utils/functions");
 const Validator = require("../../../__artefacts__/_validator_");
 const OrderService = require("../services/orders");
-const { orderSchema } = require("../validators/order.schema");
+const { orderSchema, shipmentSchema } = require("../validators/order.schema");
 
 class OrderController {
     static async get(req, res, next) {
@@ -67,6 +67,34 @@ class OrderController {
         try {
             await OrderService.delete(req.params.id, true);
             return res.sendStatus(200);
+        } catch (e) { next(e); }
+    }
+
+    static async getShipments(req, res, next) {
+        try {
+            const order = await OrderService.getById(req.params.id);
+            if (!order) throw ApiError.NotFound("Sargyt tapylmady");
+            const data = await OrderService.getShipments(req.params.id);
+            return res.status(200).json({ data });
+        } catch (e) { next(e); }
+    }
+
+    static async addShipment(req, res, next) {
+        try {
+            const order = await OrderService.getById(req.params.id);
+            if (!order) throw ApiError.NotFound("Sargyt tapylmady");
+            const { isError, errors } = await Validator.validate(shipmentSchema, req.body);
+            if (isError) throw ApiError.BadRequest(null, errors);
+            const model = await OrderService.addShipment(req.params.id, req.body);
+            return res.status(201).json({ model });
+        } catch (e) { next(e); }
+    }
+
+    static async updateShipment(req, res, next) {
+        try {
+            const model = await OrderService.updateShipment(req.params.shipmentId, req.body);
+            if (!model) throw ApiError.NotFound("Ugratma tapylmady");
+            return res.status(200).json({ model });
         } catch (e) { next(e); }
     }
 

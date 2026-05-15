@@ -6,6 +6,7 @@ const ORDER_STATUSES = {
     PROCESSING: 2,
     SHIPPED: 3,
     DELIVERED: 4,
+    CLOSED: 5,
     CANCELLED: 10,
     REFUNDED: 11,
 };
@@ -47,6 +48,12 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
+        delivery_address_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "delivery_addresses", key: "id" },
+            onDelete: "SET NULL",
+        },
         note: {
             type: DataTypes.TEXT,
             allowNull: true
@@ -68,6 +75,10 @@ module.exports = (sequelize) => {
         Model.hasMany(db.OrderItem, { foreignKey: "order_id", as: "items" });
         Model.hasMany(db.OrderStatusHistory, { foreignKey: "order_id", as: "status_history" });
         Model.hasMany(db.PaymentTransaction, { foreignKey: "order_id", as: "payments" });
+        Model.hasMany(db.Shipment, { foreignKey: "order_id", as: "shipments" });
+        if (db.DeliveryAddress) {
+            Model.belongsTo(db.DeliveryAddress, { foreignKey: "delivery_address_id", as: "address" });
+        }
     };
 
     return Model;

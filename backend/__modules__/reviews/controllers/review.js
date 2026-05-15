@@ -59,6 +59,33 @@ class ReviewController {
         } catch (e) { next(e); }
     }
 
+    static async getReply(req, res, next) {
+        try {
+            const reply = await ReviewService.getReply(req.params.id);
+            if (!reply) throw ApiError.NotFound("Jogap tapylmady");
+            return res.status(200).json({ model: reply });
+        } catch (e) { next(e); }
+    }
+
+    static async createReply(req, res, next) {
+        try {
+            const { shop_id, content } = req.body;
+            if (!shop_id) throw ApiError.BadRequest("Dükan saýlaň");
+            if (!content?.trim()) throw ApiError.BadRequest("Mazmuny giriziň");
+            const review = await ReviewService.getById(req.params.id);
+            if (!review) throw ApiError.NotFound("Teswir tapylmady");
+            const model = await ReviewService.createReply(req.params.id, shop_id, content, req.user?.id);
+            return res.status(201).json({ model });
+        } catch (e) { next(e); }
+    }
+
+    static async deleteReply(req, res, next) {
+        try {
+            await ReviewService.deleteReply(req.params.id);
+            return res.sendStatus(200);
+        } catch (e) { next(e); }
+    }
+
     static getFilter({ product_id, user_id, status, paranoid } = {}) {
         const filter = {};
         if (product_id) filter.product_id = product_id;

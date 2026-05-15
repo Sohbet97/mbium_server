@@ -89,6 +89,27 @@ class ShopService {
     if (!id) return;
     await db.Shop.destroy({ where: { id }, force });
   }
+
+  static async submitForReview(id) {
+    await db.Shop.update({ verification_status: 1 }, { where: { id } });
+    return this.getById(id);
+  }
+
+  static async verify(id, userId) {
+    await db.Shop.update(
+      { verification_status: 2, is_verified: true, verified_by: userId, verified_at: new Date(), verification_note: null },
+      { where: { id } }
+    );
+    return this.getById(id);
+  }
+
+  static async reject(id, userId, note) {
+    await db.Shop.update(
+      { verification_status: 3, is_verified: false, verified_by: userId, verified_at: new Date(), verification_note: note || null },
+      { where: { id } }
+    );
+    return this.getById(id);
+  }
 }
 
 module.exports = ShopService;

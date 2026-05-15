@@ -54,6 +54,9 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.User, { foreignKey: "user_id", as: "author" });
         Model.belongsTo(db.Product, { foreignKey: "product_id", as: "product" });
         Model.belongsTo(db.Order, { foreignKey: "order_id", as: "order" });
+        if (db.ReviewReply) {
+            Model.hasOne(db.ReviewReply, { foreignKey: "review_id", as: "reply" });
+        }
     };
 
     return Model;

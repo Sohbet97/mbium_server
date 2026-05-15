@@ -99,6 +99,33 @@ class ShopController {
         }
     }
 
+    static async submitForReview(req, res, next) {
+        try {
+            const model = await ShopService.getById(req.params.id);
+            if (!model) throw ApiError.NotFound("Dükan tapylmady");
+            const updated = await ShopService.submitForReview(req.params.id);
+            return res.status(200).json({ model: updated });
+        } catch (e) { next(e); }
+    }
+
+    static async verify(req, res, next) {
+        try {
+            const model = await ShopService.getById(req.params.id);
+            if (!model) throw ApiError.NotFound("Dükan tapylmady");
+            const updated = await ShopService.verify(req.params.id, req.user?.id);
+            return res.status(200).json({ model: updated });
+        } catch (e) { next(e); }
+    }
+
+    static async reject(req, res, next) {
+        try {
+            const model = await ShopService.getById(req.params.id);
+            if (!model) throw ApiError.NotFound("Dükan tapylmady");
+            const updated = await ShopService.reject(req.params.id, req.user?.id, req.body?.note);
+            return res.status(200).json({ model: updated });
+        } catch (e) { next(e); }
+    }
+
     static async restore(req, res, next) {
         try {
             const id = req.params?.id;

@@ -3,6 +3,7 @@ const routeGuard = require("../../middlewares/route-guard");
 const Permissions = require("../../utils/permissions");
 
 const discountRouter = require("./routes/discount");
+const flashSaleRouter = require("./routes/flash-sale");
 
 const discountsModuleRouter = require("express").Router();
 
@@ -17,5 +18,6 @@ discountsModuleRouter.use(
 );
 
 discountsModuleRouter.use("/discounts", discountRouter);
+discountsModuleRouter.use("/flash-sales", flashSaleRouter);
 
 module.exports = discountsModuleRouter;
