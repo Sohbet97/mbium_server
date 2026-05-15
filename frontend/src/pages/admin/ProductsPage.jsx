@@ -163,8 +163,8 @@ export default function ProductsPage() {
       if (shopFilter) params.shop_id = shopFilter
       if (categoryFilter) params.category_id = categoryFilter
       const { data } = await AdminApi.products.getAll(params)
-      setProducts(data.data?.rows ?? data.data?.products ?? [])
-      setTotal(data.data?.count ?? data.data?.total ?? 0)
+      setProducts(data?.data ?? data.data?.products ?? [])
+      setTotal(data?.count ?? data.data?.total ?? 0)
     } catch { setProducts([]) }
     finally { setLoading(false) }
   }, [page, search, shopFilter, categoryFilter])

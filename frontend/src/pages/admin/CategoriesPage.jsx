@@ -1,6 +1,9 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, ChevronRight, MoreHorizontal, RefreshCw, FolderTree } from 'lucide-react'
+import {
+  Plus, Search, RefreshCw, MoreHorizontal,
+  FolderTree, LayoutList, Network, ChevronRight,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -17,63 +20,90 @@ import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 
-const EMPTY_FORM = { name: '', name_ru: '', name_eng: '', slug: '', parent_id: '', icon: '', order: '', seo_title: '', seo_description: '' }
+// ── Utilities ─────────────────────────────────────────────────────────────────
 
 function slugify(str) {
   return str.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '')
 }
 
+// Build nested tree from a flat array using _children (avoids backend status:1 filter)
+function buildTree(flat) {
+  const map = {}
+  const roots = []
+  flat.forEach((c) => { map[c.id] = { ...c, _children: [] } })
+  flat.forEach((c) => {
+    if (c.parent_id != null && map[c.parent_id]) {
+      map[c.parent_id]._children.push(map[c.id])
+    } else {
+      roots.push(map[c.id])
+    }
+  })
+  return roots
+}
+
+// ── Category Modal ────────────────────────────────────────────────────────────
+
+const EMPTY_FORM = {
+  name: '', name_ru: '', name_eng: '',
+  slug: '', parent_id: '', icon: '', order: '',
+  seo_title: '', seo_description: '',
+}
+
+function buildForm(category) {
+  if (!category) return EMPTY_FORM
+  return {
+    name:            category.name            ?? '',
+    name_ru:         category.name_ru         ?? '',
+    name_eng:        category.name_eng        ?? '',
+    slug:            category.slug            ?? '',
+    parent_id:       category.parent_id       ?? '',
+    icon:            category.icon            ?? '',
+    order:           category.order           ?? '',
+    seo_title:       category.seo_title       ?? '',
+    seo_description: category.seo_description ?? '',
+  }
+}
+
 function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
   const { t } = useTranslation()
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-  const [slugTouched, setSlugTouched] = useState(false)
-
-  useEffect(() => {
-    if (open) {
-      setError('')
-      setSlugTouched(false)
-      setForm(category
-        ? {
-          name: category.name ?? '', name_ru: category.name_ru ?? '', name_eng: category.name_eng ?? '',
-          slug: category.slug ?? '', parent_id: category.parent_id ?? '',
-          icon: category.icon ?? '', order: category.order ?? '',
-          seo_title: category.seo_title ?? '', seo_description: category.seo_description ?? '',
-        }
-        : EMPTY_FORM
-      )
-    }
-  }, [open, category])
+  const [form, setForm]             = useState(() => buildForm(category))
+  const [saving, setSaving]         = useState(false)
+  const [error, setError]           = useState('')
+  const [slugTouched, setSlugTouched] = useState(() => Boolean(category))
 
   function set(field, value) {
     setForm((f) => {
       const next = { ...f, [field]: value }
-      if (field === 'name' && !slugTouched && !category) {
-        next.slug = slugify(value)
-      }
+      if (field === 'name' && !slugTouched) next.slug = slugify(value)
       return next
     })
   }
 
+  const isValid = Boolean(form.name.trim() && form.slug.trim())
+
   async function handleSave() {
-    setError('')
-    setSaving(true)
+    if (!isValid) return
+    setError(''); setSaving(true)
     try {
       const payload = {
-        ...form,
-        parent_id: form.parent_id !== '' ? Number(form.parent_id) : null,
-        order: form.order !== '' ? Number(form.order) : undefined,
+        name:            form.name.trim(),
+        name_ru:         form.name_ru.trim()  || null,
+        name_eng:        form.name_eng.trim() || null,
+        slug:            form.slug.trim(),
+        parent_id:       form.parent_id !== '' ? Number(form.parent_id) : null,
+        icon:            form.icon.trim() || null,
+        order:           form.order !== '' ? Number(form.order) : null,
+        seo_title:       form.seo_title.trim()       || null,
+        seo_description: form.seo_description.trim() || null,
       }
-      if (category?.id) {
+      if (category) {
         await AdminApi.categories.update(category.id, payload)
       } else {
         await AdminApi.categories.create(payload)
       }
       onSaved()
-      onClose()
-    } catch (err) {
-      setError(err.response?.data?.message ?? 'Error saving category')
+    } catch (e) {
+      setError(e.response?.data?.message ?? 'Error')
     } finally {
       setSaving(false)
     }
@@ -82,15 +112,15 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
   const eligible = allCategories.filter((c) => !category || c.id !== category.id)
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{category ? t('categories.editCategory') : t('categories.createCategory')}</DialogTitle>
+          <DialogTitle>
+            {category ? t('categories.editCategory') : t('categories.createCategory')}
+          </DialogTitle>
         </DialogHeader>
-        <DialogBody>
-          {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>
-          )}
+        <DialogBody className="space-y-4 max-h-[75vh] overflow-y-auto">
+          {error && <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>}
 
           <MultiLangInput baseField="name" label={t('common.name')} required values={form} onChange={set} />
 
@@ -117,7 +147,7 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
               <Input value={form.icon} onChange={(e) => set('icon', e.target.value)} placeholder="📱 or URL" />
             </FormField>
             <FormField label={t('categories.order')}>
-              <Input type="number" value={form.order} onChange={(e) => set('order', e.target.value)} min={0} />
+              <Input type="number" min={0} value={form.order} onChange={(e) => set('order', e.target.value)} />
             </FormField>
           </div>
 
@@ -125,13 +155,13 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
             <Input value={form.seo_title} onChange={(e) => set('seo_title', e.target.value)} maxLength={70} />
           </FormField>
           <FormField label={t('categories.seoDescription')}>
-            <Input value={form.seo_description} onChange={(e) => set('seo_description', e.target.value)} />
+            <Input value={form.seo_description} onChange={(e) => set('seo_description', e.target.value)} maxLength={160} />
           </FormField>
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? t('common.loading') : category ? t('common.save') : t('common.create')}
+          <Button onClick={handleSave} disabled={saving || !isValid}>
+            {saving ? '…' : category ? t('common.save') : t('common.create')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -139,37 +169,50 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
   )
 }
 
-function CategoryRow({ cat, depth = 0, onEdit, onDelete }) {
+// ── Tree Row (recursive) ──────────────────────────────────────────────────────
+
+function CategoryTreeRow({ cat, depth = 0, onEdit, onDelete }) {
   const { t } = useTranslation()
-  const [expanded, setExpanded] = useState(false)
-  const hasChildren = cat.children?.length > 0
+  const [expanded, setExpanded] = useState(true)
+  const hasChildren = cat._children?.length > 0
 
   return (
     <>
       <tr className="border-b last:border-0 hover:bg-slate-50 transition-colors">
-        <td className="px-4 py-3">
-          <div className="flex items-center gap-2" style={{ paddingLeft: `${depth * 20}px` }}>
+        <td className="px-4 py-2.5">
+          <div className="flex items-center gap-1" style={{ paddingLeft: `${depth * 22}px` }}>
             {hasChildren ? (
-              <button onClick={() => setExpanded((v) => !v)} className="text-slate-400 hover:text-slate-600">
-                <ChevronRight className={`h-4 w-4 transition-transform ${expanded ? 'rotate-90' : ''}`} />
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                className="p-0.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex-shrink-0"
+              >
+                <ChevronRight className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-90' : ''}`} />
               </button>
             ) : (
-              <span className="w-4" />
+              <span className="w-5 flex-shrink-0" />
             )}
-            {cat.icon && <span className="text-base">{cat.icon}</span>}
-            <div>
-              <p className="text-sm font-medium text-slate-900">{cat.name}</p>
-              <p className="text-xs text-slate-400 font-mono">{cat.slug}</p>
+            {cat.icon && <span className="text-sm flex-shrink-0">{cat.icon}</span>}
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">{cat.name}</p>
+              {cat.name_ru && (
+                <p className="text-xs text-slate-400 truncate">{cat.name_ru}</p>
+              )}
             </div>
           </div>
         </td>
-        <td className="px-4 py-3 text-sm text-slate-500">
-          {hasChildren && (
-            <Badge variant="secondary">{cat.children.length} {t('categories.children')}</Badge>
-          )}
+        <td className="px-4 py-2.5 text-sm text-slate-500">
+          {hasChildren
+            ? <Badge variant="secondary">{cat._children.length} {t('categories.children')}</Badge>
+            : <span className="text-slate-300">—</span>
+          }
         </td>
-        <td className="px-4 py-3 text-xs text-slate-400">{cat.order ?? '—'}</td>
-        <td className="px-4 py-3">
+        <td className="px-4 py-2.5 text-sm text-slate-500">{cat.order ?? '—'}</td>
+        <td className="px-4 py-2.5">
+          <code className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+            {cat.slug}
+          </code>
+        </td>
+        <td className="px-4 py-2.5">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -181,69 +224,155 @@ function CategoryRow({ cat, depth = 0, onEdit, onDelete }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onEdit(cat)}>{t('common.edit')}</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => onDelete(cat)}>
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={() => onDelete(cat)}
+              >
                 {t('common.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </td>
       </tr>
-      {expanded && hasChildren && cat.children.map((child) => (
-        <CategoryRow key={child.id} cat={child} depth={depth + 1} onEdit={onEdit} onDelete={onDelete} />
+      {expanded && hasChildren && cat._children.map((child) => (
+        <CategoryTreeRow
+          key={child.id}
+          cat={child}
+          depth={depth + 1}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </>
   )
 }
 
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function CategoriesPage() {
   const { t } = useTranslation()
-  const [tree, setTree] = useState([])
-  const [flat, setFlat] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
 
-  const fetchCategories = useCallback(async () => {
+  const [categories,   setCategories]   = useState([])
+  const [total,        setTotal]        = useState(0)
+  const [loading,      setLoading]      = useState(true)
+  const [page,         setPage]         = useState(1)
+  const [search,       setSearch]       = useState('')
+  const [viewMode,     setViewMode]     = useState('list') // 'list' | 'tree'
+  const [refreshTick,  setRefreshTick]  = useState(0)
+  const [modal,        setModal]        = useState({ open: false, category: null })
+
+  // Tree fetches all at once; list paginates
+  const listLimit = 50
+  const fetchLimit = viewMode === 'tree' ? 500 : listLimit
+
+  useEffect(() => {
+    let cancelled = false
+    const params = { limit: fetchLimit, skip: (page - 1) * fetchLimit }
+    if (search) params.text = search
+
+    AdminApi.categories.getAll(params)
+      .then(({ data }) => {
+        if (cancelled) return
+        setCategories(data.data  ?? [])
+        setTotal(data.count ?? 0)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (cancelled) return
+        setCategories([])
+        setLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [page, search, viewMode, fetchLimit, refreshTick])
+
+  function refresh() { setLoading(true); setRefreshTick((k) => k + 1) }
+
+  function handleSearchChange(val) { setSearch(val); setLoading(true); setPage(1) }
+  function handlePageChange(next) { setPage(next); setLoading(true) }
+
+  function switchView(mode) {
+    if (mode === viewMode) return
+    setViewMode(mode)
+    setPage(1)
     setLoading(true)
-    try {
-      const [treeRes, flatRes] = await Promise.all([
-        AdminApi.categories.tree(),
-        AdminApi.categories.getAll({ limit: 500 }),
-      ])
-      setTree(treeRes.data?.data ?? [])
-      setFlat(flatRes.data?.data?.rows ?? flatRes.data?.data?.categories ?? [])
-    } catch { setTree([]) }
-    finally { setLoading(false) }
-  }, [])
-
-  useEffect(() => { fetchCategories() }, [fetchCategories])
+  }
 
   async function handleDelete(cat) {
     if (!window.confirm(t('categories.confirmDelete'))) return
-    await AdminApi.categories.delete(cat.id).catch(() => {})
-    fetchCategories()
+    try {
+      await AdminApi.categories.delete(cat.id)
+      refresh()
+    } catch (e) {
+      window.alert(e.response?.data?.message ?? 'Error')
+    }
   }
 
-  function openCreate() { setEditing(null); setModalOpen(true) }
-  function openEdit(cat) { setEditing(cat); setModalOpen(true) }
+  function openEdit(cat) { setModal({ open: true, category: cat }) }
+
+  const totalPages = Math.ceil(total / listLimit)
+  const treeData   = viewMode === 'tree' ? buildTree(categories) : []
+
+  // Shared table header columns
+  const colLabel2 = viewMode === 'tree' ? t('categories.children') : t('categories.parentCategory')
 
   return (
     <div className="space-y-4">
+      {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-900">{t('categories.title')}</h2>
-          <p className="text-sm text-slate-500 mt-0.5">{flat.length} {t('categories.title').toLowerCase()}</p>
+          <p className="text-sm text-slate-500 mt-0.5">{total} {t('categories.title').toLowerCase()}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" onClick={fetchCategories} className="h-9 w-9" title={t('common.refresh')}>
+        <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex items-center rounded-md border overflow-hidden">
+            <Button
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-9 w-9 rounded-none border-0"
+              title="List view"
+              onClick={() => switchView('list')}
+            >
+              <LayoutList className="h-4 w-4" />
+            </Button>
+            <div className="w-px h-5 bg-border" />
+            <Button
+              variant={viewMode === 'tree' ? 'secondary' : 'ghost'}
+              size="icon"
+              className="h-9 w-9 rounded-none border-0"
+              title="Tree view"
+              onClick={() => switchView('tree')}
+            >
+              <Network className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <Button variant="ghost" size="icon" onClick={refresh} className="h-9 w-9" title={t('common.refresh')}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-          <Button size="sm" className="gap-2" onClick={openCreate}>
+          <Button size="sm" className="gap-2" onClick={() => setModal({ open: true, category: null })}>
             <Plus className="h-4 w-4" /> {t('categories.addCategory')}
           </Button>
         </div>
       </div>
 
+      {/* Search (hidden in tree mode — tree shows all anyway) */}
+      {viewMode === 'list' && (
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Input
+              placeholder={t('common.search')}
+              className="pl-9"
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Table */}
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -251,36 +380,124 @@ export default function CategoriesPage() {
               <thead>
                 <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide">
                   <th className="px-4 py-3">{t('common.name')}</th>
-                  <th className="px-4 py-3">Sub</th>
+                  <th className="px-4 py-3">{colLabel2}</th>
                   <th className="px-4 py-3">{t('categories.order')}</th>
-                  <th className="px-4 py-3 w-12"></th>
+                  <th className="px-4 py-3">{t('categories.slug')}</th>
+                  <th className="px-4 py-3 w-12" />
                 </tr>
               </thead>
               <tbody>
-                {loading && tree.length === 0 ? (
-                  <tr><td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400">{t('common.loading')}</td></tr>
-                ) : tree.length === 0 ? (
+                {loading && categories.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-4 py-16 text-center">
+                    <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400">
+                      {t('common.loading')}
+                    </td>
+                  </tr>
+                ) : categories.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-16 text-center">
                       <FolderTree className="h-10 w-10 text-slate-200 mx-auto mb-2" />
                       <p className="text-sm text-slate-400">{t('common.noResults')}</p>
                     </td>
                   </tr>
-                ) : tree.map((cat) => (
-                  <CategoryRow key={cat.id} cat={cat} onEdit={openEdit} onDelete={handleDelete} />
-                ))}
+                ) : viewMode === 'tree' ? (
+                  treeData.map((cat) => (
+                    <CategoryTreeRow
+                      key={cat.id}
+                      cat={cat}
+                      depth={0}
+                      onEdit={openEdit}
+                      onDelete={handleDelete}
+                    />
+                  ))
+                ) : (
+                  categories.map((cat) => (
+                    <tr key={cat.id} className="border-b last:border-0 hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {cat.icon && <span className="text-base">{cat.icon}</span>}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{cat.name}</p>
+                            {cat.name_ru && (
+                              <p className="text-xs text-slate-400 truncate">{cat.name_ru}</p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-500">
+                        {cat.parent
+                          ? <Badge variant="secondary">{cat.parent.name}</Badge>
+                          : <span className="text-slate-300">—</span>
+                        }
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-500">{cat.order ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        <code className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                          {cat.slug}
+                        </code>
+                      </td>
+                      <td className="px-4 py-3">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>{t('common.actions')}</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => openEdit(cat)}>
+                              {t('common.edit')}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600"
+                              onClick={() => handleDelete(cat)}
+                            >
+                              {t('common.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination — list mode only */}
+          {viewMode === 'list' && totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-slate-500">
+              <span>{t('common.page', { current: page, total: totalPages })}</span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline" size="sm"
+                  disabled={page <= 1}
+                  onClick={() => handlePageChange(page - 1)}
+                >
+                  {t('common.previous')}
+                </Button>
+                <Button
+                  variant="outline" size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => handlePageChange(page + 1)}
+                >
+                  {t('common.next')}
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
       <CategoryModal
-        open={modalOpen}
-        category={editing}
-        allCategories={flat}
-        onClose={() => setModalOpen(false)}
-        onSaved={fetchCategories}
+        key={modal.open ? (modal.category?.id ?? 'create') : 'closed'}
+        open={modal.open}
+        category={modal.category}
+        allCategories={categories}
+        onClose={() => setModal({ open: false, category: null })}
+        onSaved={() => { setModal({ open: false, category: null }); refresh() }}
       />
     </div>
   )

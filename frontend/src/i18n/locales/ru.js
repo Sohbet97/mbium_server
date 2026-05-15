@@ -10,6 +10,7 @@ export default {
     active: 'Активен', inactive: 'Неактивен', verified: 'Подтверждён', unverified: 'Не подтверждён',
     status: 'Статус', name: 'Название', description: 'Описание', createdAt: 'Создан',
     optional: 'необязательно', all: 'Все', approve: 'Одобрить', reject: 'Отклонить',
+    deleted: 'Удалён',
   },
 
   nav: {
@@ -43,10 +44,19 @@ export default {
 
   users: {
     title: 'Пользователи', totalCount: '{{count}} пользователей всего', addUser: 'Добавить пользователя',
-    searchPlaceholder: 'Поиск по имени или телефону…',
+    createUser: 'Создать пользователя',
+    searchPlaceholder: 'Поиск по имени, фамилии или email…',
     colUser: 'Пользователь', colPhone: 'Телефон', colRole: 'Роль', colStatus: 'Статус', colLastLogin: 'Последний вход',
-    viewDetails: 'Подробнее', editUser: 'Редактировать', blockUser: 'Заблокировать', unblockUser: 'Разблокировать',
+    editUser: 'Редактировать', blockUser: 'Заблокировать', unblockUser: 'Разблокировать',
+    unlockUser: 'Разблокировать (снять блок входа)', deleteUser: 'Удалить пользователя',
     statusNotActivated: 'Не активирован', statusActive: 'Активен', statusBlocked: 'Заблокирован',
+    filterStatus: 'Все статусы', filterRole: 'Все роли',
+    surname: 'Фамилия', email: 'Email', phone: 'Номер телефона',
+    birthDate: 'Дата рождения', role: 'Роль', noRole: 'Без роли',
+    password: 'Пароль', passwordHint: 'Оставьте пустым, чтобы не менять пароль',
+    confirmDelete: 'Удалить этого пользователя?',
+    confirmBlock: 'Заблокировать этого пользователя?',
+    confirmUnblock: 'Разблокировать этого пользователя?',
   },
 
   shops: {
@@ -59,6 +69,8 @@ export default {
     name: 'Название магазина', type: 'Тип магазина', owner: 'Владелец (ID пользователя)',
     phone: 'Телефон', email: 'Email', address: 'Адрес', logo: 'URL логотипа',
     isActive: 'Активен', isVerified: 'Подтверждён', order: 'Порядок отображения', noType: 'Выберите тип…',
+    filterStatus: 'Все статусы', showDeleted: 'Удалённые',
+    confirmRestore: 'Восстановить этот магазин?', confirmForceDelete: 'Удалить навсегда?',
   },
 
   categories: {

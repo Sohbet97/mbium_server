@@ -10,6 +10,7 @@ export default {
     active: 'Işjeň', inactive: 'Işjeň däl', verified: 'Tassyklanan', unverified: 'Tassyklanmadyk',
     status: 'Ýagdaýy', name: 'Ady', description: 'Beýany', createdAt: 'Döredilen',
     optional: 'islegle', all: 'Ählisi', approve: 'Oňa', reject: 'Red et',
+    deleted: 'Pozulan',
   },
 
   nav: {
@@ -43,10 +44,19 @@ export default {
 
   users: {
     title: 'Ulanyjylar', totalCount: 'Jemi {{count}} ulanyjy', addUser: 'Ulanyjy goş',
-    searchPlaceholder: 'Ady ýa-da telefon boýunça gözle…',
+    createUser: 'Ulanyjy döret',
+    searchPlaceholder: 'Ady, familiýasy ýa-da email boýunça gözle…',
     colUser: 'Ulanyjy', colPhone: 'Telefon', colRole: 'Rol', colStatus: 'Ýagdaýy', colLastLogin: 'Soňky giriş',
-    viewDetails: 'Jikme-jikler', editUser: 'Düzelt', blockUser: 'Petikle', unblockUser: 'Açyk et',
+    editUser: 'Düzelt', blockUser: 'Petikle', unblockUser: 'Açyk et',
+    unlockUser: 'Açyk et (giriş petiklemesini aýyr)', deleteUser: 'Ulanyjyny poz',
     statusNotActivated: 'Işjeňleşdirilmedi', statusActive: 'Işjeň', statusBlocked: 'Petiklenen',
+    filterStatus: 'Ähli ýagdaýlar', filterRole: 'Ähli roller',
+    surname: 'Familiýasy', email: 'Email', phone: 'Telefon belgisi',
+    birthDate: 'Doglan senesi', role: 'Rol', noRole: 'Rol ýok',
+    password: 'Açar söz', passwordHint: 'Açar sözi üýtgetmek islemediňizde boş goýuň',
+    confirmDelete: 'Bu ulanyjyny pozmak?',
+    confirmBlock: 'Bu ulanyjyny petiklemek?',
+    confirmUnblock: 'Bu ulanyjyny açyk etmek?',
   },
 
   shops: {
@@ -59,6 +69,8 @@ export default {
     name: 'Dükanyň ady', type: 'Dükanyň görnüşi', owner: 'Eýesi (ulanyjy ID)',
     phone: 'Telefon', email: 'Email', address: 'Salgy', logo: 'Logo URL',
     isActive: 'Işjeň', isVerified: 'Tassyklanan', order: 'Görkeziliş tertibi', noType: 'Görnüş saýla…',
+    filterStatus: 'Ähli ýagdaýlar', showDeleted: 'Pozulanlary görkez',
+    confirmRestore: 'Bu dükany dikeltmek?', confirmForceDelete: 'Bu dükany doly pozmak?',
   },
 
   categories: {
