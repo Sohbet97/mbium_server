@@ -72,13 +72,13 @@ Object.values(db).forEach((model) => {
 // db.UserOtpSession.sync({ alter: true });
 // db.Config.sync({ alter: true });
 
-// Object.keys(db)?.map(async (modelKey) => {
-//   try {
-//     if (db[modelKey] && db[modelKey] != null) await db[modelKey]?.sync({ alter: true }).catch((e) => console.log(e));
-//   } catch (e) {
-//     console.error(`Error while trying to sync ${modelKey} model: `, e);
-//   }
-// });
+Object.keys(db)?.map(async (modelKey) => {
+  try {
+    if (db[modelKey] && db[modelKey] != null) await db[modelKey]?.sync({ alter: true }).catch((e) => console.log(e));
+  } catch (e) {
+    console.error(`Error while trying to sync ${modelKey} model: `, e);
+  }
+});
 //#endregion
 
 module.exports = db;
