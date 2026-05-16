@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Plus, Search, RefreshCw, MoreHorizontal, Package } from 'lucide-react'
@@ -7,140 +7,17 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogBody,
-} from '@/components/ui/dialog'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { MultiLangInput } from '@/components/common/MultiLangInput'
-import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
-
-const EMPTY_FORM = {
-  name: '', name_ru: '', name_eng: '',
-  shop_id: '', category_id: '',
-  price: '', currency: 'TMT', sku: '', stock: '0',
-  description: '', is_active: true,
-}
-
-function ProductModal({ open, product, shops, categories, onClose, onSaved }) {
-  const { t } = useTranslation()
-  const [form, setForm] = useState(EMPTY_FORM)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => {
-    if (open) {
-      setError('')
-      setForm(product
-        ? {
-          name: product.name ?? '', name_ru: product.name_ru ?? '', name_eng: product.name_eng ?? '',
-          shop_id: product.shop_id ?? '', category_id: product.category_id ?? '',
-          price: product.price ?? '', currency: product.currency ?? 'TMT',
-          sku: product.sku ?? '', stock: product.stock ?? 0,
-          description: product.description ?? '', is_active: product.is_active ?? true,
-        }
-        : EMPTY_FORM
-      )
-    }
-  }, [open, product])
-
-  function set(field, value) { setForm((f) => ({ ...f, [field]: value })) }
-
-  async function handleSave() {
-    setError('')
-    setSaving(true)
-    try {
-      const payload = {
-        ...form,
-        shop_id: Number(form.shop_id),
-        category_id: Number(form.category_id),
-        price: Number(form.price),
-        stock: Number(form.stock),
-      }
-      if (product?.id) {
-        await AdminApi.products.update(product.id, payload)
-      } else {
-        await AdminApi.products.create(payload)
-      }
-      onSaved()
-      onClose()
-    } catch (err) {
-      setError(err.response?.data?.message ?? 'Error saving product')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{product ? t('products.editProduct') : t('products.createProduct')}</DialogTitle>
-        </DialogHeader>
-        <DialogBody>
-          {error && (
-            <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>
-          )}
-
-          <MultiLangInput baseField="name" label={t('common.name')} required values={form} onChange={set} />
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label={t('products.shop')} required>
-              <Select value={form.shop_id} onChange={(e) => set('shop_id', e.target.value)}>
-                <option value="">{t('products.selectShop')}</option>
-                {shops.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </Select>
-            </FormField>
-            <FormField label={t('products.category')} required>
-              <Select value={form.category_id} onChange={(e) => set('category_id', e.target.value)}>
-                <option value="">{t('products.selectCategory')}</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
-            </FormField>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <FormField label={t('products.price')} required>
-              <Input type="number" min="0" step="0.01" value={form.price} onChange={(e) => set('price', e.target.value)} />
-            </FormField>
-            <FormField label={t('products.stock')}>
-              <Input type="number" min="0" value={form.stock} onChange={(e) => set('stock', e.target.value)} />
-            </FormField>
-            <FormField label={t('products.sku')}>
-              <Input value={form.sku} onChange={(e) => set('sku', e.target.value)} placeholder="SKU-001" />
-            </FormField>
-          </div>
-
-          <FormField label={t('common.description')}>
-            <Textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={3} />
-          </FormField>
-
-          <div className="flex items-center justify-between rounded-md border px-3 py-2">
-            <Label>{t('products.isActive')}</Label>
-            <Switch checked={form.is_active} onCheckedChange={(v) => set('is_active', v)} />
-          </div>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? t('common.loading') : product ? t('common.save') : t('common.create')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
+import { toast } from 'sonner'
 
 export default function ProductsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const [searchParams] = useSearchParams()
 
   const [products, setProducts] = useState([])
   const [shops, setShops] = useState([])
@@ -151,25 +28,31 @@ export default function ProductsPage() {
   const [shopFilter, setShopFilter] = useState(searchParams.get('shop_id') ?? '')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [loading, setLoading] = useState(false)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
+  const [refreshKey, setRefreshKey] = useState(0)
   const limit = 20
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = { page, limit }
-      if (search) params.search = search
-      if (shopFilter) params.shop_id = shopFilter
-      if (categoryFilter) params.category_id = categoryFilter
-      const { data } = await AdminApi.products.getAll(params)
-      setProducts(data?.data ?? data.data?.products ?? [])
-      setTotal(data?.count ?? data.data?.total ?? 0)
-    } catch { setProducts([]) }
-    finally { setLoading(false) }
-  }, [page, search, shopFilter, categoryFilter])
+  function fetchProducts() { setRefreshKey((k) => k + 1) }
 
-  useEffect(() => { fetchProducts() }, [fetchProducts])
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const params = { page, limit }
+        if (search) params.search = search
+        if (shopFilter) params.shop_id = shopFilter
+        if (categoryFilter) params.category_id = categoryFilter
+        const { data } = await AdminApi.products.getAll(params)
+        if (!cancelled) {
+          setProducts(data?.data ?? data.data?.products ?? [])
+          setTotal(data?.count ?? data.data?.total ?? 0)
+        }
+      } catch { if (!cancelled) setProducts([]) }
+      finally { if (!cancelled) setLoading(false) }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [page, search, shopFilter, categoryFilter, refreshKey])
 
   useEffect(() => {
     Promise.all([
@@ -183,12 +66,15 @@ export default function ProductsPage() {
 
   async function handleDelete(product) {
     if (!window.confirm(`Delete "${product.name}"?`)) return
-    await AdminApi.products.delete(product.id).catch(() => {})
+    try {
+      await AdminApi.products.delete(product.id)
+      toast.success(t('toast.deleted'))
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    }
     fetchProducts()
   }
 
-  function openCreate() { setEditing(null); setModalOpen(true) }
-  function openEdit(p) { setEditing(p); setModalOpen(true) }
   const totalPages = Math.ceil(total / limit)
 
   return (
@@ -198,7 +84,7 @@ export default function ProductsPage() {
           <h2 className="text-xl font-semibold text-slate-900">{t('products.title')}</h2>
           <p className="text-sm text-slate-500 mt-0.5">{t('products.totalCount', { count: total })}</p>
         </div>
-        <Button size="sm" className="gap-2" onClick={openCreate}>
+        <Button size="sm" className="gap-2" onClick={() => navigate('/admin/catalog/products/new')}>
           <Plus className="h-4 w-4" /> {t('products.addProduct')}
         </Button>
       </div>
@@ -289,7 +175,9 @@ export default function ProductsPage() {
                           <DropdownMenuItem onClick={() => navigate(`/admin/catalog/products/${p.id}`)}>
                             {t('products.tabInfo')}
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEdit(p)}>{t('common.edit')}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/catalog/products/${p.id}/edit`)}>
+                            {t('common.edit')}
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-red-600 focus:text-red-600" onClick={() => handleDelete(p)}>
                             {t('common.delete')}
@@ -313,15 +201,6 @@ export default function ProductsPage() {
           )}
         </CardContent>
       </Card>
-
-      <ProductModal
-        open={modalOpen}
-        product={editing}
-        shops={shops}
-        categories={categories}
-        onClose={() => setModalOpen(false)}
-        onSaved={fetchProducts}
-      />
     </div>
   )
 }

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { toast } from 'sonner'
 
 // ── Status badge ──────────────────────────────────────────────────────────────
 
@@ -256,9 +257,10 @@ export default function UsersPage() {
         name: u.name, surname: u.surname,
         phone_number: u.phone_number, status: 90,
       })
+      toast.success(t('toast.updated'))
       refresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -269,18 +271,20 @@ export default function UsersPage() {
         name: u.name, surname: u.surname,
         phone_number: u.phone_number, status: 1,
       })
+      toast.success(t('toast.updated'))
       refresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
   async function handleUnlock(u) {
     try {
       await AdminApi.users.unlock(u.id)
+      toast.success(t('toast.updated'))
       refresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -288,9 +292,10 @@ export default function UsersPage() {
     if (!window.confirm(t('users.confirmDelete'))) return
     try {
       await AdminApi.users.delete(u.id)
+      toast.success(t('toast.deleted'))
       refresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -480,7 +485,7 @@ export default function UsersPage() {
         user={modal.user}
         roles={roles}
         onClose={() => setModal({ open: false, user: null })}
-        onSaved={() => { setModal({ open: false, user: null }); refresh() }}
+        onSaved={() => { toast.success(t(modal.user ? 'toast.updated' : 'toast.created')); setModal({ open: false, user: null }); refresh() }}
       />
     </div>
   )

@@ -2,6 +2,7 @@ const ApiError = require("../../../exceptions/api-error");
 const { FUNCTIONS } = require("../../../utils/functions");
 const DisputeService = require("../services/disputes");
 const { disputeSchema, disputeStatusSchema } = require("../validators/dispute.schema");
+const NotificationService = require("../../../services/notifications");
 
 class DisputeController {
     static async get(req, res, next) {
@@ -32,6 +33,7 @@ class DisputeController {
                 ...req.body,
                 opened_by: req.user?.id ?? null,
             });
+            NotificationService.createForDispute(model, req.app.io).catch(() => {});
             return res.status(201).json({ model });
         } catch (e) { next(e); }
     }

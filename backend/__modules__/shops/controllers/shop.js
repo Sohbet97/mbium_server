@@ -6,6 +6,7 @@ const { FUNCTIONS } = require("../../../utils/functions");
 const Validator = require("../../../__artefacts__/_validator_");
 const ShopService = require("../services/shops");
 const shopSchema = require("../validators/shop.scheme");
+const NotificationService = require("../../../services/notifications");
 //#endregion
 
 class ShopController {
@@ -111,6 +112,7 @@ class ShopController {
             const model = await ShopService.getById(req.params.id);
             if (!model) throw ApiError.NotFound("Dükan tapylmady");
             const updated = await ShopService.submitForReview(req.params.id);
+            NotificationService.createForShopReview(model, req.app.io).catch(() => {});
             return res.status(200).json({ model: updated });
         } catch (e) { next(e); }
     }

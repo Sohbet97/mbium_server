@@ -27,6 +27,13 @@ class ConfigController {
       // Update pricing and foreign exchange
       model.is_otp_enabled = Boolean(req.body?.is_otp_enabled) || false;
 
+      if (req.body?.platform_commission_rate !== undefined) {
+        const rate = parseFloat(req.body.platform_commission_rate)
+        if (!isNaN(rate) && rate >= 0 && rate <= 1) {
+          model.platform_commission_rate = rate
+        }
+      }
+
       // Save and respond
       await model.save();
       const saved = await trySet(req, REDIS_KEYS.CONFIG, ConfigService.get);

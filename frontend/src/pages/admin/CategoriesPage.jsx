@@ -19,6 +19,7 @@ import {
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { toast } from 'sonner'
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
@@ -302,9 +303,10 @@ export default function CategoriesPage() {
     if (!window.confirm(t('categories.confirmDelete'))) return
     try {
       await AdminApi.categories.delete(cat.id)
+      toast.success(t('toast.deleted'))
       refresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -497,7 +499,7 @@ export default function CategoriesPage() {
         category={modal.category}
         allCategories={categories}
         onClose={() => setModal({ open: false, category: null })}
-        onSaved={() => { setModal({ open: false, category: null }); refresh() }}
+        onSaved={() => { toast.success(t(modal.category ? 'toast.updated' : 'toast.created')); setModal({ open: false, category: null }); refresh() }}
       />
     </div>
   )

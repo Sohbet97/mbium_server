@@ -20,6 +20,7 @@ import {
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { toast } from 'sonner'
 
 // ─── Images Tab ────────────────────────────────────────────────────────────────
 // AddImageModal: no useEffect — parent passes key so it remounts fresh each open.
@@ -89,9 +90,10 @@ function ImagesTab({ productId, images, onRefresh }) {
     if (!window.confirm(t('images.confirmDelete'))) return
     try {
       await AdminApi.products.images.delete(productId, imageId)
+      toast.success(t('toast.deleted'))
       onRefresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -102,9 +104,10 @@ function ImagesTab({ productId, images, onRefresh }) {
         url: image.url, is_primary: true, order: image.order,
       })
       await AdminApi.products.images.delete(productId, image.id)
+      toast.success(t('toast.updated'))
       onRefresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -300,9 +303,10 @@ function VariantsTab({ productId, variants, onRefresh }) {
     if (!window.confirm(t('variants.confirmDelete'))) return
     try {
       await AdminApi.products.variants.delete(productId, v.id)
+      toast.success(t('toast.deleted'))
       onRefresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 

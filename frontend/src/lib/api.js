@@ -103,7 +103,22 @@ export class AdminApi {
     ...crud(PATHS.REVIEWS),
     updateStatus: (id, status) => http.patch(a(`${PATHS.REVIEWS}/${id}/status`), { status }),
   }
-  static discounts = crud(PATHS.DISCOUNTS)
+  static discounts  = crud(PATHS.DISCOUNTS)
+  static countries  = crud(PATHS.COUNTRIES)
+  static regions    = crud(PATHS.REGIONS)
+  static cities     = crud(PATHS.CITIES)
+  static districts  = crud(PATHS.DISTRICTS)
+  static villages   = crud(PATHS.VILLAGES)
+  static config = {
+    get:    ()     => http.get(a(PATHS.CONFIG)),
+    update: (data) => http.put(a(PATHS.CONFIG), data),
+  }
+  static notifications = {
+    list:       (params) => http.get(a(PATHS.NOTIFICATIONS), { params }),
+    count:      ()       => http.get(a(`${PATHS.NOTIFICATIONS}/count`)),
+    markAsRead: (id)     => http.patch(a(`${PATHS.NOTIFICATIONS}/${id}/read`)),
+    markAllAsRead: ()    => http.patch(a(`${PATHS.NOTIFICATIONS}/read-all`)),
+  }
 }
 
 export const AuthApi = {
