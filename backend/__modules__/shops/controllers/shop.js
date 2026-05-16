@@ -62,17 +62,24 @@ class ShopController {
             let model = await ShopService.getById(req?.params?.id);
             if (!model) throw ApiError.NotFound("Brand not found");
 
-            model.name = req.body?.name;
-            model.name_ru = req.body?.name_ru;
-            model.name_eng = req.body?.name_eng;
-            model.is_active = req.body?.is_active;
-            model.order = FUNCTIONS.getNumber(req.body?.order) || null;
+            model.name        = req.body?.name;
+            model.name_ru     = req.body?.name_ru     ?? model.name_ru;
+            model.name_eng    = req.body?.name_eng    ?? model.name_eng;
+            model.type_id     = FUNCTIONS.getNumber(req.body?.type_id)  || model.type_id;
+            model.is_active   = req.body?.is_active   ?? model.is_active;
+            model.order       = req.body?.order !== undefined ? (FUNCTIONS.getNumber(req.body.order) || null) : model.order;
+            model.description = req.body?.description ?? model.description;
+            model.logo        = req.body?.logo        ?? model.logo;
+            model.address     = req.body?.address     ?? model.address;
+            model.phone       = req.body?.phone       ?? model.phone;
+            model.email       = req.body?.email       ?? model.email;
+            if (req.body?.owner_id !== undefined) model.owner_id = req.body.owner_id;
 
             const { isError, errors } = await Validator.validate(shopSchema, model);
             if (isError) throw ApiError.BadRequest(null, errors);
 
             await model.save();
-            res.status(200).json(model);
+            res.status(200).json({ model });
             next();
         } catch (e) {
             next(e);

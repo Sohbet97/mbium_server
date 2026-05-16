@@ -71,6 +71,15 @@ export default {
     isActive: 'Активен', isVerified: 'Подтверждён', order: 'Порядок отображения', noType: 'Выберите тип…',
     filterStatus: 'Все статусы', showDeleted: 'Удалённые',
     confirmRestore: 'Восстановить этот магазин?', confirmForceDelete: 'Удалить навсегда?',
+    description: 'Описание', ownerId: 'ID владельца (UUID)',
+    tabInfo: 'Инфо', tabProducts: 'Товары', tabOrders: 'Заказы', tabUsers: 'Пользователи',
+    verification: 'Верификация', verificationStatus: 'Статус верификации',
+    verifyAction: 'Верифицировать', rejectAction: 'Отклонить',
+    rejectNote: 'Причина отклонения', rejectNotePlaceholder: 'Укажите причину…',
+    submitForReview: 'Отправить на проверку',
+    verStatusNone: 'Не подан', verStatusPending: 'На проверке',
+    verStatusApproved: 'Верифицирован', verStatusRejected: 'Отклонён',
+    verifiedAt: 'Верифицирован', verificationNote: 'Причина отклонения',
   },
 
   categories: {

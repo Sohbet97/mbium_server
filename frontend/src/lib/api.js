@@ -62,7 +62,7 @@ const crud = (path) => ({
   patch: (id, data) => http.patch(`${a(path)}/${id}`, data),
   delete: (id) => http.delete(`${a(path)}/${id}`),
   forceDelete: (id) => http.delete(`${a(path)}/${id}/force`),
-  restore: (id) => http.post(`${a(path)}/${id}/restore`),
+  restore: (id) => http.patch(`${a(path)}/${id}/restore`),
 })
 
 export class AdminApi {
@@ -71,7 +71,12 @@ export class AdminApi {
     ...crud(PATHS.USERS),
     unlock: (id) => http.put(a(`${PATHS.USERS}/${id}/unlock`)),
   }
-  static shops = crud(PATHS.SHOPS)
+  static shops = {
+    ...crud(PATHS.SHOPS),
+    verify:          (id)       => http.patch(a(`${PATHS.SHOPS}/${id}/verify`)),
+    reject:          (id, data) => http.patch(a(`${PATHS.SHOPS}/${id}/reject`), data),
+    submitForReview: (id)       => http.patch(a(`${PATHS.SHOPS}/${id}/submit`)),
+  }
   static shopTypes = { getAll: (params) => http.get(a(PATHS.SHOP_TYPES), { params }) }
   static categories = {
     ...crud(PATHS.CATEGORIES),

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus, Search, RefreshCw, MoreHorizontal, Star, ExternalLink, Store } from 'lucide-react'
+import { Plus, Search, RefreshCw, MoreHorizontal, Star, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -293,7 +293,8 @@ export default function ShopsPage() {
                 ) : shops.map((shop) => (
                   <tr
                     key={shop.id}
-                    className={`border-b last:border-0 hover:bg-slate-50 transition-colors ${shop.deletedAt ? 'opacity-60' : ''}`}
+                    className={`border-b last:border-0 hover:bg-slate-50 transition-colors cursor-pointer ${shop.deletedAt ? 'opacity-60' : ''}`}
+                    onClick={() => navigate(`/admin/shops/${shop.id}`)}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -331,7 +332,7 @@ export default function ShopsPage() {
                         {Number(shop.rating ?? 0).toFixed(2)}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -343,12 +344,6 @@ export default function ShopsPage() {
                           <DropdownMenuSeparator />
                           {!shop.deletedAt ? (
                             <>
-                              <DropdownMenuItem
-                                onClick={() => navigate(`/admin/catalog/products?shop_id=${shop.id}`)}
-                              >
-                                <ExternalLink className="h-3.5 w-3.5 mr-2" />
-                                {t('shops.viewProducts')}
-                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => setModal({ open: true, shop })}>
                                 {t('common.edit')}
                               </DropdownMenuItem>

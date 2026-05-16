@@ -1,10 +1,24 @@
 # mbium Server
 
-Backend API server for the **mbium** marketplace platform, built with Node.js, Express, Sequelize, and PostgreSQL.
+Full-stack marketplace platform — React admin frontend + Node.js/Express backend API.
 
 ---
 
 ## Tech Stack
+
+### Frontend
+
+| Layer | Technology |
+|---|---|
+| Framework | React 19 |
+| Build tool | Vite 8 |
+| Styling | Tailwind CSS 4 |
+| UI components | Radix UI |
+| Routing | React Router 7 |
+| HTTP client | Axios |
+| i18n | i18next (en / ru / tk) |
+
+### Backend
 
 | Layer | Technology |
 |---|---|
@@ -20,7 +34,6 @@ Backend API server for the **mbium** marketplace platform, built with Node.js, E
 | Scheduler | node-cron |
 | Message broker | RabbitMQ (amqplib) |
 | Search | Elasticsearch 8 |
-| Cache | Redis 5 |
 | Logging | Morgan + custom Logger |
 
 ---
@@ -29,19 +42,48 @@ Backend API server for the **mbium** marketplace platform, built with Node.js, E
 
 ```
 mbium_server/
+├── frontend/
+│   ├── src/
+│   │   ├── assets/             # Static assets
+│   │   ├── components/
+│   │   │   ├── common/         # Shared components
+│   │   │   ├── layout/         # Layout components (sidebar, header, …)
+│   │   │   └── ui/             # Low-level UI primitives (Radix-based)
+│   │   ├── hooks/              # Custom React hooks
+│   │   ├── i18n/               # i18next setup + locale files (en, ru, tk)
+│   │   ├── lib/                # Utilities and helpers
+│   │   ├── pages/
+│   │   │   ├── admin/          # Dashboard, Categories, Discounts, Orders,
+│   │   │   │                   #   Products, Reviews, Roles, Shops, Users
+│   │   │   └── auth/           # Login
+│   │   └── store/              # Global state
+│   ├── index.html
+│   └── vite.config.js
 ├── backend/
 │   ├── __artefacts__/          # Base classes (BaseController, BaseService, BaseModel, BaseRouter)
 │   ├── __modules__/            # Self-contained feature modules
-│   │   ├── shops/              # Shops & shop types
-│   │   └── user/               # Users, roles, positions, notes
+│   │   ├── banners/
+│   │   ├── catalog/
+│   │   ├── discounts/
+│   │   ├── disputes/
+│   │   ├── orders/
+│   │   ├── payouts/
+│   │   ├── reviews/
+│   │   ├── shops/
+│   │   └── user/
 │   ├── config/                 # App bootstrap (app.js) and constants
 │   ├── controllers/            # Core controllers (geo, config, logs, system dumps)
+│   ├── dtos/                   # Data transfer objects
 │   ├── middlewares/            # Auth, RBAC, error handling, logging, cookies
+│   ├── migrations/             # Sequelize migrations
 │   ├── models/                 # Core Sequelize models (Country, Region, Config, Log, …)
 │   ├── routes/
 │   │   ├── admin/              # Admin-only routes
 │   │   └── auth/               # Authentication routes
+│   ├── seeders/                # Database seeders
 │   ├── services/               # Business logic (cities, regions, countries, …)
+│   ├── swagger/                # OpenAPI/Swagger configuration
+│   ├── utils/                  # Shared utilities
 │   ├── exceptions/             # ApiError class
 │   ├── logger/                 # Structured logger
 │   └── index.js                # Entry point — HTTP server + Socket.IO
@@ -70,41 +112,77 @@ utils/
 
 - Node.js >= 18
 - PostgreSQL
-- Redis (optional — currently disabled)
 - RabbitMQ (optional)
+- Elasticsearch (optional)
 
-### Installation
+---
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev        # dev server (Vite HMR)
+npm run build      # production build → dist/
+npm run preview    # preview production build
+```
+
+The dev server starts on **http://localhost:5173** by default.
+
+---
+
+### Backend
+
+#### Installation
 
 ```bash
 cd backend
 npm install
 ```
 
-### Environment variables
+#### Environment variables
 
-Create a `.env` file in `backend/`:
+Copy the example file and fill in your values:
+
+```bash
+cp env.example .env
+```
 
 ```env
 PORT=8811
 SESSION_SECRET=your_secret_here
+EXTERNAL_SECRET=your_external_secret
+DUMP_ENCRYPT_PASSWORD=your_dump_password
 
 # Database
 DB_HOST=localhost
-DB_PORT=5432
 DB_NAME=mbium
-DB_USER=postgres
+DB_USERNAME=postgres
 DB_PASSWORD=password
 
 # JWT
-JWT_SECRET=your_jwt_secret
+ACCESS_TOKEN=your_access_token_secret
+REFRESH_TOKEN=your_refresh_token_secret
+ACCESS_TOKEN_EXPIRE_TIME=15m
+REFRESH_TOKEN_EXPIRE_TIME=2d
+REFRESH_TOKEN_EXPIRE_TIME_MILLISECONDS=172800000
 
 # Optional
-REDIS_URL=redis://localhost:6379
 RABBITMQ_URL=amqp://localhost
 ELASTICSEARCH_URL=http://localhost:9200
 ```
 
-### Run
+#### Database setup
+
+```bash
+# Run migrations
+npx sequelize-cli db:migrate
+
+# (Optional) Seed initial data
+npm run seed
+```
+
+#### Run
 
 ```bash
 # Development (nodemon auto-reload)

@@ -72,6 +72,15 @@ export default {
     isActive: 'Active', isVerified: 'Verified', order: 'Display Order', noType: 'Select type…',
     filterStatus: 'All Statuses', showDeleted: 'Show Deleted',
     confirmRestore: 'Restore this shop?', confirmForceDelete: 'Permanently delete this shop?',
+    description: 'Description', ownerId: 'Owner ID (UUID)',
+    tabInfo: 'Info', tabProducts: 'Products', tabOrders: 'Orders', tabUsers: 'Users',
+    verification: 'Verification', verificationStatus: 'Verification Status',
+    verifyAction: 'Verify Shop', rejectAction: 'Reject',
+    rejectNote: 'Rejection Note', rejectNotePlaceholder: 'Reason for rejection…',
+    submitForReview: 'Submit for Review',
+    verStatusNone: 'Not Submitted', verStatusPending: 'Pending Review',
+    verStatusApproved: 'Verified', verStatusRejected: 'Rejected',
+    verifiedAt: 'Verified At', verificationNote: 'Rejection Note',
   },
 
   categories: {

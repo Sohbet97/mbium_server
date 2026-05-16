@@ -46,11 +46,8 @@ class ShopService {
       where: { id },
       paranoid,
       include: [
-        {
-          model: db.ShopType,
-          as: "type",
-          attributes: ["name"],
-        }
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
+        { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number", "email", "status"] },
       ],
     });
     return model;
