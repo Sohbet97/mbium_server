@@ -11,4 +11,14 @@ export const PATHS = {
   ORDERS:      '/orders',
   REVIEWS:     '/reviews',
   DISCOUNTS:   '/discounts',
+  // Locations
+  COUNTRIES:   '/country',
+  REGIONS:     '/region',
+  CITIES:      '/city',
+  DISTRICTS:   '/districts',
+  VILLAGES:    '/village',
+  // Config
+  CONFIG:        '/configurations',
+  // Notifications
+  NOTIFICATIONS: '/notifications',
 }

@@ -4,6 +4,7 @@ const { FUNCTIONS } = require("../../../utils/functions");
 const Validator = require("../../../__artefacts__/_validator_");
 const OrderService = require("../services/orders");
 const { orderSchema, shipmentSchema } = require("../validators/order.schema");
+const NotificationService = require("../../../services/notifications");
 
 class OrderController {
     static async get(req, res, next) {
@@ -32,6 +33,7 @@ class OrderController {
             const { isError, errors } = await Validator.validate(orderSchema, req.body);
             if (isError) throw ApiError.BadRequest(null, errors);
             const model = await OrderService.create(req.user?.id, req.body);
+            NotificationService.createForOrder(model, req.app.io).catch(() => {});
             return res.status(201).json({ model });
         } catch (e) { next(e); }
     }

@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
 import { AdminApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const REVIEW_STATUSES = [
   { value: 0, labelKey: 'reviews.statusPending', color: 'bg-yellow-100 text-yellow-800' },
@@ -66,16 +67,22 @@ export default function ReviewsPage() {
   async function updateStatus(id, status) {
     try {
       await AdminApi.reviews.updateStatus(id, status)
+      toast.success(t('toast.updated'))
       fetchReviews()
-    } catch {}
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    }
   }
 
   async function deleteReview(id) {
     if (!confirm(t('reviews.confirmDelete'))) return
     try {
       await AdminApi.reviews.delete(id)
+      toast.success(t('toast.deleted'))
       fetchReviews()
-    } catch {}
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    }
   }
 
   const totalPages = Math.ceil(count / PAGE_SIZE)

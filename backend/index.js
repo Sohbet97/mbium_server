@@ -33,5 +33,6 @@ io.on("connection", (socket) => {
 
 app.io = io;
 app.onlineUsers = onlineUsers;
+app.notifyUser = (userId, data) => io.to(String(userId)).emit('notification', data);
 
 server.listen(PORT, () => console.log(`Backend server is running on the port: ${PORT}`));

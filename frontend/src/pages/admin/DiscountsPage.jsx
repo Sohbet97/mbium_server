@@ -13,6 +13,7 @@ import {
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const DISCOUNT_TYPES = ['PERCENTAGE', 'FIXED', 'FREE_SHIPPING']
 
@@ -246,8 +247,11 @@ export default function DiscountsPage() {
     if (!confirm(t('discounts.confirmDelete'))) return
     try {
       await AdminApi.discounts.delete(discount.id)
+      toast.success(t('toast.deleted'))
       fetchDiscounts()
-    } catch {}
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    }
   }
 
   const totalPages = Math.ceil(count / PAGE_SIZE)
@@ -360,7 +364,7 @@ export default function DiscountsPage() {
         discount={modal.discount}
         shops={shops}
         onClose={() => setModal({ open: false, discount: null })}
-        onSaved={() => { setModal({ open: false, discount: null }); fetchDiscounts() }}
+        onSaved={() => { toast.success(t(modal.discount ? 'toast.updated' : 'toast.created')); setModal({ open: false, discount: null }); fetchDiscounts() }}
       />
     </div>
   )

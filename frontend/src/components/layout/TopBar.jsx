@@ -1,4 +1,4 @@
-import { Bell, Globe } from 'lucide-react'
+import { Globe } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -6,6 +6,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/store/auth'
+import { NotificationPanel } from './NotificationPanel'
 
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧' },
@@ -48,9 +49,7 @@ export function TopBar({ title }) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <button className="relative p-2 rounded-full hover:bg-slate-100 transition-colors">
-          <Bell className="h-5 w-5 text-slate-500" />
-        </button>
+        <NotificationPanel />
 
         <Avatar className="h-8 w-8">
           <AvatarFallback className="bg-blue-600 text-white text-xs">{initials}</AvatarFallback>

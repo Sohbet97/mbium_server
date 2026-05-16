@@ -98,6 +98,26 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: STATUSES.STATUSE_ACTIVE
         },
+        cost_price: {
+            type: DataTypes.DECIMAL(12, 2),
+            allowNull: true,
+            comment: "Cost per item (for profit margin tracking)"
+        },
+        is_physical: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+            comment: "Physical product (requires shipping)"
+        },
+        track_inventory: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+            comment: "Whether to track stock quantity"
+        },
+        sell_when_out_of_stock: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+            comment: "Continue selling even when stock reaches 0"
+        },
         is_active: {
             type: DataTypes.BOOLEAN,
             defaultValue: true

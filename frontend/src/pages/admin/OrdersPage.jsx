@@ -17,6 +17,7 @@ import {
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 const ORDER_STATUSES = [
   { value: 0, labelKey: 'orders.statusPending', color: 'bg-yellow-100 text-yellow-800' },
@@ -288,13 +289,13 @@ function OrderDetail({ order, onClose, onRefresh }) {
         orderId={order.id}
         currentStatus={order.status}
         onClose={() => setStatusModal(false)}
-        onSaved={() => { setStatusModal(false); onRefresh() }}
+        onSaved={() => { toast.success(t('toast.updated')); setStatusModal(false); onRefresh() }}
       />
       <AddPaymentModal
         open={paymentModal}
         orderId={order.id}
         onClose={() => setPaymentModal(false)}
-        onSaved={() => { setPaymentModal(false); onRefresh() }}
+        onSaved={() => { toast.success(t('toast.created')); setPaymentModal(false); onRefresh() }}
       />
     </div>
   )

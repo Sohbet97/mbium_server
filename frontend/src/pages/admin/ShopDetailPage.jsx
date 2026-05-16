@@ -22,6 +22,7 @@ import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // ─── Order helpers (shared with OrdersPage) ────────────────────────────────────
 
@@ -325,9 +326,10 @@ function VerificationSection({ shop, onRefresh }) {
     setSaving(true)
     try {
       await AdminApi.shops.verify(shop.id)
+      toast.success(t('toast.updated'))
       onRefresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setSaving(false) }
   }
 
@@ -337,9 +339,10 @@ function VerificationSection({ shop, onRefresh }) {
       await AdminApi.shops.reject(shop.id, { note: rejectNote })
       setShowRejectForm(false)
       setRejectNote('')
+      toast.success(t('toast.updated'))
       onRefresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setSaving(false) }
   }
 
@@ -347,9 +350,10 @@ function VerificationSection({ shop, onRefresh }) {
     setSaving(true)
     try {
       await AdminApi.shops.submitForReview(shop.id)
+      toast.success(t('toast.updated'))
       onRefresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setSaving(false) }
   }
 
@@ -861,7 +865,7 @@ function OrdersTab({ shopId }) {
       const { data } = await AdminApi.orders.getOne(order.id)
       setSelectedOrder(data.model)
     } catch {
-      window.alert('Failed to load order detail')
+      toast.error(t('toast.error'))
     } finally {
       setDetailLoading(false)
     }

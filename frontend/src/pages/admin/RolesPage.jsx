@@ -10,6 +10,7 @@ import {
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 // ── Permission definitions ────────────────────────────────────────────────────
 // Each group: { labelKey, perms: [GET, POST, PUT, DELETE] }
@@ -297,8 +298,11 @@ export default function RolesPage() {
     if (!confirm(t('roles.confirmDelete'))) return
     try {
       await AdminApi.roles.delete(role.id)
+      toast.success(t('toast.deleted'))
       fetchRoles()
-    } catch {}
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    }
   }
 
   return (
@@ -338,7 +342,7 @@ export default function RolesPage() {
         open={modal.open}
         role={modal.role}
         onClose={() => setModal({ open: false, role: null })}
-        onSaved={() => { setModal({ open: false, role: null }); fetchRoles() }}
+        onSaved={() => { toast.success(t(modal.role ? 'toast.updated' : 'toast.created')); setModal({ open: false, role: null }); fetchRoles() }}
       />
     </div>
   )

@@ -4,6 +4,7 @@ const { FUNCTIONS } = require("../../../utils/functions");
 const Validator = require("../../../__artefacts__/_validator_");
 const ReviewService = require("../services/reviews");
 const reviewSchema = require("../validators/review.schema");
+const NotificationService = require("../../../services/notifications");
 
 class ReviewController {
     static async get(req, res, next) {
@@ -32,6 +33,7 @@ class ReviewController {
             const { isError, errors } = await Validator.validate(reviewSchema, req.body);
             if (isError) throw ApiError.BadRequest(null, errors);
             const model = await ReviewService.create(req.user?.id, req.body);
+            NotificationService.createForReview(model, req.app.io).catch(() => {});
             return res.status(201).json({ model });
         } catch (e) { next(e); }
     }

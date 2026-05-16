@@ -20,6 +20,7 @@ import {
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { toast } from 'sonner'
 
 // ── Shop Modal (create / edit) ────────────────────────────────────────────────
 // Parent passes a `key` prop to remount on open/shop change — no useEffect needed.
@@ -189,9 +190,10 @@ export default function ShopsPage() {
     if (!window.confirm(t('shops.confirmDelete'))) return
     try {
       await AdminApi.shops.delete(shop.id)
+      toast.success(t('toast.deleted'))
       refresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -199,9 +201,10 @@ export default function ShopsPage() {
     if (!window.confirm(t('shops.confirmRestore'))) return
     try {
       await AdminApi.shops.restore(shop.id)
+      toast.success(t('toast.updated'))
       refresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -209,9 +212,10 @@ export default function ShopsPage() {
     if (!window.confirm(t('shops.confirmForceDelete'))) return
     try {
       await AdminApi.shops.forceDelete(shop.id)
+      toast.success(t('toast.deleted'))
       refresh()
     } catch (e) {
-      window.alert(e.response?.data?.message ?? 'Error')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -408,7 +412,7 @@ export default function ShopsPage() {
         shop={modal.shop}
         shopTypes={shopTypes}
         onClose={() => setModal({ open: false, shop: null })}
-        onSaved={() => { setModal({ open: false, shop: null }); refresh() }}
+        onSaved={() => { toast.success(t(modal.shop ? 'toast.updated' : 'toast.created')); setModal({ open: false, shop: null }); refresh() }}
       />
     </div>
   )

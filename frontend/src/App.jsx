@@ -1,5 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { AuthProvider } from '@/store/auth'
+import { NotificationProvider } from '@/store/notifications'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import LoginPage from '@/pages/auth/LoginPage'
@@ -10,11 +12,13 @@ import ShopDetailPage from '@/pages/admin/ShopDetailPage'
 import CategoriesPage from '@/pages/admin/CategoriesPage'
 import ProductsPage from '@/pages/admin/ProductsPage'
 import ProductDetailPage from '@/pages/admin/ProductDetailPage'
+import ProductFormPage from '@/pages/admin/ProductFormPage'
 import OrdersPage from '@/pages/admin/OrdersPage'
 import ReviewsPage from '@/pages/admin/ReviewsPage'
 import DiscountsPage from '@/pages/admin/DiscountsPage'
 import RolesPage from '@/pages/admin/RolesPage'
-import PlaceholderPage from '@/pages/admin/PlaceholderPage'
+import LocationsPage from '@/pages/admin/LocationsPage'
+import SettingsPage from '@/pages/admin/SettingsPage'
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -31,13 +35,15 @@ const router = createBrowserRouter([
           { path: 'shops/:id', element: <ShopDetailPage />, handle: { titleKey: 'shops.title' } },
           { path: 'catalog/categories', element: <CategoriesPage />, handle: { titleKey: 'categories.title' } },
           { path: 'catalog/products', element: <ProductsPage />, handle: { titleKey: 'products.title' } },
+          { path: 'catalog/products/new', element: <ProductFormPage />, handle: { titleKey: 'products.title' } },
           { path: 'catalog/products/:id', element: <ProductDetailPage />, handle: { titleKey: 'products.title' } },
+          { path: 'catalog/products/:id/edit', element: <ProductFormPage />, handle: { titleKey: 'products.title' } },
           { path: 'orders', element: <OrdersPage />, handle: { titleKey: 'orders.title' } },
           { path: 'reviews', element: <ReviewsPage />, handle: { titleKey: 'reviews.title' } },
           { path: 'discounts', element: <DiscountsPage />, handle: { titleKey: 'discounts.title' } },
           { path: 'roles', element: <RolesPage />, handle: { titleKey: 'roles.title' } },
-          { path: 'locations', element: <PlaceholderPage titleKey="locations.title" />, handle: { titleKey: 'locations.title' } },
-          { path: 'settings', element: <PlaceholderPage titleKey="settings.title" />, handle: { titleKey: 'settings.title' } },
+          { path: 'locations', element: <LocationsPage />, handle: { titleKey: 'locations.title' } },
+          { path: 'settings', element: <SettingsPage />, handle: { titleKey: 'settings.title' } },
         ],
       },
     ],
@@ -49,7 +55,10 @@ const router = createBrowserRouter([
 export default function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <NotificationProvider>
+        <RouterProvider router={router} />
+        <Toaster position="top-right" richColors closeButton />
+      </NotificationProvider>
     </AuthProvider>
   )
 }

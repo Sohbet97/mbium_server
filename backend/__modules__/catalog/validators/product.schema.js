@@ -18,8 +18,12 @@ const productSchema = yup.object().shape({
     handle:           yup.string().nullable().optional().max(255),
     seo_title:        yup.string().nullable().optional().max(255),
     seo_description:  yup.string().nullable().optional(),
-    status:           yup.number().integer().optional(),
-    is_active:        yup.boolean().optional(),
+    cost_price:             yup.number().nullable().optional().min(0),
+    is_physical:            yup.boolean().optional(),
+    track_inventory:        yup.boolean().optional(),
+    sell_when_out_of_stock: yup.boolean().optional(),
+    status:                 yup.number().integer().optional(),
+    is_active:              yup.boolean().optional(),
 });
 
 module.exports = productSchema;
