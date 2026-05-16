@@ -6,6 +6,7 @@ import LoginPage from '@/pages/auth/LoginPage'
 import DashboardPage from '@/pages/admin/DashboardPage'
 import UsersPage from '@/pages/admin/UsersPage'
 import ShopsPage from '@/pages/admin/ShopsPage'
+import ShopDetailPage from '@/pages/admin/ShopDetailPage'
 import CategoriesPage from '@/pages/admin/CategoriesPage'
 import ProductsPage from '@/pages/admin/ProductsPage'
 import ProductDetailPage from '@/pages/admin/ProductDetailPage'
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
           { index: true, element: <DashboardPage />, handle: { titleKey: 'dashboard.title' } },
           { path: 'users', element: <UsersPage />, handle: { titleKey: 'users.title' } },
           { path: 'shops', element: <ShopsPage />, handle: { titleKey: 'shops.title' } },
+          { path: 'shops/:id', element: <ShopDetailPage />, handle: { titleKey: 'shops.title' } },
           { path: 'catalog/categories', element: <CategoriesPage />, handle: { titleKey: 'categories.title' } },
           { path: 'catalog/products', element: <ProductsPage />, handle: { titleKey: 'products.title' } },
           { path: 'catalog/products/:id', element: <ProductDetailPage />, handle: { titleKey: 'products.title' } },

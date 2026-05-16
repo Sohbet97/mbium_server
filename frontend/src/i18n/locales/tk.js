@@ -71,6 +71,15 @@ export default {
     isActive: 'Işjeň', isVerified: 'Tassyklanan', order: 'Görkeziliş tertibi', noType: 'Görnüş saýla…',
     filterStatus: 'Ähli ýagdaýlar', showDeleted: 'Pozulanlary görkez',
     confirmRestore: 'Bu dükany dikeltmek?', confirmForceDelete: 'Bu dükany doly pozmak?',
+    description: 'Beýany', ownerId: 'Eýesiniň ID (UUID)',
+    tabInfo: 'Maglumat', tabProducts: 'Harytlar', tabOrders: 'Sargytlar', tabUsers: 'Ulanyjylar',
+    verification: 'Tassyklamak', verificationStatus: 'Tassyklama ýagdaýy',
+    verifyAction: 'Tassykla', rejectAction: 'Red et',
+    rejectNote: 'Red etmek sebäbi', rejectNotePlaceholder: 'Sebäbini görkeziň…',
+    submitForReview: 'Barlag üçin ugrat',
+    verStatusNone: 'Berilmedi', verStatusPending: 'Barlagda',
+    verStatusApproved: 'Tassyklanan', verStatusRejected: 'Red edilen',
+    verifiedAt: 'Tassyklanan', verificationNote: 'Red etmek sebäbi',
   },
 
   categories: {
