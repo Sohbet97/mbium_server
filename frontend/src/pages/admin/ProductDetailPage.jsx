@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Trash2, Star, ImagePlus, PlusCircle, Package,
-  CheckCircle, Circle, Pencil, Save, X,
+  CheckCircle, Pencil, Save, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,30 +22,28 @@ import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 
 // ─── Images Tab ────────────────────────────────────────────────────────────────
+// AddImageModal: no useEffect — parent passes key so it remounts fresh each open.
 
 function AddImageModal({ open, productId, onClose, onSaved }) {
   const { t } = useTranslation()
-  const [url, setUrl] = useState('')
+  const [url,       setUrl]       = useState('')
   const [isPrimary, setIsPrimary] = useState(false)
-  const [order, setOrder] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
-
-  useEffect(() => { if (open) { setUrl(''); setIsPrimary(false); setOrder(''); setError('') } }, [open])
+  const [order,     setOrder]     = useState('')
+  const [saving,    setSaving]    = useState(false)
+  const [error,     setError]     = useState('')
 
   async function handleSave() {
     if (!url.trim()) return
-    setSaving(true)
+    setError(''); setSaving(true)
     try {
       await AdminApi.products.images.create(productId, {
-        url: url.trim(),
+        url:        url.trim(),
         is_primary: isPrimary,
-        order: order !== '' ? Number(order) : undefined,
+        order:      order !== '' ? Number(order) : undefined,
       })
       onSaved()
-      onClose()
-    } catch (err) {
-      setError(err.response?.data?.message ?? 'Error adding image')
+    } catch (e) {
+      setError(e.response?.data?.message ?? 'Error adding image')
     } finally {
       setSaving(false)
     }
@@ -56,7 +54,9 @@ function AddImageModal({ open, productId, onClose, onSaved }) {
       <DialogContent className="max-w-md">
         <DialogHeader><DialogTitle>{t('images.addImage')}</DialogTitle></DialogHeader>
         <DialogBody>
-          {error && <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>
+          )}
           <FormField label={t('images.imageUrl')} required>
             <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
           </FormField>
@@ -73,7 +73,7 @@ function AddImageModal({ open, productId, onClose, onSaved }) {
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={handleSave} disabled={saving || !url.trim()}>
-            {saving ? t('common.loading') : t('common.add')}
+            {saving ? '…' : t('common.add')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -87,14 +87,25 @@ function ImagesTab({ productId, images, onRefresh }) {
 
   async function handleDelete(imageId) {
     if (!window.confirm(t('images.confirmDelete'))) return
-    await AdminApi.products.images.delete(productId, imageId).catch(() => {})
-    onRefresh()
+    try {
+      await AdminApi.products.images.delete(productId, imageId)
+      onRefresh()
+    } catch (e) {
+      window.alert(e.response?.data?.message ?? 'Error')
+    }
   }
 
   async function handleSetPrimary(image) {
-    await AdminApi.products.images.delete(productId, image.id).catch(() => {})
-    await AdminApi.products.images.create(productId, { url: image.url, is_primary: true, order: image.order }).catch(() => {})
-    onRefresh()
+    // Create with is_primary:true first (backend clears all others), then remove old record
+    try {
+      await AdminApi.products.images.create(productId, {
+        url: image.url, is_primary: true, order: image.order,
+      })
+      await AdminApi.products.images.delete(productId, image.id)
+      onRefresh()
+    } catch (e) {
+      window.alert(e.response?.data?.message ?? 'Error')
+    }
   }
 
   return (
@@ -118,7 +129,7 @@ function ImagesTab({ productId, images, onRefresh }) {
                 src={img.url}
                 alt=""
                 className="w-full aspect-square object-cover"
-                onError={(e) => { e.target.src = ''; e.target.className = 'hidden' }}
+                onError={(e) => { e.currentTarget.style.display = 'none' }}
               />
               {img.is_primary && (
                 <div className="absolute top-2 left-2">
@@ -151,37 +162,46 @@ function ImagesTab({ productId, images, onRefresh }) {
         </div>
       )}
 
-      <AddImageModal open={addOpen} productId={productId} onClose={() => setAddOpen(false)} onSaved={onRefresh} />
+      {/* key remounts modal so state is always fresh */}
+      <AddImageModal
+        key={addOpen ? 'open' : 'closed'}
+        open={addOpen}
+        productId={productId}
+        onClose={() => setAddOpen(false)}
+        onSaved={() => { setAddOpen(false); onRefresh() }}
+      />
     </div>
   )
 }
 
 // ─── Variants Tab ──────────────────────────────────────────────────────────────
 
-const EMPTY_VARIANT = { name: '', sku: '', barcode: '', price: '', compare_at_price: '', stock: '0', attributes: '{}', is_active: true }
+const EMPTY_VARIANT = {
+  name: '', sku: '', barcode: '', price: '',
+  compare_at_price: '', stock: '0', attributes: '{}', is_active: true,
+}
+
+function buildVariantForm(variant) {
+  if (!variant) return EMPTY_VARIANT
+  return {
+    name:             variant.name             ?? '',
+    sku:              variant.sku              ?? '',
+    barcode:          variant.barcode          ?? '',
+    price:            variant.price            ?? '',
+    compare_at_price: variant.compare_at_price ?? '',
+    stock:            variant.stock            ?? 0,
+    attributes:       JSON.stringify(variant.attributes ?? {}, null, 2),
+    is_active:        variant.is_active        ?? true,
+  }
+}
 
 function VariantModal({ open, productId, variant, onClose, onSaved }) {
+  // No useEffect — parent uses key remount.
   const { t } = useTranslation()
-  const [form, setForm] = useState(EMPTY_VARIANT)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [form,      setForm]      = useState(() => buildVariantForm(variant))
+  const [saving,    setSaving]    = useState(false)
+  const [error,     setError]     = useState('')
   const [attrError, setAttrError] = useState('')
-
-  useEffect(() => {
-    if (open) {
-      setError(''); setAttrError('')
-      setForm(variant
-        ? {
-          name: variant.name ?? '', sku: variant.sku ?? '', barcode: variant.barcode ?? '',
-          price: variant.price ?? '', compare_at_price: variant.compare_at_price ?? '',
-          stock: variant.stock ?? 0,
-          attributes: JSON.stringify(variant.attributes ?? {}, null, 2),
-          is_active: variant.is_active ?? true,
-        }
-        : EMPTY_VARIANT
-      )
-    }
-  }, [open, variant])
 
   function set(field, value) { setForm((f) => ({ ...f, [field]: value })) }
 
@@ -194,24 +214,26 @@ function VariantModal({ open, productId, variant, onClose, onSaved }) {
     setSaving(true)
     try {
       const payload = {
-        name: form.name,
-        sku: form.sku || undefined,
-        barcode: form.barcode || undefined,
-        price: form.price !== '' ? Number(form.price) : null,
+        name:             form.name,
+        sku:              form.sku              || undefined,
+        barcode:          form.barcode          || undefined,
+        price:            form.price            !== '' ? Number(form.price)            : null,
         compare_at_price: form.compare_at_price !== '' ? Number(form.compare_at_price) : null,
-        stock: Number(form.stock),
-        attributes: attrs,
-        is_active: form.is_active,
+        stock:            Number(form.stock),
+        attributes:       attrs,
+        is_active:        form.is_active,
       }
       if (variant?.id) {
         await AdminApi.products.variants.update(productId, variant.id, payload)
       } else {
         await AdminApi.products.variants.create(productId, payload)
       }
-      onSaved(); onClose()
-    } catch (err) {
-      setError(err.response?.data?.message ?? 'Error saving variant')
-    } finally { setSaving(false) }
+      onSaved()
+    } catch (e) {
+      setError(e.response?.data?.message ?? 'Error saving variant')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -221,7 +243,7 @@ function VariantModal({ open, productId, variant, onClose, onSaved }) {
           <DialogTitle>{variant ? t('variants.editVariant') : t('variants.addVariant')}</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          {error && <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
+          {error && <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>}
           <FormField label={t('variants.variantName')} required>
             <Input value={form.name} onChange={(e) => set('name', e.target.value)} placeholder="e.g. Red / XL" />
           </FormField>
@@ -260,8 +282,8 @@ function VariantModal({ open, productId, variant, onClose, onSaved }) {
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? t('common.loading') : variant ? t('common.save') : t('common.create')}
+          <Button onClick={handleSave} disabled={saving || !form.name.trim()}>
+            {saving ? '…' : variant ? t('common.save') : t('common.create')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -272,21 +294,22 @@ function VariantModal({ open, productId, variant, onClose, onSaved }) {
 function VariantsTab({ productId, variants, onRefresh }) {
   const { t } = useTranslation()
   const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState(null)
+  const [editing,   setEditing]   = useState(null)
 
   async function handleDelete(v) {
     if (!window.confirm(t('variants.confirmDelete'))) return
-    await AdminApi.products.variants.delete(productId, v.id).catch(() => {})
-    onRefresh()
+    try {
+      await AdminApi.products.variants.delete(productId, v.id)
+      onRefresh()
+    } catch (e) {
+      window.alert(e.response?.data?.message ?? 'Error')
+    }
   }
-
-  function openCreate() { setEditing(null); setModalOpen(true) }
-  function openEdit(v) { setEditing(v); setModalOpen(true) }
 
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <Button size="sm" className="gap-2" onClick={openCreate}>
+        <Button size="sm" className="gap-2" onClick={() => { setEditing(null); setModalOpen(true) }}>
           <PlusCircle className="h-4 w-4" /> {t('variants.addVariant')}
         </Button>
       </div>
@@ -308,7 +331,7 @@ function VariantsTab({ productId, variants, onRefresh }) {
                   <th className="px-4 py-3">{t('variants.colStock')}</th>
                   <th className="px-4 py-3">Attributes</th>
                   <th className="px-4 py-3">{t('variants.colActive')}</th>
-                  <th className="px-4 py-3 w-20"></th>
+                  <th className="px-4 py-3 w-20" />
                 </tr>
               </thead>
               <tbody>
@@ -316,12 +339,18 @@ function VariantsTab({ productId, variants, onRefresh }) {
                   <tr key={v.id} className="border-b last:border-0 hover:bg-slate-50">
                     <td className="px-4 py-3 text-sm font-medium text-slate-900">{v.name}</td>
                     <td className="px-4 py-3 text-sm text-slate-500 font-mono">{v.sku || '—'}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700">{v.price != null ? `${v.price} TMT` : <span className="text-slate-400">Inherited</span>}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
+                      {v.price != null
+                        ? `${v.price} TMT`
+                        : <span className="text-slate-400">Inherited</span>
+                      }
+                    </td>
                     <td className="px-4 py-3 text-sm text-slate-700">{v.stock}</td>
                     <td className="px-4 py-3 text-xs text-slate-400 font-mono max-w-[120px] truncate">
                       {Object.keys(v.attributes ?? {}).length > 0
                         ? Object.entries(v.attributes).map(([k, val]) => `${k}: ${val}`).join(', ')
-                        : '—'}
+                        : '—'
+                      }
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={v.is_active ? 'success' : 'secondary'}>
@@ -330,10 +359,16 @@ function VariantsTab({ productId, variants, onRefresh }) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(v)}>
+                        <Button
+                          variant="ghost" size="icon" className="h-7 w-7"
+                          onClick={() => { setEditing(v); setModalOpen(true) }}
+                        >
                           <Pencil className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600" onClick={() => handleDelete(v)}>
+                        <Button
+                          variant="ghost" size="icon" className="h-7 w-7 text-red-500 hover:text-red-600"
+                          onClick={() => handleDelete(v)}
+                        >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
@@ -346,12 +381,14 @@ function VariantsTab({ productId, variants, onRefresh }) {
         </Card>
       )}
 
+      {/* key remounts modal so form is always fresh */}
       <VariantModal
+        key={modalOpen ? (editing?.id ?? 'create') : 'closed'}
         open={modalOpen}
         productId={productId}
         variant={editing}
         onClose={() => setModalOpen(false)}
-        onSaved={onRefresh}
+        onSaved={() => { setModalOpen(false); onRefresh() }}
       />
     </div>
   )
@@ -361,10 +398,10 @@ function VariantsTab({ productId, variants, onRefresh }) {
 
 function SeoTab({ product, onRefresh }) {
   const { t } = useTranslation()
-  const [form, setForm] = useState({ seo_title: '', seo_description: '' })
+  const [form,    setForm]    = useState({ seo_title: '', seo_description: '' })
   const [editing, setEditing] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [saving,  setSaving]  = useState(false)
+  const [error,   setError]   = useState('')
 
   function startEdit() {
     setForm({ seo_title: product.seo_title ?? '', seo_description: product.seo_description ?? '' })
@@ -376,19 +413,31 @@ function SeoTab({ product, onRefresh }) {
   async function handleSave() {
     setSaving(true); setError('')
     try {
-      await AdminApi.products.update(product.id, form)
+      // Include all validator-required fields from the product alongside SEO fields
+      await AdminApi.products.update(product.id, {
+        shop_id:         product.shop_id,
+        category_id:     product.category_id,
+        name:            product.name,
+        price:           product.price,
+        seo_title:       form.seo_title       || null,
+        seo_description: form.seo_description || null,
+      })
       setEditing(false)
       onRefresh()
-    } catch (err) {
-      setError(err.response?.data?.message ?? 'Error saving')
-    } finally { setSaving(false) }
+    } catch (e) {
+      setError(e.response?.data?.message ?? 'Error saving')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!editing) {
     return (
       <div className="space-y-4 max-w-2xl">
         <div className="flex justify-end">
-          <Button size="sm" variant="outline" onClick={startEdit}><Pencil className="h-4 w-4 mr-1.5" />{t('common.edit')}</Button>
+          <Button size="sm" variant="outline" onClick={startEdit}>
+            <Pencil className="h-4 w-4 mr-1.5" />{t('common.edit')}
+          </Button>
         </div>
         <Card>
           <CardContent className="pt-4 space-y-3">
@@ -400,7 +449,9 @@ function SeoTab({ product, onRefresh }) {
             <div>
               <p className="text-xs font-medium text-slate-500 mb-0.5">{t('products.seoDescription')}</p>
               <p className="text-sm">{product.seo_description || <span className="text-slate-300">—</span>}</p>
-              {product.seo_description && <p className="text-xs text-slate-400">{product.seo_description.length}/160</p>}
+              {product.seo_description && (
+                <p className="text-xs text-slate-400">{product.seo_description.length}/160</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -410,13 +461,9 @@ function SeoTab({ product, onRefresh }) {
 
   return (
     <div className="space-y-4 max-w-2xl">
-      {error && <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>}
       <FormField label={t('products.seoTitle')} hint={t('products.seoTitleHint')}>
-        <Input
-          value={form.seo_title}
-          onChange={(e) => set('seo_title', e.target.value)}
-          maxLength={70}
-        />
+        <Input value={form.seo_title} onChange={(e) => set('seo_title', e.target.value)} maxLength={70} />
         <p className="text-xs text-slate-400 mt-0.5">{form.seo_title.length}/70</p>
       </FormField>
       <FormField label={t('products.seoDescription')} hint={t('products.seoDescHint')}>
@@ -429,8 +476,12 @@ function SeoTab({ product, onRefresh }) {
         <p className="text-xs text-slate-400 mt-0.5">{form.seo_description.length}/160</p>
       </FormField>
       <div className="flex gap-2 justify-end">
-        <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}><X className="h-4 w-4 mr-1" />{t('common.cancel')}</Button>
-        <Button onClick={handleSave} disabled={saving}><Save className="h-4 w-4 mr-1" />{saving ? t('common.loading') : t('common.save')}</Button>
+        <Button variant="outline" onClick={() => setEditing(false)} disabled={saving}>
+          <X className="h-4 w-4 mr-1" />{t('common.cancel')}
+        </Button>
+        <Button onClick={handleSave} disabled={saving}>
+          <Save className="h-4 w-4 mr-1" />{saving ? '…' : t('common.save')}
+        </Button>
       </div>
     </div>
   )
@@ -441,22 +492,29 @@ function SeoTab({ product, onRefresh }) {
 function InfoTab({ product, shops, categories, onRefresh }) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({})
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  const [form,    setForm]    = useState({})
+  const [saving,  setSaving]  = useState(false)
+  const [error,   setError]   = useState('')
 
   function startEdit() {
     setError('')
     setForm({
-      name: product.name ?? '', name_ru: product.name_ru ?? '', name_eng: product.name_eng ?? '',
-      shop_id: product.shop_id ?? '', category_id: product.category_id ?? '',
-      price: product.price ?? '', compare_at_price: product.compare_at_price ?? '',
-      currency: product.currency ?? 'TMT',
-      sku: product.sku ?? '', barcode: product.barcode ?? '',
-      weight: product.weight ?? '', stock: product.stock ?? 0,
-      tags: (product.tags ?? []).join(', '),
-      handle: product.handle ?? '',
-      description: product.description ?? '', is_active: product.is_active ?? true,
+      name:             product.name             ?? '',
+      name_ru:          product.name_ru          ?? '',
+      name_eng:         product.name_eng         ?? '',
+      shop_id:          product.shop_id          ?? '',
+      category_id:      product.category_id      ?? '',
+      price:            product.price            ?? '',
+      compare_at_price: product.compare_at_price ?? '',
+      currency:         product.currency         ?? 'TMT',
+      sku:              product.sku              ?? '',
+      barcode:          product.barcode          ?? '',
+      weight:           product.weight           ?? '',
+      stock:            product.stock            ?? 0,
+      tags:             (product.tags ?? []).join(', '),
+      handle:           product.handle           ?? '',
+      description:      product.description      ?? '',
+      is_active:        product.is_active        ?? true,
     })
     setEditing(true)
   }
@@ -467,21 +525,30 @@ function InfoTab({ product, shops, categories, onRefresh }) {
     setSaving(true); setError('')
     try {
       await AdminApi.products.update(product.id, {
-        ...form,
-        shop_id: Number(form.shop_id),
-        category_id: Number(form.category_id),
-        price: Number(form.price),
+        shop_id:          Number(form.shop_id),
+        category_id:      Number(form.category_id),
+        name:             form.name,
+        name_ru:          form.name_ru      || null,
+        name_eng:         form.name_eng     || null,
+        description:      form.description  || null,
+        price:            Number(form.price),
         compare_at_price: form.compare_at_price !== '' ? Number(form.compare_at_price) : null,
-        weight: form.weight !== '' ? Number(form.weight) : null,
-        stock: Number(form.stock),
-        tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
-        handle: form.handle || null,
+        currency:         form.currency,
+        sku:              form.sku          || null,
+        barcode:          form.barcode      || null,
+        weight:           form.weight !== '' ? Number(form.weight) : null,
+        stock:            Number(form.stock),
+        tags:             form.tags ? form.tags.split(',').map((s) => s.trim()).filter(Boolean) : [],
+        handle:           form.handle       || null,
+        is_active:        form.is_active,
       })
       setEditing(false)
       onRefresh()
-    } catch (err) {
-      setError(err.response?.data?.message ?? 'Error saving')
-    } finally { setSaving(false) }
+    } catch (e) {
+      setError(e.response?.data?.message ?? 'Error saving')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (!editing) {
@@ -497,43 +564,94 @@ function InfoTab({ product, shops, categories, onRefresh }) {
             <CardHeader><CardTitle className="text-sm">{t('common.name')}</CardTitle></CardHeader>
             <CardContent className="pt-0 space-y-1">
               <p className="text-sm">🇹🇲 {product.name}</p>
-              {product.name_ru && <p className="text-sm">🇷🇺 {product.name_ru}</p>}
+              {product.name_ru  && <p className="text-sm">🇷🇺 {product.name_ru}</p>}
               {product.name_eng && <p className="text-sm">🇬🇧 {product.name_eng}</p>}
             </CardContent>
           </Card>
           <Card>
             <CardHeader><CardTitle className="text-sm">Details</CardTitle></CardHeader>
             <CardContent className="pt-0 space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-slate-500">{t('products.shop')}</span><span>{product.shop?.name ?? product.shop_id}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">{t('products.category')}</span><span>{product.category?.name ?? product.category_id}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">{t('products.price')}</span><span className="font-semibold">{product.price} {product.currency}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">{t('products.stock')}</span><span>{product.stock}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">{t('products.sku')}</span><span className="font-mono">{product.sku || '—'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">{t('products.isActive')}</span>
-                <Badge variant={product.is_active ? 'success' : 'secondary'}>{product.is_active ? t('common.active') : t('common.inactive')}</Badge>
+              <div className="flex justify-between">
+                <span className="text-slate-500">{t('products.shop')}</span>
+                <span>{product.shop?.name ?? product.shop_id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">{t('products.category')}</span>
+                <span>{product.category?.name ?? product.category_id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">{t('products.price')}</span>
+                <span className="font-semibold">{product.price} {product.currency}</span>
+              </div>
+              {product.compare_at_price && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">{t('products.compareAtPrice')}</span>
+                  <span className="line-through text-slate-400">{product.compare_at_price} {product.currency}</span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-slate-500">{t('products.stock')}</span>
+                <span>{product.stock}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">{t('products.sku')}</span>
+                <span className="font-mono">{product.sku || '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">{t('products.isActive')}</span>
+                <Badge variant={product.is_active ? 'success' : 'secondary'}>
+                  {product.is_active ? t('common.active') : t('common.inactive')}
+                </Badge>
               </div>
             </CardContent>
           </Card>
         </div>
+
         {product.description && (
           <Card>
             <CardHeader><CardTitle className="text-sm">{t('common.description')}</CardTitle></CardHeader>
-            <CardContent className="pt-0 text-sm text-slate-600 whitespace-pre-wrap">{product.description}</CardContent>
+            <CardContent className="pt-0 text-sm text-slate-600 whitespace-pre-wrap">
+              {product.description}
+            </CardContent>
           </Card>
         )}
+
         <div className="flex items-center gap-3 text-sm text-slate-400">
-          <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />{product.rating}</span>
+          <span className="flex items-center gap-1">
+            <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
+            {product.rating}
+          </span>
           <span>{product.review_count} reviews</span>
         </div>
-        {(product.compare_at_price || product.barcode || product.weight || product.tags?.length > 0 || product.handle) && (
+
+        {(product.barcode || product.weight || product.handle || product.tags?.length > 0) && (
           <Card>
             <CardHeader><CardTitle className="text-sm">Extended Info</CardTitle></CardHeader>
             <CardContent className="pt-0 space-y-1 text-sm">
-              {product.compare_at_price && <div className="flex justify-between"><span className="text-slate-500">{t('products.compareAtPrice')}</span><span className="line-through text-slate-400">{product.compare_at_price} {product.currency}</span></div>}
-              {product.barcode && <div className="flex justify-between"><span className="text-slate-500">{t('products.barcode')}</span><span className="font-mono">{product.barcode}</span></div>}
-              {product.weight && <div className="flex justify-between"><span className="text-slate-500">{t('products.weight')}</span><span>{product.weight} g</span></div>}
-              {product.handle && <div className="flex justify-between"><span className="text-slate-500">{t('products.handle')}</span><span className="font-mono text-xs">{product.handle}</span></div>}
-              {product.tags?.length > 0 && <div className="flex justify-between"><span className="text-slate-500">{t('products.tags')}</span><span className="text-right">{product.tags.join(', ')}</span></div>}
+              {product.barcode && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">{t('products.barcode')}</span>
+                  <span className="font-mono">{product.barcode}</span>
+                </div>
+              )}
+              {product.weight && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">{t('products.weight')}</span>
+                  <span>{product.weight} g</span>
+                </div>
+              )}
+              {product.handle && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">{t('products.handle')}</span>
+                  <span className="font-mono text-xs">{product.handle}</span>
+                </div>
+              )}
+              {product.tags?.length > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">{t('products.tags')}</span>
+                  <span className="text-right">{product.tags.join(', ')}</span>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
@@ -543,7 +661,7 @@ function InfoTab({ product, shops, categories, onRefresh }) {
 
   return (
     <div className="space-y-4">
-      {error && <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>}
       <MultiLangInput baseField="name" label={t('common.name')} required values={form} onChange={set} />
       <div className="grid grid-cols-2 gap-4">
         <FormField label={t('products.shop')} required>
@@ -601,7 +719,7 @@ function InfoTab({ product, shops, categories, onRefresh }) {
           <X className="h-4 w-4 mr-1" />{t('common.cancel')}
         </Button>
         <Button onClick={handleSave} disabled={saving}>
-          <Save className="h-4 w-4 mr-1" />{saving ? t('common.loading') : t('common.save')}
+          <Save className="h-4 w-4 mr-1" />{saving ? '…' : t('common.save')}
         </Button>
       </div>
     </div>
@@ -611,32 +729,47 @@ function InfoTab({ product, shops, categories, onRefresh }) {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ProductDetailPage() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-  const { t } = useTranslation()
-  const [product, setProduct] = useState(null)
-  const [shops, setShops] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
+  const { id }     = useParams()
+  const navigate   = useNavigate()
+  const { t }      = useTranslation()
 
-  async function fetchProduct() {
-    try {
-      const { data } = await AdminApi.products.getOne(id)
-      setProduct(data.data)
-    } catch { navigate('/admin/catalog/products') }
-    finally { setLoading(false) }
-  }
+  const [product,     setProduct]     = useState(null)
+  const [shops,       setShops]       = useState([])
+  const [categories,  setCategories]  = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [refreshTick, setRefreshTick] = useState(0)
 
+  function refresh() { setLoading(true); setRefreshTick((k) => k + 1) }
+
+  // Fetch product — re-runs on id change or manual refresh
   useEffect(() => {
-    fetchProduct()
+    let cancelled = false
+
+    AdminApi.products.getOne(id)
+      .then(({ data }) => {
+        if (cancelled) return
+        // Backend returns { model } — not { data }
+        setProduct(data.model ?? null)
+        setLoading(false)
+      })
+      .catch(() => {
+        if (!cancelled) navigate('/admin/catalog/products')
+      })
+
+    return () => { cancelled = true }
+  }, [id, navigate, refreshTick])
+
+  // Fetch shops and categories once for the InfoTab edit form
+  useEffect(() => {
     Promise.all([
       AdminApi.shops.getAll({ limit: 500 }),
       AdminApi.categories.getAll({ limit: 500 }),
     ]).then(([s, c]) => {
-      setShops(s.data?.data?.rows ?? s.data?.data?.shops ?? [])
-      setCategories(c.data?.data?.rows ?? c.data?.data?.categories ?? [])
+      // GET /admin/shops and /admin/categories both return { data: [...], count: N }
+      setShops(s.data?.data       ?? [])
+      setCategories(c.data?.data  ?? [])
     }).catch(() => {})
-  }, [id])
+  }, [])
 
   if (loading || !product) {
     return (
@@ -658,7 +791,11 @@ export default function ProductDetailPage() {
         <div className="flex items-center gap-4 flex-1">
           {primaryImage?.url
             ? <img src={primaryImage.url} alt="" className="h-14 w-14 rounded-lg object-cover border" />
-            : <div className="h-14 w-14 rounded-lg bg-slate-100 flex items-center justify-center"><Package className="h-6 w-6 text-slate-300" /></div>
+            : (
+              <div className="h-14 w-14 rounded-lg bg-slate-100 flex items-center justify-center">
+                <Package className="h-6 w-6 text-slate-300" />
+              </div>
+            )
           }
           <div>
             <h2 className="text-xl font-semibold text-slate-900">{product.name}</h2>
@@ -690,19 +827,16 @@ export default function ProductDetailPage() {
         </TabsList>
 
         <TabsContent value="info">
-          <InfoTab product={product} shops={shops} categories={categories} onRefresh={fetchProduct} />
+          <InfoTab product={product} shops={shops} categories={categories} onRefresh={refresh} />
         </TabsContent>
-
         <TabsContent value="images">
-          <ImagesTab productId={product.id} images={product.images ?? []} onRefresh={fetchProduct} />
+          <ImagesTab productId={product.id} images={product.images ?? []} onRefresh={refresh} />
         </TabsContent>
-
         <TabsContent value="variants">
-          <VariantsTab productId={product.id} variants={product.variants ?? []} onRefresh={fetchProduct} />
+          <VariantsTab productId={product.id} variants={product.variants ?? []} onRefresh={refresh} />
         </TabsContent>
-
         <TabsContent value="seo">
-          <SeoTab product={product} onRefresh={fetchProduct} />
+          <SeoTab product={product} onRefresh={refresh} />
         </TabsContent>
       </Tabs>
     </div>
