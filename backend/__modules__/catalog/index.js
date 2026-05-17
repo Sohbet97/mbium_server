@@ -4,6 +4,7 @@ const Permissions = require("../../utils/permissions");
 
 const categoryRouter = require("./routes/category");
 const productRouter = require("./routes/product");
+const collectionRouter = require("./routes/collection");
 
 const catalogModuleRouter = require("express").Router();
 
@@ -27,6 +28,16 @@ catalogModuleRouter.use(
         DELETE: Permissions.PRODUCT_DELETE,
     }),
     productRouter
+);
+catalogModuleRouter.use(
+    "/collections",
+    routeGuard({
+        GET: Permissions.COLLECTION_GET,
+        POST: Permissions.COLLECTION_POST,
+        PUT: Permissions.COLLECTION_PUT,
+        DELETE: Permissions.COLLECTION_DELETE,
+    }),
+    collectionRouter
 );
 
 module.exports = catalogModuleRouter;

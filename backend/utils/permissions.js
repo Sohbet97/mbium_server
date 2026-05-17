@@ -70,6 +70,16 @@ class Permissions {
     static PAYOUT_PUT = 55
     static PAYOUT_DELETE = 56
 
+    static COLLECTION_GET = 57
+    static COLLECTION_POST = 58
+    static COLLECTION_PUT = 59
+    static COLLECTION_DELETE = 60
+
+    static MEDIA_GET = 61
+    static MEDIA_POST = 62
+    static MEDIA_PUT = 63
+    static MEDIA_DELETE = 64
+
     static DISPUTE_GET = 65
     static DISPUTE_POST = 66
     static DISPUTE_PUT = 67

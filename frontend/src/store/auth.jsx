@@ -39,6 +39,17 @@ export function AuthProvider({ children }) {
     return data
   }
 
+  async function loginWithGoogle(id_token) {
+    const { data } = await AuthApi.googleLogin(id_token)
+    if (data.token) localStorage.setItem('accessToken', data.token)
+    setUser(data.user ?? null)
+    return data
+  }
+
+  function updateUser(fields) {
+    setUser((u) => ({ ...u, ...fields }))
+  }
+
   async function logout() {
     await AuthApi.logout().catch(() => {})
     localStorage.removeItem('accessToken')
@@ -46,7 +57,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, verifyOtp, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, verifyOtp, loginWithGoogle, logout, setUser, updateUser }}>
       {children}
     </AuthContext.Provider>
   )

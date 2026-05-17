@@ -144,6 +144,12 @@ module.exports = (sequelize) => {
         Model.hasMany(db.ProductVariant, { foreignKey: "product_id", as: "variants" });
         Model.hasMany(db.ProductImage, { foreignKey: "product_id", as: "images" });
         Model.hasMany(db.Review, { foreignKey: "product_id", as: "reviews" });
+        Model.belongsToMany(db.Collection, {
+            through: db.CollectionProduct,
+            foreignKey: "product_id",
+            otherKey: "collection_id",
+            as: "collections",
+        });
     };
 
     return Model;

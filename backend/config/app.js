@@ -1,5 +1,6 @@
 const express = require("express");
-const helmet = require("helmet");
+const path    = require("path");
+const helmet  = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors");
 const cron = require("node-cron");
@@ -26,7 +27,7 @@ const app = express();
 // const { createRedisClient, redisMiddleware, bindRedisClient } = require("../utils/redis/redis-client");
 
 // Uncomment this for set up cors security
-var allowlist = ["http://localhost:3000"];
+var allowlist = ["http://localhost:3001"];
 var corsOptionsDelegate = function (req, callback) {
   var corsOptions = {
     origin: false,
@@ -73,6 +74,17 @@ cron.schedule("0 0 * * *", async () => {
   // Register daily jobs here
 });
 
+
+// Serve uploaded media files
+app.use(
+  "/media",
+  cors(corsOptionsDelegate),
+  express.static(path.resolve(process.cwd(), "storage", "media"), {
+    dotfiles: "ignore",
+    etag: true,
+    maxAge: "7d",
+  })
+);
 
 // Configure static folder
 app.use(

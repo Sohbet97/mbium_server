@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:is(.dark *));
+
 @theme inline {
   --color-background:           hsl(var(--background));
   --color-foreground:           hsl(var(--foreground));
@@ -51,25 +53,26 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    color-scheme: dark;
+    --background: 240 9% 6%;      /* #0f0f12 — main page bg */
+    --foreground: 0 0% 94%;       /* near-white text */
+    --card: 240 7% 11%;           /* #1a1a1f — card bg matches sidebar */
+    --card-foreground: 0 0% 94%;
+    --popover: 240 7% 13%;
+    --popover-foreground: 0 0% 94%;
     --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 6% 18%;
+    --secondary-foreground: 0 0% 85%;
+    --muted: 240 6% 16%;
+    --muted-foreground: 240 4% 55%;
+    --accent: 240 6% 16%;
+    --accent-foreground: 0 0% 94%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 20%;
+    --input: 240 6% 17%;
+    --ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -84,5 +87,38 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     margin: 0;
+  }
+}
+
+/* ── Dark mode overrides for hardcoded slate utility classes ───────────────
+   Pages use `bg-slate-*` / `text-slate-*` without `dark:` prefixes.
+   These rules use @variant dark to have higher specificity and win.
+   ──────────────────────────────────────────────────────────────────────── */
+@layer utilities {
+  @variant dark {
+    /* Backgrounds */
+    .bg-white      { background-color: hsl(var(--card)); }
+    .bg-slate-50   { background-color: hsl(240 6% 14%); }
+    .bg-slate-100  { background-color: hsl(240 6% 17%); }
+    .bg-slate-200  { background-color: hsl(240 6% 21%); }
+
+    /* Hover backgrounds */
+    .hover\:bg-slate-50:hover  { background-color: hsl(240 6% 16%); }
+    .hover\:bg-slate-100:hover { background-color: hsl(240 6% 19%); }
+
+    /* Text — lighten all slate shades in dark mode */
+    .text-slate-900 { color: hsl(0 0% 94%); }
+    .text-slate-800 { color: hsl(0 0% 88%); }
+    .text-slate-700 { color: hsl(0 0% 78%); }
+    .text-slate-600 { color: hsl(240 4% 62%); }
+    .text-slate-500 { color: hsl(240 4% 52%); }
+    .text-slate-400 { color: hsl(240 4% 44%); }
+    .text-slate-300 { color: hsl(240 4% 36%); }
+    .text-slate-200 { color: hsl(240 4% 28%); }
+
+    /* Borders */
+    .border-slate-200 { border-color: hsl(var(--border)); }
+    .border-slate-100 { border-color: hsl(240 6% 16%); }
+    .divide-slate-200 > * + * { border-color: hsl(var(--border)); }
   }
 }

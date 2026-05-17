@@ -60,6 +60,11 @@ module.exports = (sequelize) => {
                 unique: true,
             },
 
+            thumbnail: {
+                type: DataTypes.STRING(500),
+                allowNull: true,
+            },
+
             status: {
                 type: DataTypes.SMALLINT,
                 allowNull: false,

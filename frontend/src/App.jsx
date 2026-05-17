@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from '@/store/auth'
 import { NotificationProvider } from '@/store/notifications'
+import { ThemeProvider } from '@/store/theme'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import LoginPage from '@/pages/auth/LoginPage'
@@ -13,12 +14,16 @@ import CategoriesPage from '@/pages/admin/CategoriesPage'
 import ProductsPage from '@/pages/admin/ProductsPage'
 import ProductDetailPage from '@/pages/admin/ProductDetailPage'
 import ProductFormPage from '@/pages/admin/ProductFormPage'
+import CollectionsPage from '@/pages/admin/CollectionsPage'
+import CollectionFormPage from '@/pages/admin/CollectionFormPage'
 import OrdersPage from '@/pages/admin/OrdersPage'
 import ReviewsPage from '@/pages/admin/ReviewsPage'
 import DiscountsPage from '@/pages/admin/DiscountsPage'
 import RolesPage from '@/pages/admin/RolesPage'
 import LocationsPage from '@/pages/admin/LocationsPage'
 import SettingsPage from '@/pages/admin/SettingsPage'
+import AccountPage from '@/pages/admin/AccountPage'
+import MediaPage from '@/pages/admin/MediaPage'
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -38,12 +43,17 @@ const router = createBrowserRouter([
           { path: 'catalog/products/new', element: <ProductFormPage />, handle: { titleKey: 'products.title' } },
           { path: 'catalog/products/:id', element: <ProductDetailPage />, handle: { titleKey: 'products.title' } },
           { path: 'catalog/products/:id/edit', element: <ProductFormPage />, handle: { titleKey: 'products.title' } },
+          { path: 'catalog/collections', element: <CollectionsPage />, handle: { titleKey: 'collections.title' } },
+          { path: 'catalog/collections/new', element: <CollectionFormPage />, handle: { titleKey: 'collections.title' } },
+          { path: 'catalog/collections/:id/edit', element: <CollectionFormPage />, handle: { titleKey: 'collections.title' } },
           { path: 'orders', element: <OrdersPage />, handle: { titleKey: 'orders.title' } },
           { path: 'reviews', element: <ReviewsPage />, handle: { titleKey: 'reviews.title' } },
           { path: 'discounts', element: <DiscountsPage />, handle: { titleKey: 'discounts.title' } },
           { path: 'roles', element: <RolesPage />, handle: { titleKey: 'roles.title' } },
           { path: 'locations', element: <LocationsPage />, handle: { titleKey: 'locations.title' } },
           { path: 'settings', element: <SettingsPage />, handle: { titleKey: 'settings.title' } },
+          { path: 'account', element: <AccountPage />, handle: { titleKey: 'account.title' } },
+          { path: 'media', element: <MediaPage />, handle: { titleKey: 'media.title' } },
         ],
       },
     ],
@@ -54,11 +64,13 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <RouterProvider router={router} />
-        <Toaster position="top-right" richColors closeButton />
-      </NotificationProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <RouterProvider router={router} />
+          <Toaster position="top-right" richColors closeButton />
+        </NotificationProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
