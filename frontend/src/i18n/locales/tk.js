@@ -14,7 +14,7 @@ export default {
   },
 
   nav: {
-    dashboard: 'Dolandyryş paneli', users: 'Ulanyjylar', roles: 'Roller we rugsat',
+    dashboard: 'Dolandyryş paneli', users: 'Ulanyjylar', roles: 'Rollar we rugsat',
     shops: 'Dükanllar', catalog: 'Katalog', categories: 'Kategoriýalar', products: 'Harytlar',
     orders: 'Sargytlar', reviews: 'Syn', discounts: 'Arzanladyşlar',
     locations: 'Ýerler', settings: 'Sazlamalar', logout: 'Çyk',
@@ -35,7 +35,7 @@ export default {
     subtitle: 'Platformanyň umumy görkezijileri',
     totalUsers: 'Ähli ulanyjylar', totalShops: 'Ähli dükanllar',
     totalOrders: 'Ähli sargytlar', totalRevenue: 'Girdeji (TMT)',
-    roles: 'Roller', activeSessions: 'Işjeň sessiýalar',
+    roles: 'Rollar', activeSessions: 'Işjeň sessiýalar',
     recentOrders: 'Soňky sargytlar', recentActivity: 'Soňky işjeňlik',
     activityPlaceholder: 'Işjeňlik žurnaly ýakynda gelýär.',
     systemStatus: 'Ulgamyň ýagdaýy', apiServer: 'API-serwer',
@@ -50,7 +50,7 @@ export default {
     editUser: 'Düzelt', blockUser: 'Petikle', unblockUser: 'Açyk et',
     unlockUser: 'Açyk et (giriş petiklemesini aýyr)', deleteUser: 'Ulanyjyny poz',
     statusNotActivated: 'Işjeňleşdirilmedi', statusActive: 'Işjeň', statusBlocked: 'Petiklenen',
-    filterStatus: 'Ähli ýagdaýlar', filterRole: 'Ähli roller',
+    filterStatus: 'Ähli ýagdaýlar', filterRole: 'Ähli rollar',
     surname: 'Familiýasy', email: 'Email', phone: 'Telefon belgisi',
     birthDate: 'Doglan senesi', role: 'Rol', noRole: 'Rol ýok',
     password: 'Açar söz', passwordHint: 'Açar sözi üýtgetmek islemediňizde boş goýuň',
@@ -185,14 +185,14 @@ export default {
   },
 
   roles: {
-    title: 'Roller we rugsat',
+    title: 'Rollar we rugsat',
     addRole: 'Rol goş', editRole: 'Roly düzelt', createRole: 'Rol döret',
     roleName: 'Roluň ady', roleOrder: 'Tertip',
     permissions: 'Rugsatlar', selectAll: 'Ählisi', clearAll: 'Arassala',
     userCount: '{{count}} ulanyjy', noRoles: 'Rol ýok',
     confirmDelete: 'Bu roly pozmak?',
     pRead: 'Görüş', pCreate: 'Döretmek', pEdit: 'Üýtgetmek', pDelete: 'Pozmak',
-    grpRoles: 'Roller', grpUsers: 'Ulanyjylar', grpPositions: 'Wezipeler',
+    grpRoles: 'Rollar', grpUsers: 'Ulanyjylar', grpPositions: 'Wezipeler',
     grpRegions: 'Sebitler', grpVillages: 'Obalar', grpCountries: 'Ýurtlar',
     grpCategories: 'Kategoriýalar', grpProducts: 'Harytlar',
     grpOrders: 'Sargytlar', grpReviews: 'Synlar', grpDiscounts: 'Arzanladyşlar',

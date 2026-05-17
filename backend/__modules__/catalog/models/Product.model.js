@@ -74,7 +74,6 @@ module.exports = (sequelize) => {
         handle: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            unique: true,
             comment: "URL-friendly slug for storefront"
         },
         seo_title: {

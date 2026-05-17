@@ -19,6 +19,7 @@ const swaggerSpec = {
     },
     servers: [
         { url: "http://localhost:5000", description: "Local dev" },
+        { url: "http://216.250.11.232/api", description: "Mbium server" },
     ],
     security: [],
     components: {
