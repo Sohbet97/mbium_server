@@ -1,13 +1,13 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
-  ChevronLeft, Tag, Package, ChevronDown, ShoppingCart, Star, Percent,
+  PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
+  ShoppingCart, Star, Percent, Layers, Images,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
-import { Separator } from '@/components/ui/separator'
 
 export function Sidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth()
@@ -21,6 +21,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart },
     { to: '/admin/reviews', label: t('nav.reviews'), icon: Star },
     { to: '/admin/discounts', label: t('nav.discounts'), icon: Percent },
+    { to: '/admin/media', label: t('nav.media'), icon: Images },
   ]
 
   const bottomNav = [
@@ -29,82 +30,126 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/settings', label: t('nav.settings'), icon: Settings },
   ]
 
+  const itemBase = cn(
+    'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] font-medium transition-all duration-150 w-full',
+    collapsed && 'justify-center px-0'
+  )
+  const itemInactive = 'dark:text-[#a0a0ab] text-[#6d7175] dark:hover:bg-white/[0.08] hover:bg-black/[0.06] dark:hover:text-white hover:text-[#202223]'
+  const itemActive = 'dark:bg-white/[0.12] bg-black/[0.07] dark:text-white text-[#202223] font-semibold'
+
   const navLink = (to, label, icon, end) => (
     <NavLink
       key={to} to={to} end={end}
-      className={({ isActive }) =>
-        cn(
-          'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-          isActive ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-700 hover:text-white',
-          collapsed && 'justify-center px-2'
-        )
-      }
+      className={({ isActive }) => cn(itemBase, isActive ? itemActive : itemInactive)}
       title={collapsed ? label : undefined}
     >
       {({ isActive }) => {
         const Icon = icon
-        return <>
-          <Icon className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>{label}</span>}
-        </>
+        return (
+          <>
+            <Icon className={cn('h-[18px] w-[18px] shrink-0', isActive ? 'opacity-100' : 'opacity-60')} />
+            {!collapsed && <span>{label}</span>}
+          </>
+        )
       }}
     </NavLink>
   )
 
+  const divider = <div className="mx-1 my-1.5 border-t dark:border-white/[0.08] border-black/[0.08]" />
+
   return (
-    <aside className={cn('flex flex-col bg-slate-900 text-slate-100 transition-all duration-300 shrink-0', collapsed ? 'w-16' : 'w-60')}>
-      {/* Logo */}
-      <div className="flex items-center justify-between h-16 px-4 border-b border-slate-700">
-        {!collapsed && <span className="font-bold text-lg tracking-tight">mbium</span>}
-        <button onClick={onToggle} className={cn('p-1.5 rounded hover:bg-slate-700 transition-colors', collapsed && 'mx-auto')}>
-          <ChevronLeft className={cn('h-4 w-4 transition-transform duration-300', collapsed && 'rotate-180')} />
+    <aside className={cn(
+      'flex flex-col shrink-0 transition-all duration-300',
+      'border-r dark:border-white/[0.08] border-black/[0.08]',
+      'dark:bg-[#1a1a1f] bg-[#f6f6f7]',
+      collapsed ? 'w-[56px]' : 'w-[220px]'
+    )}>
+
+      {/* Header */}
+      <div className={cn(
+        'flex items-center h-14 shrink-0 border-b dark:border-white/[0.08] border-black/[0.08]',
+        collapsed ? 'justify-center' : 'justify-between px-3'
+      )}>
+        {!collapsed && (
+          <span className="text-[15px] font-bold tracking-tight dark:text-white text-[#202223] ml-1">
+            mbium
+          </span>
+        )}
+        <button
+          onClick={onToggle}
+          title={collapsed ? 'Expand' : 'Collapse'}
+          className={cn(
+            'p-1.5 rounded-lg transition-colors',
+            'dark:text-[#a0a0ab] dark:hover:bg-white/[0.08] dark:hover:text-white',
+            'text-[#6d7175] hover:bg-black/[0.06] hover:text-[#202223]'
+          )}
+        >
+          {collapsed
+            ? <PanelLeftOpen className="h-4 w-4" />
+            : <PanelLeftClose className="h-4 w-4" />
+          }
         </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2">
+      <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
         {topNav.map(({ to, label, icon, end }) => navLink(to, label, icon, end))}
 
         {/* Catalog section */}
-        <div className="pt-2">
-          {!collapsed ? (
+        <div className="pt-1">
+          {divider}
+          {!collapsed && (
             <button
               onClick={() => setCatalogOpen((v) => !v)}
-              className="flex items-center justify-between w-full px-3 py-2 rounded-md text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-300 transition-colors"
+              className={cn(
+                'flex items-center justify-between w-full px-2.5 py-1.5 rounded-lg',
+                'text-[11px] font-semibold uppercase tracking-widest transition-colors',
+                'dark:text-[#5a5a6a] dark:hover:text-[#a0a0ab]',
+                'text-[#8c9196] hover:text-[#6d7175]'
+              )}
             >
               <span>{t('nav.catalog')}</span>
-              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', catalogOpen && 'rotate-180')} />
+              <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', catalogOpen && 'rotate-180')} />
             </button>
-          ) : (
-            <div className="border-t border-slate-700 my-1" />
           )}
           {(catalogOpen || collapsed) && (
-            <div className={cn('space-y-1', !collapsed && 'pl-2')}>
+            <div className={cn('space-y-0.5 mt-0.5', !collapsed && 'pl-1')}>
               {navLink('/admin/catalog/categories', t('nav.categories'), Tag)}
               {navLink('/admin/catalog/products', t('nav.products'), Package)}
+              {navLink('/admin/catalog/collections', t('nav.collections'), Layers)}
             </div>
           )}
         </div>
 
-        <div className="pt-2 border-t border-slate-700 space-y-1">
+        {/* Bottom nav */}
+        <div className="pt-1 space-y-0.5">
+          {divider}
           {bottomNav.map(({ to, label, icon }) => navLink(to, label, icon))}
         </div>
       </nav>
 
       {/* Footer */}
-      <div className="p-2 border-t border-slate-700">
+      <div className="shrink-0 border-t dark:border-white/[0.08] border-black/[0.08] p-2">
         {!collapsed && (
-          <div className="px-3 py-1 mb-1">
-            <p className="text-xs font-medium text-slate-200 truncate">{user?.name} {user?.surname}</p>
-            <p className="text-xs text-slate-400 truncate">{user?.phone_number}</p>
+          <div className="px-2.5 py-1.5 mb-1">
+            <p className="text-[13px] font-semibold dark:text-white text-[#202223] truncate leading-tight">
+              {user?.name} {user?.surname}
+            </p>
+            <p className="text-[11px] dark:text-[#5a5a6a] text-[#8c9196] truncate mt-0.5">
+              {user?.phone_number}
+            </p>
           </div>
         )}
         <button
           onClick={logout}
-          className={cn('flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm text-slate-300 hover:bg-slate-700 hover:text-white transition-colors', collapsed && 'justify-center px-2')}
           title={collapsed ? t('nav.logout') : undefined}
+          className={cn(
+            itemBase,
+            'dark:text-[#a0a0ab] dark:hover:bg-white/[0.08] dark:hover:text-white',
+            'text-[#6d7175] hover:bg-black/[0.06] hover:text-[#202223]'
+          )}
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="h-[18px] w-[18px] shrink-0 opacity-60" />
           {!collapsed && <span>{t('nav.logout')}</span>}
         </button>
       </div>

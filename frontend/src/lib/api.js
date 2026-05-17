@@ -94,6 +94,12 @@ export class AdminApi {
       delete: (productId, variantId) => http.delete(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`)),
     },
   }
+  static collections = {
+    ...crud(PATHS.COLLECTIONS),
+    addProduct:     (id, data)      => http.post(a(`${PATHS.COLLECTIONS}/${id}/products`), data),
+    removeProduct:  (id, productId) => http.delete(a(`${PATHS.COLLECTIONS}/${id}/products/${productId}`)),
+    searchProducts: (params)        => http.get(a(`${PATHS.COLLECTIONS}/search-products`), { params }),
+  }
   static orders = {
     ...crud(PATHS.ORDERS),
     updateStatus: (id, data) => http.patch(a(`${PATHS.ORDERS}/${id}/status`), data),
@@ -119,14 +125,39 @@ export class AdminApi {
     markAsRead: (id)     => http.patch(a(`${PATHS.NOTIFICATIONS}/${id}/read`)),
     markAllAsRead: ()    => http.patch(a(`${PATHS.NOTIFICATIONS}/read-all`)),
   }
+  static media = {
+    upload:    (formData, mediaType) =>
+      http.post(a(`${PATHS.MEDIA}/upload${mediaType ? `?media_type=${mediaType}` : ''}`), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+    list:      (params)        => http.get(a(PATHS.MEDIA), { params }),
+    getOne:    (id)            => http.get(a(`${PATHS.MEDIA}/${id}`)),
+    update:    (id, data)      => http.patch(a(`${PATHS.MEDIA}/${id}`), data),
+    delete:    (id)            => http.delete(a(`${PATHS.MEDIA}/${id}`)),
+    // Product ↔ Media
+    getProductMedia: (productId) =>
+      http.get(a(`${PATHS.MEDIA}/product/${productId}`)),
+    attachToProduct: (productId, data) =>
+      http.post(a(`${PATHS.MEDIA}/product/${productId}`), data),
+    detachFromProduct: (productId, mediaId) =>
+      http.delete(a(`${PATHS.MEDIA}/product/${productId}/${mediaId}`)),
+  }
 }
 
 export const AuthApi = {
-  login: (data) => http.post(`${AUTH}/login`, data),
-  refresh: () => http.post(`${AUTH}/refresh`),
-  logout: () => http.post(`${AUTH}/logout`),
-  verifyOtp: (data) => http.post(`${AUTH}/verify-otp`, data),
-  resendOtp: (data) => http.post(`${AUTH}/resend-otp`, data),
+  login:            (data) => http.post(`${AUTH}/login`, data),
+  refresh:          ()     => http.post(`${AUTH}/refresh`),
+  logout:           ()     => http.post(`${AUTH}/logout`),
+  verifyOtp:        (data) => http.post(`${AUTH}/verify-otp`, data),
+  resendOtp:        (data) => http.post(`${AUTH}/resend-otp`, data),
+  googleLogin:      (id_token) => http.post(`${AUTH}/google`, { id_token }),
+  me:               ()     => http.get(`${AUTH}/me`),
+  updateMe:         (data) => http.patch(`${AUTH}/me`, data),
+  disconnectGoogle: ()     => http.delete(`${AUTH}/me/google`),
+  getSessions:      ()     => http.get(`${AUTH}/sessions`),
+  deleteSession:    (id)   => http.delete(`${AUTH}/sessions/${id}`),
+  changePassword:   (data) => http.post(`${AUTH}/change-password`, data),
+  uploadAvatar:     (formData) => http.post(`${AUTH}/me/avatar`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
 }
 
 export default http

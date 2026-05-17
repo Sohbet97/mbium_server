@@ -71,6 +71,7 @@ Object.values(db).forEach((model) => {
 // db.User.sync({ alter: true });
 // db.UserOtpSession.sync({ alter: true });
 // db.Config.sync({ alter: true });
+// db.Media.sync({ alter: true });
 
 // Object.keys(db)?.map(async (modelKey) => {
 //   try {

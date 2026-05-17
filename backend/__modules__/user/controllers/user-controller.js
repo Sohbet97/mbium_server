@@ -28,6 +28,80 @@ class UserController {
     }
   }
 
+  // ─── Self-service profile ────────────────────────────────────────────────────
+
+  static async getMe(req, res, next) {
+    try {
+      const user = await db.User.findOne({
+        where: { id: req.user.id },
+        attributes: { exclude: ['password'] },
+      });
+      if (!user) throw ApiError.NotFound();
+      return res.status(200).json({ model: user });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async updateMe(req, res, next) {
+    try {
+      const user = await db.User.findOne({ where: { id: req.user.id } });
+      if (!user) throw ApiError.NotFound();
+
+      const { name, surname, email, phone_number, birth_date } = req.body;
+
+      if (email && email !== user.email) {
+        const existing = await db.User.findOne({ where: { email } });
+        if (existing) throw ApiError.BadRequest('Email is already in use');
+      }
+      if (phone_number && phone_number !== user.phone_number) {
+        const existing = await db.User.findOne({ where: { phone_number } });
+        if (existing) throw ApiError.BadRequest('Phone number is already in use');
+      }
+
+      if (name !== undefined) user.name = FUNCTIONS.safeString(name);
+      if (surname !== undefined) user.surname = FUNCTIONS.safeString(surname);
+      if (email !== undefined) user.email = email || null;
+      if (phone_number !== undefined) user.phone_number = phone_number || null;
+      if (birth_date !== undefined) user.birth_date = birth_date || null;
+
+      await user.save();
+      const { password: _pw, ...safe } = user.toJSON();
+      return res.status(200).json({ model: safe });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async uploadAvatar(req, res, next) {
+    try {
+      if (!req.file) throw ApiError.BadRequest("No file uploaded");
+      const user = await db.User.findOne({ where: { id: req.user.id } });
+      if (!user) throw ApiError.NotFound();
+      user.thumbnail = `/static/avatars/${req.file.filename}`;
+      await user.save();
+      return res.status(200).json({ thumbnail: user.thumbnail });
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async disconnectGoogle(req, res, next) {
+    try {
+      const user = await db.User.findOne({
+        where: { id: req.user.id },
+        attributes: ['id', 'google_id', 'password'],
+      });
+      if (!user) throw ApiError.NotFound();
+      if (!user.password) throw ApiError.BadRequest('Set a password before disconnecting Google');
+      user.google_id = null;
+      await user.save();
+      return res.sendStatus(200);
+    } catch (e) {
+      next(e);
+    }
+  }
+
   static async forceLogin(req, res, next) {
     this.loginFunction(req, res, next, true);
   }

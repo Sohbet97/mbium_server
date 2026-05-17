@@ -8,6 +8,7 @@ export const PATHS = {
   SHOP_TYPES:  '/shop-types',
   CATEGORIES:  '/categories',
   PRODUCTS:    '/products',
+  COLLECTIONS: '/collections',
   ORDERS:      '/orders',
   REVIEWS:     '/reviews',
   DISCOUNTS:   '/discounts',
@@ -21,4 +22,6 @@ export const PATHS = {
   CONFIG:        '/configurations',
   // Notifications
   NOTIFICATIONS: '/notifications',
+  // Media library
+  MEDIA: '/media',
 }
