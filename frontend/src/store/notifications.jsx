@@ -16,7 +16,11 @@ export function NotificationProvider({ children }) {
   // Fetch initial unread count
   useEffect(() => {
     if (!user) { setNotifications([]); setUnreadCount(0); return }
-    AdminApi.notifications.count().then(({ data }) => setUnreadCount(data.count ?? 0)).catch(() => {})
+    AdminApi.notifications.count().then(({ data }) => {
+      console.log('count API: ', data);
+      
+      setUnreadCount(data.count ?? 0);
+    }).catch(() => { })
   }, [user])
 
   // Connect Socket.IO and join user room
