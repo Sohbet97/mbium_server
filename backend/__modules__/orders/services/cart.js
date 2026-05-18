@@ -10,7 +10,13 @@ class CartService {
                     model: db.Product,
                     as: "product",
                     attributes: ["id", "name", "price", "currency", "stock", "is_active"],
-                    include: [{ model: db.ProductImage, as: "images", where: { is_primary: true }, required: false }],
+                    include: [{
+                        model: db.ProductMedia,
+                        as: "productMedia",
+                        where: { role: "primary" },
+                        required: false,
+                        include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
+                    }],
                 },
                 {
                     model: db.ProductVariant,

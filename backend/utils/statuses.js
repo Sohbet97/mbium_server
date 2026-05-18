@@ -134,10 +134,11 @@ class STATUSES {
     static NOT_PAYMENT = 50
 
     // Marketplace notification types
-    static NOT_ORDER       = 100
-    static NOT_SHOP_REVIEW = 110
-    static NOT_REVIEW      = 120
-    static NOT_DISPUTE     = 130
+    static NOT_ORDER          = 100
+    static NOT_SHOP_REVIEW    = 110
+    static NOT_SHOP_REJECTED  = 111
+    static NOT_REVIEW         = 120
+    static NOT_DISPUTE        = 130
 
     static USER_DOCTOR = 0
     static USER_CASHIER = 10

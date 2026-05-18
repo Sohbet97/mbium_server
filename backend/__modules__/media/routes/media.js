@@ -12,6 +12,7 @@ router.delete('/:id', ctrl.remove)
 // Product ↔ Media attachment
 router.get('/product/:product_id', ctrl.getProductMedia)
 router.post('/product/:product_id', ctrl.attachToProduct)
+router.patch('/product/:product_id/:media_id', ctrl.updateProductMedia)
 router.delete('/product/:product_id/:media_id', ctrl.detachFromProduct)
 
 module.exports = router

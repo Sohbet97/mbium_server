@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,10 +21,19 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart },
     { to: '/admin/reviews', label: t('nav.reviews'), icon: Star },
     { to: '/admin/discounts', label: t('nav.discounts'), icon: Percent },
+    { to: '/admin/banners', label: t('nav.banners'), icon: LayoutTemplate },
+  ]
+  
+  const catalogNav = [
+    { to: '/admin/catalog/categories', label: t('nav.categories'), icon: Tag },
+    { to: '/admin/catalog/products', label: t('nav.products'), icon: Package },
+    { to: '/admin/catalog/collections', label: t('nav.collections'), icon: Layers },
     { to: '/admin/media', label: t('nav.media'), icon: Images },
   ]
-
+  
   const bottomNav = [
+    { to: '/admin/delivers', label: t('nav.delivers'), icon: Truck },
+    { to: '/admin/plans', label: t('nav.plans'), icon: CreditCard },
     { to: '/admin/locations', label: t('nav.locations'), icon: MapPin },
     { to: '/admin/roles', label: t('nav.roles'), icon: Shield },
     { to: '/admin/settings', label: t('nav.settings'), icon: Settings },
@@ -114,9 +123,7 @@ export function Sidebar({ collapsed, onToggle }) {
           )}
           {(catalogOpen || collapsed) && (
             <div className={cn('space-y-0.5 mt-0.5', !collapsed && 'pl-1')}>
-              {navLink('/admin/catalog/categories', t('nav.categories'), Tag)}
-              {navLink('/admin/catalog/products', t('nav.products'), Package)}
-              {navLink('/admin/catalog/collections', t('nav.collections'), Layers)}
+              {catalogNav.map(({ to, label, icon }) => navLink(to, label, icon))}
             </div>
           )}
         </div>

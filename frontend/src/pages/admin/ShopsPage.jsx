@@ -20,6 +20,7 @@ import {
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
 
 // ── Shop Modal (create / edit) ────────────────────────────────────────────────
@@ -303,7 +304,7 @@ export default function ShopsPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {shop.logo
-                          ? <img src={shop.logo} alt="" className="h-10 w-10 rounded object-cover border" />
+                          ? <img src={absUrl(shop.logo)} alt="" className="h-10 w-10 rounded object-cover border" />
                           : (
                             <div className="h-10 w-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-bold">
                               {shop.name?.[0]?.toUpperCase()}

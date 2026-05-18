@@ -138,4 +138,81 @@ module.exports = {
             responses: { 200: { description: "Deleted permanently" } },
         },
     },
+    "/admin/orders/{id}/shipments": {
+        get: {
+            tags: [tagOrders],
+            summary: "Get shipments for an order",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Shipment list", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/Shipment" } } } } } } } },
+        },
+        post: {
+            tags: [tagOrders],
+            summary: "Add shipment to order",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ShipmentRequest" } } } },
+            responses: { 201: { description: "Shipment created" } },
+        },
+    },
+    "/admin/orders/{id}/shipments/{shipmentId}": {
+        put: {
+            tags: [tagOrders],
+            summary: "Update shipment",
+            security,
+            parameters: [
+                { in: "path", name: "id",         required: true, schema: { type: "integer" } },
+                { in: "path", name: "shipmentId", required: true, schema: { type: "integer" } },
+            ],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ShipmentRequest" } } } },
+            responses: { 200: { description: "Updated" } },
+        },
+    },
+
+    // ── Delivery Addresses ────────────────────────────────────────────────────
+    "/admin/delivery-addresses": {
+        get: {
+            tags: [tagOrders],
+            summary: "List delivery addresses for current user",
+            security,
+            responses: { 200: { description: "Address list", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/DeliveryAddress" } } } } } } } },
+        },
+        post: {
+            tags: [tagOrders],
+            summary: "Create delivery address",
+            security,
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/DeliveryAddressRequest" } } } },
+            responses: { 201: { description: "Created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/DeliveryAddress" } } } } } } },
+        },
+    },
+    "/admin/delivery-addresses/{id}": {
+        get: {
+            tags: [tagOrders],
+            summary: "Get delivery address by ID",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Address" }, 404: { description: "Not found" } },
+        },
+        put: {
+            tags: [tagOrders],
+            summary: "Update delivery address",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/DeliveryAddressRequest" } } } },
+            responses: { 200: { description: "Updated" } },
+        },
+        delete: {
+            tags: [tagOrders],
+            summary: "Soft-delete address",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Deleted" } },
+        },
+    },
+    "/admin/delivery-addresses/{id}/force": {
+        delete: { tags: [tagOrders], summary: "Permanently delete address", security, parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Deleted permanently" } } },
+    },
+    "/admin/delivery-addresses/{id}/restore": {
+        post: { tags: [tagOrders], summary: "Restore address", security, parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Restored" } } },
+    },
 };

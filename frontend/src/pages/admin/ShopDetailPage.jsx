@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Store, ShieldCheck, ShieldX, Search,
   Pencil, Save, X, RefreshCw, Package, ShoppingCart,
-  Clock, DollarSign,
+  Clock, DollarSign, CreditCard, Check,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,7 +21,7 @@ import {
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
-import { cn } from '@/lib/utils'
+import { cn, absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
 
 // ─── Order helpers (shared with OrdersPage) ────────────────────────────────────
@@ -546,7 +546,7 @@ function InfoTab({ shop, shopTypes, onRefresh }) {
             <CardHeader><CardTitle className="text-sm">{t('shops.logo')}</CardTitle></CardHeader>
             <CardContent className="pt-0">
               <img
-                src={shop.logo} alt="logo"
+                src={absUrl(shop.logo)} alt="logo"
                 className="h-20 w-20 rounded object-cover border"
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
               />
@@ -707,7 +707,8 @@ function ProductsTab({ shopId }) {
                     </td>
                   </tr>
                 ) : products.map((p) => {
-                  const primaryImg = p.images?.find((i) => i.is_primary) ?? p.images?.[0]
+                  const primaryPm = p.productMedia?.find((pm) => pm.role === 'primary') ?? p.productMedia?.[0]
+                  const primaryImgUrl = absUrl(primaryPm?.media?.thumbnail_url || primaryPm?.media?.url)
                   return (
                     <tr
                       key={p.id}
@@ -716,8 +717,8 @@ function ProductsTab({ shopId }) {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {primaryImg?.url
-                            ? <img src={primaryImg.url} alt="" className="h-8 w-8 rounded object-cover border" />
+                          {primaryImgUrl
+                            ? <img src={primaryImgUrl} alt="" className="h-8 w-8 rounded object-cover border" />
                             : (
                               <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center">
                                 <Package className="h-4 w-4 text-slate-300" />
@@ -1003,6 +1004,192 @@ function OrdersTab({ shopId }) {
   )
 }
 
+// ─── Subscription Tab ─────────────────────────────────────────────────────────
+
+const SUB_STATUS = {
+  0: { label: 'subscriptions.statusPending',   color: 'bg-yellow-100 text-yellow-800' },
+  1: { label: 'subscriptions.statusActive',    color: 'bg-green-100 text-green-800' },
+  2: { label: 'subscriptions.statusCancelled', color: 'bg-gray-100 text-gray-600' },
+  3: { label: 'subscriptions.statusExpired',   color: 'bg-red-100 text-red-700' },
+}
+
+function SubscriptionTab({ shopId }) {
+  const { t } = useTranslation()
+  const [sub, setSub] = useState(null)
+  const [history, setHistory] = useState([])
+  const [plans, setPlans] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [assignModal, setAssignModal] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState('')
+  const [note, setNote] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  function load() {
+    setLoading(true)
+    Promise.all([
+      AdminApi.shopSubscriptions.getActiveForShop(shopId),
+      AdminApi.shopSubscriptions.getAll({ shop_id: shopId }),
+      AdminApi.plans.getAll({ all: 'true' }),
+    ]).then(([activeRes, histRes, plansRes]) => {
+      setSub(activeRes.data.model ?? null)
+      setHistory(histRes.data.data ?? [])
+      setPlans(plansRes.data.data ?? [])
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }
+
+  useEffect(load, [shopId])
+
+  async function handleAssign() {
+    if (!selectedPlan) return
+    setSaving(true)
+    try {
+      await AdminApi.shopSubscriptions.assign({ shop_id: shopId, plan_id: Number(selectedPlan), note: note || null })
+      toast.success(t('toast.updated'))
+      setAssignModal(false); setSelectedPlan(''); setNote('')
+      load()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    } finally { setSaving(false) }
+  }
+
+  async function handleCancel() {
+    if (!sub || !window.confirm(t('subscriptions.confirmCancel'))) return
+    try {
+      await AdminApi.shopSubscriptions.updateStatus(sub.id, { status: 2 })
+      toast.success(t('toast.updated'))
+      load()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    }
+  }
+
+  if (loading) return <p className="text-sm text-slate-400 py-8 text-center">{t('common.loading')}</p>
+
+  const activePlan = sub?.plan
+
+  return (
+    <div className="space-y-4 mt-4">
+      {/* Current plan card */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-slate-500 dark:text-white/50">{t('subscriptions.currentPlan')}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {activePlan ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center">
+                  <CreditCard className="h-5 w-5 text-indigo-500" />
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900 dark:text-white">
+                    {activePlan.display_name_en || activePlan.name}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    {Number(activePlan.price_monthly) === 0 ? 'Free' : `${activePlan.price_monthly} TMT / mo`}
+                    {' · '}
+                    Commission: {(Number(activePlan.commission_rate) * 100).toFixed(0)}%
+                  </p>
+                </div>
+                <span className={cn('ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', SUB_STATUS[sub.status]?.color)}>
+                  {t(SUB_STATUS[sub.status]?.label ?? 'subscriptions.statusActive')}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setAssignModal(true)}>
+                  {t('subscriptions.changePlan')}
+                </Button>
+                <Button size="sm" variant="outline" className="text-red-500 border-red-200 hover:bg-red-50" onClick={handleCancel}>
+                  {t('subscriptions.cancelSub')}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-slate-400">
+                <CreditCard className="h-5 w-5" />
+                <span className="text-sm">{t('subscriptions.noPlan')}</span>
+              </div>
+              <Button size="sm" onClick={() => setAssignModal(true)}>
+                {t('subscriptions.assignPlan')}
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* History */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-slate-500 dark:text-white/50">{t('subscriptions.history')}</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {history.length === 0 ? (
+            <p className="text-sm text-slate-400 px-6 py-4">{t('common.noResults')}</p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b dark:border-white/[0.08] text-left">
+                  <th className="px-4 py-2 text-xs font-medium text-slate-500">{t('subscriptions.colPlan')}</th>
+                  <th className="px-4 py-2 text-xs font-medium text-slate-500">{t('subscriptions.colStatus')}</th>
+                  <th className="px-4 py-2 text-xs font-medium text-slate-500">{t('subscriptions.colStarts')}</th>
+                  <th className="px-4 py-2 text-xs font-medium text-slate-500">{t('subscriptions.colEnds')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((s) => {
+                  const meta = SUB_STATUS[s.status] ?? SUB_STATUS[1]
+                  return (
+                    <tr key={s.id} className="border-b last:border-0 dark:border-white/[0.06]">
+                      <td className="px-4 py-2 font-medium">{s.plan?.display_name_en || s.plan?.name}</td>
+                      <td className="px-4 py-2">
+                        <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', meta.color)}>
+                          {t(meta.label)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-2 text-slate-500">{s.starts_at ? new Date(s.starts_at).toLocaleDateString() : '—'}</td>
+                      <td className="px-4 py-2 text-slate-500">{s.ends_at ? new Date(s.ends_at).toLocaleDateString() : t('subscriptions.noExpiry')}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Assign modal */}
+      <Dialog open={assignModal} onOpenChange={setAssignModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{activePlan ? t('subscriptions.changePlan') : t('subscriptions.assignPlan')}</DialogTitle>
+          </DialogHeader>
+          <DialogBody className="space-y-3">
+            <FormField label={t('subscriptions.selectPlan')} required>
+              <Select value={selectedPlan} onChange={(e) => setSelectedPlan(e.target.value)}>
+                <option value="">{t('subscriptions.selectPlan')}</option>
+                {plans.map((p) => (
+                  <option key={p.id} value={p.id}>{p.display_name_en || p.name} — {Number(p.price_monthly) === 0 ? 'Free' : `${p.price_monthly} TMT`}</option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField label={t('subscriptions.note')}>
+              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Optional note…" />
+            </FormField>
+          </DialogBody>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignModal(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleAssign} disabled={saving || !selectedPlan}>
+              {saving ? '…' : t('common.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ShopDetailPage() {
@@ -1058,7 +1245,7 @@ export default function ShopDetailPage() {
           {shop.logo
             ? (
               <img
-                src={shop.logo} alt=""
+                src={absUrl(shop.logo)} alt=""
                 className="h-14 w-14 rounded-lg object-cover border flex-shrink-0"
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
               />
@@ -1093,6 +1280,7 @@ export default function ShopDetailPage() {
           <TabsTrigger value="products">{t('shops.tabProducts')}</TabsTrigger>
           <TabsTrigger value="orders">{t('shops.tabOrders')}</TabsTrigger>
           <TabsTrigger value="users">{t('shops.tabUsers')}</TabsTrigger>
+          <TabsTrigger value="subscription">{t('subscriptions.title')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -1106,6 +1294,9 @@ export default function ShopDetailPage() {
         </TabsContent>
         <TabsContent value="users">
           <UsersTab shop={shop} />
+        </TabsContent>
+        <TabsContent value="subscription">
+          <SubscriptionTab shopId={shop.id} />
         </TabsContent>
       </Tabs>
     </div>

@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  ArrowLeft, Trash2, Star, ImagePlus, PlusCircle, Package,
-  CheckCircle, Pencil, Save, X,
+  ArrowLeft, Trash2, Star, PlusCircle, Package,
+  Pencil, Save, X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -20,162 +20,9 @@ import {
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { absUrl } from '@/lib/utils'
+import { ProductMediaManager } from '@/components/media/ProductMediaManager'
 import { toast } from 'sonner'
-
-// ─── Images Tab ────────────────────────────────────────────────────────────────
-// AddImageModal: no useEffect — parent passes key so it remounts fresh each open.
-
-function AddImageModal({ open, productId, onClose, onSaved }) {
-  const { t } = useTranslation()
-  const [url,       setUrl]       = useState('')
-  const [isPrimary, setIsPrimary] = useState(false)
-  const [order,     setOrder]     = useState('')
-  const [saving,    setSaving]    = useState(false)
-  const [error,     setError]     = useState('')
-
-  async function handleSave() {
-    if (!url.trim()) return
-    setError(''); setSaving(true)
-    try {
-      await AdminApi.products.images.create(productId, {
-        url:        url.trim(),
-        is_primary: isPrimary,
-        order:      order !== '' ? Number(order) : undefined,
-      })
-      onSaved()
-    } catch (e) {
-      setError(e.response?.data?.message ?? 'Error adding image')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>{t('images.addImage')}</DialogTitle></DialogHeader>
-        <DialogBody>
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded p-2">{error}</p>
-          )}
-          <FormField label={t('images.imageUrl')} required>
-            <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://…" />
-          </FormField>
-          <div className="grid grid-cols-2 gap-4">
-            <FormField label={t('images.order')}>
-              <Input type="number" value={order} onChange={(e) => setOrder(e.target.value)} min={0} />
-            </FormField>
-            <div className="flex items-center justify-between rounded-md border px-3 py-2 self-end">
-              <Label>{t('images.isPrimary')}</Label>
-              <Switch checked={isPrimary} onCheckedChange={setIsPrimary} />
-            </div>
-          </div>
-        </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
-          <Button onClick={handleSave} disabled={saving || !url.trim()}>
-            {saving ? '…' : t('common.add')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function ImagesTab({ productId, images, onRefresh }) {
-  const { t } = useTranslation()
-  const [addOpen, setAddOpen] = useState(false)
-
-  async function handleDelete(imageId) {
-    if (!window.confirm(t('images.confirmDelete'))) return
-    try {
-      await AdminApi.products.images.delete(productId, imageId)
-      toast.success(t('toast.deleted'))
-      onRefresh()
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? t('toast.error'))
-    }
-  }
-
-  async function handleSetPrimary(image) {
-    // Create with is_primary:true first (backend clears all others), then remove old record
-    try {
-      await AdminApi.products.images.create(productId, {
-        url: image.url, is_primary: true, order: image.order,
-      })
-      await AdminApi.products.images.delete(productId, image.id)
-      toast.success(t('toast.updated'))
-      onRefresh()
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? t('toast.error'))
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" className="gap-2" onClick={() => setAddOpen(true)}>
-          <ImagePlus className="h-4 w-4" /> {t('images.addImage')}
-        </Button>
-      </div>
-
-      {images.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-          <ImagePlus className="h-10 w-10 mb-2 text-slate-200" />
-          <p className="text-sm">{t('common.noResults')}</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((img) => (
-            <div key={img.id} className="relative group rounded-lg overflow-hidden border bg-white">
-              <img
-                src={img.url}
-                alt=""
-                className="w-full aspect-square object-cover"
-                onError={(e) => { e.currentTarget.style.display = 'none' }}
-              />
-              {img.is_primary && (
-                <div className="absolute top-2 left-2">
-                  <Badge variant="default" className="text-xs gap-1">
-                    <Star className="h-3 w-3 fill-current" /> {t('images.primary')}
-                  </Badge>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                {!img.is_primary && (
-                  <button
-                    onClick={() => handleSetPrimary(img)}
-                    className="p-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700 transition-colors"
-                    title={t('images.setPrimary')}
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDelete(img.id)}
-                  className="p-1.5 rounded-full bg-white/90 hover:bg-white text-red-600 transition-colors"
-                  title={t('common.delete')}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="p-2 text-xs text-slate-400">#{img.order ?? '—'}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* key remounts modal so state is always fresh */}
-      <AddImageModal
-        key={addOpen ? 'open' : 'closed'}
-        open={addOpen}
-        productId={productId}
-        onClose={() => setAddOpen(false)}
-        onSaved={() => { setAddOpen(false); onRefresh() }}
-      />
-    </div>
-  )
-}
 
 // ─── Variants Tab ──────────────────────────────────────────────────────────────
 
@@ -783,7 +630,8 @@ export default function ProductDetailPage() {
     )
   }
 
-  const primaryImage = product.images?.find((img) => img.is_primary) ?? product.images?.[0]
+  const primaryMedia = product.productMedia?.find((pm) => pm.role === 'primary') ?? product.productMedia?.[0]
+  const primaryImageUrl = absUrl(primaryMedia?.media?.thumbnail_url || primaryMedia?.media?.url)
 
   return (
     <div className="space-y-4">
@@ -793,8 +641,8 @@ export default function ProductDetailPage() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-4 flex-1">
-          {primaryImage?.url
-            ? <img src={primaryImage.url} alt="" className="h-14 w-14 rounded-lg object-cover border" />
+          {primaryImageUrl
+            ? <img src={primaryImageUrl} alt="" className="h-14 w-14 rounded-lg object-cover border" />
             : (
               <div className="h-14 w-14 rounded-lg bg-slate-100 flex items-center justify-center">
                 <Package className="h-6 w-6 text-slate-300" />
@@ -817,8 +665,8 @@ export default function ProductDetailPage() {
           <TabsTrigger value="info">{t('products.tabInfo')}</TabsTrigger>
           <TabsTrigger value="images">
             {t('products.tabImages')}
-            {product.images?.length > 0 && (
-              <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 py-0">{product.images.length}</Badge>
+            {product.productMedia?.length > 0 && (
+              <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 py-0">{product.productMedia.length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="variants">
@@ -834,7 +682,7 @@ export default function ProductDetailPage() {
           <InfoTab product={product} shops={shops} categories={categories} onRefresh={refresh} />
         </TabsContent>
         <TabsContent value="images">
-          <ImagesTab productId={product.id} images={product.images ?? []} onRefresh={refresh} />
+          <ProductMediaManager productId={product.id} />
         </TabsContent>
         <TabsContent value="variants">
           <VariantsTab productId={product.id} variants={product.variants ?? []} onRefresh={refresh} />

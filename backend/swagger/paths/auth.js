@@ -182,4 +182,73 @@ module.exports = {
             responses: { 200: { description: "PNG image", content: { "image/png": {} } } },
         },
     },
+    "/auth/me": {
+        get: {
+            tags: [tag],
+            summary: "Get current user profile",
+            description: "Returns the authenticated user plus their shop (if any). The `shop` field includes `verification_status`, `type.commission_rate`, and `categories`.",
+            security: [{ BearerAuth: [] }],
+            responses: {
+                200: {
+                    description: "User with optional shop",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    model: {
+                                        allOf: [
+                                            { $ref: "#/components/schemas/User" },
+                                            {
+                                                type: "object",
+                                                properties: {
+                                                    shop: { oneOf: [{ $ref: "#/components/schemas/Shop" }, { type: "null" }] },
+                                                },
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { description: "Unauthorized" },
+            },
+        },
+        patch: {
+            tags: [tag],
+            summary: "Update own profile",
+            security: [{ BearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            properties: {
+                                name:         { type: "string" },
+                                surname:      { type: "string" },
+                                email:        { type: "string", format: "email" },
+                                phone_number: { type: "string" },
+                                birth_date:   { type: "string", format: "date" },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: { 200: { description: "Updated profile" }, 400: { description: "Phone/email already in use" } },
+        },
+    },
+    "/auth/me/avatar": {
+        post: {
+            tags: [tag],
+            summary: "Upload own avatar",
+            security: [{ BearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: { "multipart/form-data": { schema: { type: "object", properties: { avatar: { type: "string", format: "binary" } }, required: ["avatar"] } } },
+            },
+            responses: { 200: { description: "Avatar uploaded" } },
+        },
+    },
 };

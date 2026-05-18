@@ -109,6 +109,18 @@ class NotificationService {
         const content = `Täze jedel açyldy (#${dispute?.id ?? dispute})`;
         return this._broadcastToAdmins(STATUSES.NOT_DISPUTE, dispute?.id ?? dispute, content, io);
     }
+
+    static async createForShopRejected(shop, note, io) {
+        const content = { message: note || 'Dükan arzaňyz ret edildi.' };
+        const record = await this.create({
+            userId:   shop.owner_id,
+            type:     STATUSES.NOT_SHOP_REJECTED,
+            targetId: shop.id,
+            content,
+        });
+        if (io) io.to(shop.owner_id).emit('notification', record);
+        return record;
+    }
 }
 
 module.exports = NotificationService;

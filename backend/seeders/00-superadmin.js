@@ -13,17 +13,27 @@ const bcrypt = require('bcryptjs');
 
 // All permission IDs defined in utils/permissions.js
 const ALL_PERMISSIONS = [
-    1, 2, 3, 4,       // Roles
-    5, 6, 7, 8,       // Users
-    9, 10, 11, 12,    // Positions
-    13, 14, 15, 16,   // Regions
-    17, 18, 19, 20,   // Villages
-    21, 22, 23, 24,   // Countries
-    25, 26, 27, 28,   // Categories
-    29, 30, 31, 32,   // Products
-    33, 34, 35, 36,   // Orders
-    37, 38, 39, 40,   // Reviews
-    41, 42, 43, 44,   // Discounts
+    1,   2,   3,   4,   // Roles
+    5,   6,   7,   8,   // Users
+    9,   10,  11,  12,  // Positions
+    13,  14,  15,  16,  // Regions
+    17,  18,  19,  20,  // Villages
+    21,  22,  23,  24,  // Countries
+    25,  26,  27,  28,  // Categories
+    29,  30,  31,  32,  // Products
+    33,  34,  35,  36,  // Orders
+    37,  38,  39,  40,  // Reviews
+    41,  42,  43,  44,  // Discounts
+    45,  46,  47,  48,  // Banners
+    49,  50,  51,  52,  // Shop Members
+    53,  54,  55,  56,  // Payouts
+    57,  58,  59,  60,  // Collections
+    61,  62,  63,  64,  // Media
+    65,  66,  67,  68,  // Disputes
+    69,  70,  71,  72,  // Delivers
+    73,  74,  75,  76,  // Plans
+    77,  78,  79,  80,  // Subscriptions
+    309,                // User login-as
 ];
 
 const ADMIN_PHONE    = '61000000';

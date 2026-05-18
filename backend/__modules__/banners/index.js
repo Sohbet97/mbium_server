@@ -9,9 +9,10 @@ const bannersModuleRouter = require("express").Router();
 bannersModuleRouter.use(
     authorizationMiddleware,
     routeGuard({
-        GET: Permissions.BANNER_GET,
-        POST: Permissions.BANNER_POST,
-        PUT: Permissions.BANNER_PUT,
+        GET:    Permissions.BANNER_GET,
+        POST:   Permissions.BANNER_POST,
+        PUT:    Permissions.BANNER_PUT,
+        PATCH:  Permissions.BANNER_PUT,
         DELETE: Permissions.BANNER_DELETE,
     })
 );

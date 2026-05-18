@@ -3,6 +3,7 @@ const authorizationMiddleware = require('../../middlewares/authorization-middlew
 const rbacMiddleware = require('../../middlewares/rbac-middleware');
 const Permissions = require('../../utils/permissions');
 const UserController = require('../../__modules__/user/controllers/user-controller');
+const ShopController = require('../../__modules__/shops/controllers/shop');
 const { avatarUpload } = require('../../utils/upload');
 
 // ── Public ────────────────────────────────────────────────────────────────────
@@ -26,6 +27,10 @@ authRouter.get('/me', authorizationMiddleware, UserController.getMe.bind(UserCon
 authRouter.patch('/me', authorizationMiddleware, UserController.updateMe.bind(UserController));
 authRouter.delete('/me/google', authorizationMiddleware, UserController.disconnectGoogle.bind(UserController));
 authRouter.post('/me/avatar', authorizationMiddleware, avatarUpload.single('avatar'), UserController.uploadAvatar.bind(UserController));
+
+// ── Shop application ──────────────────────────────────────────────────────────
+authRouter.post('/me/shop', authorizationMiddleware, ShopController.applyForShop.bind(ShopController));
+authRouter.get('/me/shop',  authorizationMiddleware, ShopController.getMyShop.bind(ShopController));
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 authRouter.post(

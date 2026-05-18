@@ -63,6 +63,16 @@ ctrl.attachToProduct = async (req, res) => {
     }
 }
 
+ctrl.updateProductMedia = async (req, res) => {
+    try {
+        const { product_id, media_id } = req.params
+        const record = await svc.updateProductMedia(product_id, media_id, req.body)
+        res.json({ data: record })
+    } catch (e) {
+        res.status(400).json({ message: e.message })
+    }
+}
+
 ctrl.detachFromProduct = async (req, res) => {
     try {
         await svc.detachFromProduct(req.params.product_id, req.params.media_id)

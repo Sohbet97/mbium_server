@@ -37,7 +37,13 @@ class CollectionService {
                     as: "products",
                     through: { attributes: ["id", "sort_order"] },
                     include: [
-                        { model: db.ProductImage, as: "images", where: { is_primary: true }, required: false },
+                        {
+                            model: db.ProductMedia,
+                            as: "productMedia",
+                            where: { role: "primary" },
+                            required: false,
+                            include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
+                        },
                     ],
                 },
             ],
@@ -109,9 +115,13 @@ class CollectionService {
         return db.Product.findAll({
             where: filter,
             limit,
-            include: [
-                { model: db.ProductImage, as: "images", where: { is_primary: true }, required: false },
-            ],
+            include: [{
+                model: db.ProductMedia,
+                as: "productMedia",
+                where: { role: "primary" },
+                required: false,
+                include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
+            }],
             attributes: ["id", "name", "name_ru", "price", "currency", "sku", "stock"],
         });
     }

@@ -134,7 +134,7 @@ export default function LoginPage() {
   const current = LANGUAGES.find((l) => l.code === i18n.language) ?? LANGUAGES[0]
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#232727] bg-[#f6f6f7]">
+    <div className={"min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#232727] bg-[#f6f6f7]"}>
       <div className="absolute top-4 right-4 flex items-center gap-1">
         <ThemeSwitcher />
         <DropdownMenu>
