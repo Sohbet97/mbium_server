@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Eye, EyeOff, AlertCircle, Globe, ArrowLeft } from 'lucide-react'
+import { ThemeSwitcher } from '../../components/layout/TopBar'
 
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧' },
@@ -133,11 +134,12 @@ export default function LoginPage() {
   const current = LANGUAGES.find((l) => l.code === i18n.language) ?? LANGUAGES[0]
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="absolute top-4 right-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#232727] bg-[#f6f6f7]">
+      <div className="absolute top-4 right-4 flex items-center gap-1">
+        <ThemeSwitcher />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-slate-600 bg-white border hover:bg-slate-50 transition-colors">
+            <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-slate-600 bg-white dark:bg-[#0e0e0e] dark:text-white border hover:bg-slate-50 transition-colors">
               <Globe className="h-4 w-4" />
               <span>{current.flag}</span>
               <span>{t(`lang.${current.code}`)}</span>
@@ -148,7 +150,7 @@ export default function LoginPage() {
               <DropdownMenuItem
                 key={code}
                 onClick={() => i18n.changeLanguage(code)}
-                className={i18n.language === code ? 'bg-slate-100 font-medium' : ''}
+                className={i18n.language === code ? 'bg-slate-100 font-medium dark:bg-[#010101]' : ''}
               >
                 <span className="mr-2">{flag}</span>
                 {t(`lang.${code}`)}
@@ -160,7 +162,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm px-4">
         <div className="text-center mb-8">
-          <span className="text-3xl font-bold tracking-tight text-slate-900">mbium</span>
+          <span className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">mbium</span>
           <p className="text-sm text-slate-500 mt-1">{t('login.subtitle')}</p>
         </div>
 
@@ -168,7 +170,7 @@ export default function LoginPage() {
           {step === 'credentials' ? (
             <>
               <CardHeader>
-                <CardTitle className="text-xl">{t('login.title')}</CardTitle>
+                <CardTitle className="text-xl ">{t('login.title')}</CardTitle>
                 <CardDescription>{t('login.description')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -228,7 +230,7 @@ export default function LoginPage() {
                         <span className="w-full border-t" />
                       </div>
                       <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-white px-2 text-slate-400">{t('login.orContinueWith')}</span>
+                        <span className="bg-white dark:bg-card px-2 text-slate-400">{t('login.orContinueWith')}</span>
                       </div>
                     </div>
                     <div ref={googleBtnRef} className="flex justify-center" />
