@@ -33,20 +33,20 @@ const EMPTY_FORM = {
 function buildForm(shop) {
   if (!shop) return EMPTY_FORM
   return {
-    name:      shop.name      ?? '',
-    name_ru:   shop.name_ru   ?? '',
-    name_eng:  shop.name_eng  ?? '',
-    type_id:   shop.type_id   ?? '',
+    name: shop.name ?? '',
+    name_ru: shop.name_ru ?? '',
+    name_eng: shop.name_eng ?? '',
+    type_id: shop.type_id ?? '',
     is_active: shop.is_active ?? true,
-    order:     shop.order     ?? '',
+    order: shop.order ?? '',
   }
 }
 
 function ShopModal({ open, shop, shopTypes, onClose, onSaved }) {
   const { t } = useTranslation()
-  const [form, setForm]     = useState(() => buildForm(shop))
+  const [form, setForm] = useState(() => buildForm(shop))
   const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
+  const [error, setError] = useState('')
 
   function set(field, val) { setForm((f) => ({ ...f, [field]: val })) }
 
@@ -57,12 +57,12 @@ function ShopModal({ open, shop, shopTypes, onClose, onSaved }) {
     setError(''); setSaving(true)
     try {
       const payload = {
-        name:      form.name.trim(),
-        name_ru:   form.name_ru.trim()  || null,
-        name_eng:  form.name_eng.trim() || null,
-        type_id:   Number(form.type_id),
+        name: form.name.trim(),
+        name_ru: form.name_ru.trim() || null,
+        name_eng: form.name_eng.trim() || null,
+        type_id: Number(form.type_id),
         is_active: form.is_active,
-        order:     form.order !== '' ? Number(form.order) : null,
+        order: form.order !== '' ? Number(form.order) : null,
       }
       if (shop) {
         await AdminApi.shops.update(shop.id, payload)
@@ -137,30 +137,30 @@ export default function ShopsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [shops,        setShops]        = useState([])
-  const [shopTypes,    setShopTypes]    = useState([])
-  const [total,        setTotal]        = useState(0)
-  const [loading,      setLoading]      = useState(true)
-  const [page,         setPage]         = useState(1)
-  const [search,       setSearch]       = useState('')
+  const [shops, setShops] = useState([])
+  const [shopTypes, setShopTypes] = useState([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
   const [activeFilter, setActiveFilter] = useState('')
-  const [showDeleted,  setShowDeleted]  = useState(false)
-  const [refreshTick,  setRefreshTick]  = useState(0)
-  const [modal,        setModal]        = useState({ open: false, shop: null })
+  const [showDeleted, setShowDeleted] = useState(false)
+  const [refreshTick, setRefreshTick] = useState(0)
+  const [modal, setModal] = useState({ open: false, shop: null })
   const limit = 20
 
   // Fetch shops — all setState in async callbacks to satisfy linter
   useEffect(() => {
     let cancelled = false
     const params = { limit, skip: (page - 1) * limit }
-    if (search)              params.text      = search
+    if (search) params.text = search
     if (activeFilter !== '') params.is_active = activeFilter
-    if (showDeleted)         params.paranoid  = 'true'
+    if (showDeleted) params.paranoid = 'true'
 
     AdminApi.shops.getAll(params)
       .then(({ data }) => {
         if (cancelled) return
-        setShops(data.data  ?? [])
+        setShops(data.data ?? [])
         setTotal(data.count ?? 0)
         setLoading(false)
       })
@@ -177,7 +177,7 @@ export default function ShopsPage() {
   useEffect(() => {
     AdminApi.shopTypes.getAll({ limit: 200 })
       .then(({ data }) => setShopTypes(data.data ?? []))
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   function refresh() { setLoading(true); setRefreshTick((k) => k + 1) }
@@ -226,8 +226,8 @@ export default function ShopsPage() {
       {/* Toolbar */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">{t('shops.title')}</h2>
-          <p className="text-sm text-slate-500 mt-0.5">{t('shops.totalCount', { count: total })}</p>
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t('shops.title')}</h2>
+          <p className="text-sm text-slate-500 mt-0.5 dark:text-white/[0.8]">{t('shops.totalCount', { count: total })}</p>
         </div>
         <Button size="sm" className="gap-2" onClick={() => setModal({ open: true, shop: null })}>
           <Plus className="h-4 w-4" /> {t('shops.addShop')}
@@ -272,7 +272,7 @@ export default function ShopsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide dark:bg-[#0f0f10] dark:text-white">
                   <th className="px-4 py-3">{t('shops.colShop')}</th>
                   <th className="px-4 py-3">{t('shops.colType')}</th>
                   <th className="px-4 py-3">{t('shops.colStatus')}</th>
@@ -297,7 +297,7 @@ export default function ShopsPage() {
                 ) : shops.map((shop) => (
                   <tr
                     key={shop.id}
-                    className={`border-b last:border-0 hover:bg-slate-50 transition-colors cursor-pointer ${shop.deletedAt ? 'opacity-60' : ''}`}
+                    className={`border-b last:border-0 hover:bg-slate-50 transition-colors cursor-pointer ${shop.deletedAt ? 'opacity-60' : ''} dark:hover:bg-white/[0.08]`}
                     onClick={() => navigate(`/admin/shops/${shop.id}`)}
                   >
                     <td className="px-4 py-3">

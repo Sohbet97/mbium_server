@@ -34,13 +34,13 @@ function StatCard({ label, value, icon: Icon, color, onClick }) {
       onClick={onClick}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-slate-500">{label}</CardTitle>
+        <CardTitle className="text-sm font-medium text-slate-500 dark:text-[#a0a0ab]">{label}</CardTitle>
         <div className={cn('p-2 rounded-md', color)}>
           <Icon className="h-4 w-4 text-white" />
         </div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-slate-900">
+        <div className="text-2xl font-bold text-slate-900 dark:text-white">
           {value === null
             ? <span className="text-slate-300 animate-pulse">—</span>
             : value}
@@ -251,12 +251,12 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-900">
+          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
             {t('dashboard.overview')}
             {greeting ? ` — ${greeting}` : ''}
           </h2>
           <div className="flex items-center gap-2 mt-1">
-            <p className="text-sm text-slate-500">{t('dashboard.subtitle')}</p>
+            <p className="text-sm text-slate-500 dark:text-[#a0a0ab]">{t('dashboard.subtitle')}</p>
             {user?.role?.name && <RoleChip roleName={user.role.name} />}
           </div>
         </div>

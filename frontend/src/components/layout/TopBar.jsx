@@ -20,7 +20,6 @@ const iconBtn = 'flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm transi
 
 export function TopBar({ title }) {
   const { user, logout } = useAuth()
-  const { theme, toggle } = useTheme()
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const { pathname } = useLocation()
@@ -48,12 +47,7 @@ export function TopBar({ title }) {
 
       <div className="flex items-center gap-0.5">
         {/* Theme toggle */}
-        <button onClick={toggle} className={iconBtn} title={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
-          {theme === 'dark'
-            ? <Sun className="h-4 w-4" />
-            : <Moon className="h-4 w-4" />
-          }
-        </button>
+        <ThemeSwitcher />
 
         {/* Language switcher */}
         <DropdownMenu>
@@ -110,4 +104,13 @@ export function TopBar({ title }) {
       </div>
     </header>
   )
+}
+
+export function ThemeSwitcher() {
+  const { theme, toggle } = useTheme()
+  return <button onClick={toggle} className={iconBtn} title={theme === 'dark' ? 'Light mode' : 'Dark mode'}>
+    {theme === 'dark'
+      ? <Sun className="h-4 w-4" />
+      : <Moon className="h-4 w-4" />}
+  </button>
 }
