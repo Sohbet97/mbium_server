@@ -42,6 +42,9 @@ async function run() {
         console.log('\n[11/11] Notifications');
         await require('./11-notifications')(fullDb);
 
+        console.log('\n[12/12] Banner Types');
+        await require('./12-banner-types')(fullDb);
+
         console.log('\nAll seeds complete.');
     } catch (err) {
         console.error('\nSeeding failed:', err.message);

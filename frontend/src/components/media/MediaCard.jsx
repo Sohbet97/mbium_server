@@ -1,11 +1,14 @@
 import { cn } from '@/lib/utils'
 import { FileVideo, Box, ScanLine, ImageIcon, Check } from 'lucide-react'
 
+const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+const absUrl = (url) => (!url || url.startsWith('http') ? url : `${BASE}${url}`)
+
 const TYPE_ICONS = {
-  video:  FileVideo,
-  '3d':   Box,
-  '360':  ScanLine,
-  image:  ImageIcon,
+  video: FileVideo,
+  '3d': Box,
+  '360': ScanLine,
+  image: ImageIcon,
 }
 
 const TYPE_LABELS = {
@@ -13,15 +16,15 @@ const TYPE_LABELS = {
 }
 
 const TYPE_COLORS = {
-  image:  'bg-blue-500/20 text-blue-400',
-  video:  'bg-purple-500/20 text-purple-400',
-  '3d':   'bg-emerald-500/20 text-emerald-400',
-  '360':  'bg-amber-500/20 text-amber-400',
+  image: 'bg-blue-500/20 text-blue-400',
+  video: 'bg-purple-500/20 text-purple-400',
+  '3d': 'bg-emerald-500/20 text-emerald-400',
+  '360': 'bg-amber-500/20 text-amber-400',
 }
 
 export function MediaCard({ item, selected, selectable, onClick }) {
   const Icon = TYPE_ICONS[item.type] ?? ImageIcon
-  const thumb = item.thumbnail_url || (item.type === 'image' || item.type === '360' ? item.url : null)
+  const thumb = absUrl(item.thumbnail_url || (item.type === 'image' || item.type === '360' ? item.url : null))
 
   return (
     <button

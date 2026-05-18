@@ -13,7 +13,13 @@ class ProductService {
             include: [
                 { model: db.Category, as: "category", attributes: ["id", "name"] },
                 { model: db.Shop, as: "shop", attributes: ["id", "name"] },
-                { model: db.ProductImage, as: "images", where: { is_primary: true }, required: false },
+                {
+                    model: db.ProductMedia,
+                    as: "productMedia",
+                    where: { role: "primary" },
+                    required: false,
+                    include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
+                },
             ],
         });
     }
@@ -31,7 +37,13 @@ class ProductService {
                 { model: db.Category, as: "category", attributes: ["id", "name", "slug"] },
                 { model: db.Shop, as: "shop", attributes: ["id", "name", "logo"] },
                 { model: db.ProductVariant, as: "variants" },
-                { model: db.ProductImage, as: "images", order: [["order", "ASC"]] },
+                {
+                    model: db.ProductMedia,
+                    as: "productMedia",
+                    required: false,
+                    order: [["sort_order", "ASC"]],
+                    include: [{ model: db.Media, as: "media" }],
+                },
             ],
         });
     }
@@ -97,19 +109,6 @@ class ProductService {
 
     static async delete(id, force = false) {
         return db.Product.destroy({ where: { id }, force });
-    }
-
-    // ── Images ──────────────────────────────────────────────────────────────────
-
-    static async addImage(productId, url, isPrimary = false, order = null) {
-        if (isPrimary) {
-            await db.ProductImage.update({ is_primary: false }, { where: { product_id: productId } });
-        }
-        return db.ProductImage.create({ product_id: productId, url, is_primary: isPrimary, order });
-    }
-
-    static async deleteImage(imageId) {
-        return db.ProductImage.destroy({ where: { id: imageId } });
     }
 
     // ── Variants ─────────────────────────────────────────────────────────────────

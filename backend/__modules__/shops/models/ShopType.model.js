@@ -26,6 +26,11 @@ module.exports = (sequelize) => {
             type: DataTypes.BOOLEAN,
             defaultValue: false
         },
+        commission_rate: {
+            type: DataTypes.DECIMAL(5, 4),
+            allowNull: false,
+            defaultValue: 0.15
+        },
         createdBy: {
             type: DataTypes.UUID,
             references: {

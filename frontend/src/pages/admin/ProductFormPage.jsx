@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  ArrowLeft, Save, Package, ImagePlus, Trash2, Star, CheckCircle, X, ExternalLink,
+  ArrowLeft, Save, Package, X, ExternalLink,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { ProductMediaManager } from '@/components/media/ProductMediaManager'
 import { toast } from 'sonner'
 
 const EMPTY_FORM = {
@@ -57,114 +58,6 @@ function buildForm(product) {
     seo_description:        product.seo_description        ?? '',
     is_active:              product.is_active              ?? true,
   }
-}
-
-// ─── Inline Image Manager (edit mode only) ─────────────────────────────────────
-
-function ImageManager({ productId, images, onRefresh }) {
-  const { t } = useTranslation()
-  const [urlInput, setUrlInput] = useState('')
-  const [adding, setAdding] = useState(false)
-  const [addError, setAddError] = useState('')
-
-  async function handleAdd() {
-    if (!urlInput.trim()) return
-    setAddError(''); setAdding(true)
-    try {
-      await AdminApi.products.images.create(productId, {
-        url: urlInput.trim(),
-        is_primary: images.length === 0,
-      })
-      setUrlInput('')
-      onRefresh()
-    } catch (e) {
-      setAddError(e.response?.data?.message ?? t('toast.error'))
-    } finally {
-      setAdding(false)
-    }
-  }
-
-  async function handleDelete(imageId) {
-    if (!window.confirm(t('images.confirmDelete'))) return
-    try {
-      await AdminApi.products.images.delete(productId, imageId)
-      toast.success(t('toast.deleted'))
-      onRefresh()
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? t('toast.error'))
-    }
-  }
-
-  async function handleSetPrimary(image) {
-    try {
-      await AdminApi.products.images.create(productId, {
-        url: image.url, is_primary: true, order: image.order,
-      })
-      await AdminApi.products.images.delete(productId, image.id)
-      onRefresh()
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? t('toast.error'))
-    }
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex gap-2">
-        <Input
-          placeholder="https://…"
-          value={urlInput}
-          onChange={(e) => { setUrlInput(e.target.value); setAddError('') }}
-          onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
-          className="flex-1"
-        />
-        <Button size="sm" onClick={handleAdd} disabled={adding || !urlInput.trim()}>
-          <ImagePlus className="h-4 w-4 mr-1.5" />
-          {adding ? '…' : t('common.add')}
-        </Button>
-      </div>
-      {addError && <p className="text-xs text-red-600">{addError}</p>}
-
-      {images.length > 0 && (
-        <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
-          {images.map((img) => (
-            <div key={img.id} className="relative group rounded-lg overflow-hidden border bg-white aspect-square">
-              <img
-                src={img.url} alt=""
-                className="w-full h-full object-cover"
-                onError={(e) => { e.currentTarget.style.display = 'none' }}
-              />
-              {img.is_primary && (
-                <div className="absolute top-1 left-1">
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-medium bg-black/70 text-white rounded px-1 py-0.5">
-                    <Star className="h-2.5 w-2.5 fill-yellow-400 stroke-yellow-400" />
-                    {t('images.primary')}
-                  </span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
-                {!img.is_primary && (
-                  <button
-                    onClick={() => handleSetPrimary(img)}
-                    className="p-1.5 rounded-full bg-white/90 hover:bg-white text-slate-700"
-                    title={t('images.setPrimary')}
-                  >
-                    <CheckCircle className="h-3.5 w-3.5" />
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDelete(img.id)}
-                  className="p-1.5 rounded-full bg-white/90 hover:bg-white text-red-600"
-                  title={t('common.delete')}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
 }
 
 // ─── Toggle Row ────────────────────────────────────────────────────────────────
@@ -339,7 +232,7 @@ export default function ProductFormPage() {
             </CardHeader>
             <CardContent className="pt-0">
               {isEdit ? (
-                <ImageManager productId={id} images={product?.images ?? []} onRefresh={refresh} />
+                <ProductMediaManager productId={id} />
               ) : (
                 <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-slate-200 rounded-lg text-slate-400 gap-2">
                   <Package className="h-8 w-8 text-slate-200" />

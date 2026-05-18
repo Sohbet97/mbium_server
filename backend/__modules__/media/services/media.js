@@ -122,6 +122,21 @@ async function attachToProduct(productId, mediaId, role = 'gallery', sortOrder =
     return record
 }
 
+async function updateProductMedia(productId, mediaId, { role, sort_order }) {
+    const record = await db.ProductMedia.findOne({ where: { product_id: productId, media_id: mediaId } })
+    if (!record) throw new Error('Not found')
+    const updates = {}
+    if (role !== undefined) updates.role = role
+    if (sort_order !== undefined) updates.sort_order = sort_order
+    if (role === 'primary') {
+        await db.ProductMedia.update(
+            { role: 'gallery' },
+            { where: { product_id: productId, role: 'primary', media_id: { [require('sequelize').Op.ne]: mediaId } } }
+        )
+    }
+    return record.update(updates)
+}
+
 async function detachFromProduct(productId, mediaId) {
     return db.ProductMedia.destroy({ where: { product_id: productId, media_id: mediaId } })
 }
@@ -134,4 +149,4 @@ async function getProductMedia(productId) {
     })
 }
 
-module.exports = { processUpload, list, getById, update, remove, attachToProduct, detachFromProduct, getProductMedia }
+module.exports = { processUpload, list, getById, update, remove, attachToProduct, updateProductMedia, detachFromProduct, getProductMedia }

@@ -35,6 +35,26 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
+        description_tm: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        description_ru: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        description_en: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        location: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        coordinates: {
+            type: DataTypes.JSONB,
+            allowNull: true
+        },
         logo: {
             type: DataTypes.TEXT,
             allowNull: true
@@ -101,6 +121,12 @@ module.exports = (sequelize) => {
             type: DataTypes.DECIMAL(3, 2),
             defaultValue: 0
         },
+        plan_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "plans", key: "id" },
+            onDelete: "SET NULL",
+        },
         createdBy: {
             type: DataTypes.UUID,
             allowNull: true,
@@ -127,6 +153,20 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.Region, { as: "region", foreignKey: "region_id" });
         Model.belongsTo(db.City, { as: "city", foreignKey: "city_id" });
         Model.belongsTo(db.User, { as: "verifier", foreignKey: "verified_by" });
+        if (db.Plan) {
+            Model.belongsTo(db.Plan, { foreignKey: "plan_id", as: "plan" });
+        }
+        if (db.ShopSubscription) {
+            Model.hasMany(db.ShopSubscription, { foreignKey: "shop_id", as: "subscriptions" });
+        }
+        if (db.ShopCategory && db.Category) {
+            Model.belongsToMany(db.Category, {
+                through: db.ShopCategory,
+                foreignKey: "shop_id",
+                otherKey: "category_id",
+                as: "categories",
+            });
+        }
     };
 
     return Model;

@@ -12,6 +12,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { AdminApi } from '@/lib/api'
+import { absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export default function ProductsPage() {
@@ -143,10 +144,10 @@ export default function ProductsPage() {
                     onClick={() => navigate(`/admin/catalog/products/${p.id}`)}>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-3">
-                        {p.images?.[0]?.url
-                          ? <img src={p.images[0].url} alt="" className="h-10 w-10 rounded object-cover border" />
+                        {(() => { const pm = p.productMedia?.find((m) => m.role === 'primary') ?? p.productMedia?.[0]; const src = absUrl(pm?.media?.thumbnail_url || pm?.media?.url); return src
+                          ? <img src={src} alt="" className="h-10 w-10 rounded object-cover border" />
                           : <div className="h-10 w-10 rounded bg-slate-100 flex items-center justify-center"><Package className="h-4 w-4 text-slate-300" /></div>
-                        }
+                        })()}
                         <div>
                           <p className="text-sm font-medium text-slate-900 max-w-[200px] truncate">{p.name}</p>
                           <p className="text-xs text-slate-400">{p.sku || '—'}</p>

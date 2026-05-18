@@ -75,4 +75,31 @@ module.exports = {
             responses: { 200: { description: "Deleted permanently" } },
         },
     },
+    "/admin/reviews/{id}/reply": {
+        get: {
+            tags: [tag],
+            summary: "Get seller reply to review",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Reply text or null" } },
+        },
+        post: {
+            tags: [tag],
+            summary: "Create or update seller reply",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["reply"], properties: { reply: { type: "string" } } } } },
+            },
+            responses: { 200: { description: "Reply saved" } },
+        },
+        delete: {
+            tags: [tag],
+            summary: "Delete seller reply",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Reply deleted" } },
+        },
+    },
 };

@@ -9,6 +9,7 @@ const { default: captchapng } = require("typed-captchapng");
 const { OAuth2Client } = require("google-auth-library");
 const db = require("../../../models");
 const USER_CONSTANTS = require("../utils/constants");
+const ShopService = require("../../shops/services/shops");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -32,12 +33,16 @@ class UserController {
 
   static async getMe(req, res, next) {
     try {
-      const user = await db.User.findOne({
-        where: { id: req.user.id },
-        attributes: { exclude: ['password'] },
-      });
+      const [user, shop] = await Promise.all([
+        db.User.findOne({
+          where: { id: req.user.id },
+          attributes: { exclude: ['password'] },
+        }),
+        ShopService.getByOwner(req.user.id),
+      ]);
       if (!user) throw ApiError.NotFound();
-      return res.status(200).json({ model: user });
+      const { password: _pw, ...userJson } = user.toJSON();
+      return res.status(200).json({ model: { ...userJson, shop: shop || null } });
     } catch (e) {
       next(e);
     }

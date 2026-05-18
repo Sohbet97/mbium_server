@@ -11,6 +11,7 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { AdminApi } from '@/lib/api'
+import { absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export default function CollectionsPage() {
@@ -117,7 +118,7 @@ export default function CollectionsPage() {
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-3">
                         {col.image_url
-                          ? <img src={col.image_url} alt="" className="h-10 w-10 rounded object-cover border" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+                          ? <img src={absUrl(col.image_url)} alt="" className="h-10 w-10 rounded object-cover border" onError={(e) => { e.currentTarget.style.display = 'none' }} />
                           : <div className="h-10 w-10 rounded bg-slate-100 flex items-center justify-center"><Layers className="h-4 w-4 text-slate-300" /></div>
                         }
                         <div>

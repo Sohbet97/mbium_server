@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
 
 const EMPTY_FORM = {
@@ -104,10 +105,10 @@ function ProductsSection({ collectionId, products, onRefresh }) {
               className="flex items-center gap-3 w-full px-4 py-2.5 hover:bg-slate-50 transition-colors text-left border-b last:border-0"
               onClick={() => handleAdd(p)}
             >
-              {p.images?.[0]?.url
-                ? <img src={p.images[0].url} alt="" className="h-8 w-8 rounded object-cover border shrink-0" />
+              {(() => { const pm = p.productMedia?.[0]; const src = absUrl(pm?.media?.thumbnail_url || pm?.media?.url); return src
+                ? <img src={src} alt="" className="h-8 w-8 rounded object-cover border shrink-0" />
                 : <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center shrink-0"><Package className="h-3.5 w-3.5 text-slate-300" /></div>
-              }
+              })()}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-800 truncate">{p.name}</p>
                 <p className="text-xs text-slate-400">{p.price} {p.currency} · {p.sku || '—'}</p>
@@ -128,10 +129,10 @@ function ProductsSection({ collectionId, products, onRefresh }) {
         <div className="border rounded-lg overflow-hidden">
           {products.map((p) => (
             <div key={p.id} className="flex items-center gap-3 px-4 py-2.5 border-b last:border-0 hover:bg-slate-50">
-              {p.images?.[0]?.url
-                ? <img src={p.images[0].url} alt="" className="h-9 w-9 rounded object-cover border shrink-0" />
+              {(() => { const pm = p.productMedia?.[0]; const src = absUrl(pm?.media?.thumbnail_url || pm?.media?.url); return src
+                ? <img src={src} alt="" className="h-9 w-9 rounded object-cover border shrink-0" />
                 : <div className="h-9 w-9 rounded bg-slate-100 flex items-center justify-center shrink-0"><Package className="h-3.5 w-3.5 text-slate-300" /></div>
-              }
+              })()}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-800 truncate">{p.name}</p>
                 <p className="text-xs text-slate-400">{p.price} {p.currency} · {t('products.stock')}: {p.stock}</p>
@@ -360,7 +361,7 @@ export default function CollectionFormPage() {
               {form.image_url && (
                 <div className="relative rounded-lg overflow-hidden border aspect-video bg-slate-50">
                   <img
-                    src={form.image_url} alt=""
+                    src={absUrl(form.image_url)} alt=""
                     className="w-full h-full object-cover"
                     onError={(e) => { e.currentTarget.style.display = 'none' }}
                   />

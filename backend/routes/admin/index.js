@@ -21,6 +21,8 @@ const payoutsModuleRouter = require("../../__modules__/payouts")
 const disputesModuleRouter = require("../../__modules__/disputes")
 const notificationRouter = require('./notifications')
 const mediaModuleRouter = require("../../__modules__/media")
+const deliversModuleRouter = require("../../__modules__/delivers")
+const subscriptionsModuleRouter = require("../../__modules__/subscriptions")
 const authorizationMiddleware = require("../../middlewares/authorization-middleware")
 //#endregion
 
@@ -47,6 +49,8 @@ adminRouter.use('/city', cityRouter)
 adminRouter.use('/log', logRouter)
 adminRouter.use('/notifications', notificationRouter)
 adminRouter.use(mediaModuleRouter)
+adminRouter.use(deliversModuleRouter)
+adminRouter.use(subscriptionsModuleRouter)
 //#endregion
 
 module.exports = adminRouter;

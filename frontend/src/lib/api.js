@@ -84,10 +84,6 @@ export class AdminApi {
   }
   static products = {
     ...crud(PATHS.PRODUCTS),
-    images: {
-      create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/images`), data),
-      delete: (productId, imageId) => http.delete(a(`${PATHS.PRODUCTS}/${productId}/images/${imageId}`)),
-    },
     variants: {
       create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/variants`), data),
       update: (productId, variantId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`), data),
@@ -125,6 +121,36 @@ export class AdminApi {
     markAsRead: (id)     => http.patch(a(`${PATHS.NOTIFICATIONS}/${id}/read`)),
     markAllAsRead: ()    => http.patch(a(`${PATHS.NOTIFICATIONS}/read-all`)),
   }
+  static bannerTypes = {
+    getAll: ()        => http.get(a(PATHS.BANNER_TYPES)),
+    create: (data)    => http.post(a(PATHS.BANNER_TYPES), data),
+    update: (id, data)=> http.put(a(`${PATHS.BANNER_TYPES}/${id}`), data),
+    delete: (id)      => http.delete(a(`${PATHS.BANNER_TYPES}/${id}`)),
+  }
+  static delivers = crud(PATHS.DELIVERS)
+  static plans = {
+    getAll:  (params) => http.get(a(PATHS.PLANS), { params }),
+    getOne:  (id)     => http.get(a(`${PATHS.PLANS}/${id}`)),
+    create:  (data)   => http.post(a(PATHS.PLANS), data),
+    update:  (id, data) => http.put(a(`${PATHS.PLANS}/${id}`), data),
+    delete:  (id)     => http.delete(a(`${PATHS.PLANS}/${id}`)),
+  }
+  static shopSubscriptions = {
+    getAll:           (params)      => http.get(a(PATHS.SHOP_SUBSCRIPTIONS), { params }),
+    getActiveForShop: (shopId)      => http.get(a(`${PATHS.SHOP_SUBSCRIPTIONS}/shop/${shopId}/active`)),
+    assign:           (data)        => http.post(a(PATHS.SHOP_SUBSCRIPTIONS), data),
+    updateStatus:     (id, data)    => http.patch(a(`${PATHS.SHOP_SUBSCRIPTIONS}/${id}/status`), data),
+    remove:           (id)          => http.delete(a(`${PATHS.SHOP_SUBSCRIPTIONS}/${id}`)),
+  }
+  static banners = {
+    getAll:  (params) => http.get(a(PATHS.BANNERS), { params }),
+    getOne:  (id)     => http.get(a(`${PATHS.BANNERS}/${id}`)),
+    create:  (data)   => http.post(a(PATHS.BANNERS), data),
+    update:  (id, data) => http.put(a(`${PATHS.BANNERS}/${id}`), data),
+    delete:  (id)     => http.delete(a(`${PATHS.BANNERS}/${id}`)),
+    reorder: (items)  => http.post(a(`${PATHS.BANNERS}/reorder`), { items }),
+    toggleActive: (id, is_active) => http.put(a(`${PATHS.BANNERS}/${id}`), { is_active }),
+  }
   static media = {
     upload:    (formData, mediaType) =>
       http.post(a(`${PATHS.MEDIA}/upload${mediaType ? `?media_type=${mediaType}` : ''}`), formData, {
@@ -139,6 +165,8 @@ export class AdminApi {
       http.get(a(`${PATHS.MEDIA}/product/${productId}`)),
     attachToProduct: (productId, data) =>
       http.post(a(`${PATHS.MEDIA}/product/${productId}`), data),
+    updateProductMedia: (productId, mediaId, data) =>
+      http.patch(a(`${PATHS.MEDIA}/product/${productId}/${mediaId}`), data),
     detachFromProduct: (productId, mediaId) =>
       http.delete(a(`${PATHS.MEDIA}/product/${productId}/${mediaId}`)),
   }

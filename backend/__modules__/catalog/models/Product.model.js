@@ -142,7 +142,7 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.Shop, { foreignKey: "shop_id", as: "shop" });
         Model.belongsTo(db.Category, { foreignKey: "category_id", as: "category" });
         Model.hasMany(db.ProductVariant, { foreignKey: "product_id", as: "variants" });
-        Model.hasMany(db.ProductImage, { foreignKey: "product_id", as: "images" });
+        if (db.ProductMedia) Model.hasMany(db.ProductMedia, { foreignKey: "product_id", as: "productMedia" });
         Model.hasMany(db.Review, { foreignKey: "product_id", as: "reviews" });
         Model.belongsToMany(db.Collection, {
             through: db.CollectionProduct,

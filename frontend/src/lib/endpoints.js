@@ -24,4 +24,12 @@ export const PATHS = {
   NOTIFICATIONS: '/notifications',
   // Media library
   MEDIA: '/media',
+  // Banners
+  BANNERS:      '/banners',
+  BANNER_TYPES: '/banners/types',
+  // Delivers
+  DELIVERS: '/delivers',
+  // Subscriptions
+  PLANS:              '/plans',
+  SHOP_SUBSCRIPTIONS: '/shop-subscriptions',
 }

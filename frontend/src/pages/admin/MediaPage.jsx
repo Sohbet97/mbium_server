@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Upload, Trash2, Eye, Search, Loader2, ImageIcon } from 'lucide-react'
+import { Upload, Trash2, Search, Loader2, ImageIcon, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { AdminApi } from '@/lib/api'
 import { MediaCard } from '@/components/media/MediaCard'
@@ -8,11 +8,11 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 const TYPES = [
-  { value: '',      label: 'All' },
+  { value: '', label: 'All' },
   { value: 'image', label: 'Images' },
   { value: 'video', label: 'Video' },
-  { value: '3d',    label: '3D Models' },
-  { value: '360',   label: '360° Photos' },
+  { value: '3d', label: '3D Models' },
+  { value: '360', label: '360° Photos' },
 ]
 
 const ACCEPT = 'image/*,video/mp4,video/webm,video/quicktime,.glb,.gltf'
@@ -20,16 +20,16 @@ const LIMIT = 48
 
 export default function MediaPage() {
   const { t } = useTranslation()
-  const [items,     setItems]     = useState([])
-  const [total,     setTotal]     = useState(0)
-  const [loading,   setLoading]   = useState(false)
+  const [items, setItems] = useState([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
-  const [page,      setPage]      = useState(1)
-  const [search,    setSearch]    = useState('')
-  const [type,      setType]      = useState('')
-  const [viewer,    setViewer]    = useState(null)
-  const [selected,  setSelected]  = useState(new Set())
-  const [deleting,  setDeleting]  = useState(false)
+  const [page, setPage] = useState(1)
+  const [search, setSearch] = useState('')
+  const [type, setType] = useState('')
+  const [viewer, setViewer] = useState(null)
+  const [selected, setSelected] = useState(new Set())
+  const [deleting, setDeleting] = useState(false)
   const fileRef = useRef(null)
   const searchTimer = useRef(null)
 
@@ -42,7 +42,7 @@ export default function MediaPage() {
       setTotal(data.count ?? 0)
       setPage(p)
     } catch { toast.error(t('toast.error')) }
-    finally  { setLoading(false) }
+    finally { setLoading(false) }
   }
 
   useEffect(() => { load(1) }, [])
@@ -97,7 +97,7 @@ export default function MediaPage() {
       setSelected(new Set())
       load(1)
     } catch { toast.error(t('toast.error')) }
-    finally  { setDeleting(false) }
+    finally { setDeleting(false) }
   }
 
   // Drag-and-drop upload
@@ -214,19 +214,25 @@ export default function MediaPage() {
           <>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
               {items.map((item) => (
-                <div key={item.id} className="relative">
+                <div key={item.id} className="relative group">
                   <MediaCard
                     item={item}
                     selected={selected.has(item.id)}
                     selectable
-                    onClick={() => toggleSelect(item.id)}
+                    onClick={() => setViewer(item)}
                   />
+                  {/* Selection checkbox */}
                   <button
-                    onClick={(e) => { e.stopPropagation(); setViewer(item) }}
-                    className="absolute bottom-1.5 right-1.5 p-1 rounded bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:bg-black/70 transition-all"
-                    title="Preview"
+                    onClick={(e) => { e.stopPropagation(); toggleSelect(item.id) }}
+                    className={cn(
+                      'absolute top-1.5 left-1.5 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all z-10',
+                      selected.has(item.id)
+                        ? 'bg-blue-500 border-blue-500 opacity-100'
+                        : 'bg-black/40 border-white/60 opacity-0 group-hover:opacity-100'
+                    )}
+                    title="Select"
                   >
-                    <Eye className="h-3 w-3" />
+                    {selected.has(item.id) && <Check className="h-2.5 w-2.5 text-white" />}
                   </button>
                 </div>
               ))}

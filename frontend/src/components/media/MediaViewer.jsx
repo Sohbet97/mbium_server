@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { X, Download, ExternalLink } from 'lucide-react'
+import { X, Download, ExternalLink, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
@@ -91,7 +91,7 @@ const VIEWERS = {
   '360': Viewer360,
 }
 
-export function MediaViewer({ item, onClose }) {
+export function MediaViewer({ item, onClose, onSetPrimary, isPrimary }) {
   const Viewer = VIEWERS[item.type] ?? ImageViewer
 
   useEffect(() => {
@@ -116,6 +116,22 @@ export function MediaViewer({ item, onClose }) {
             </p>
           </div>
           <div className="flex items-center gap-1 ml-4 shrink-0">
+            {onSetPrimary && (
+              <button
+                onClick={onSetPrimary}
+                disabled={isPrimary}
+                title={isPrimary ? 'Primary image' : 'Set as primary'}
+                className={cn(
+                  'flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors',
+                  isPrimary
+                    ? 'dark:bg-yellow-500/20 bg-yellow-50 text-yellow-600 cursor-default'
+                    : 'dark:hover:bg-white/[0.08] hover:bg-slate-100 dark:text-slate-400 text-slate-500'
+                )}
+              >
+                <Star className={cn('h-3.5 w-3.5', isPrimary && 'fill-yellow-500 stroke-yellow-500')} />
+                {isPrimary ? 'Primary' : 'Set primary'}
+              </button>
+            )}
             <a
               href={absUrl(item.url)}
               target="_blank"

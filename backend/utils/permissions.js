@@ -84,6 +84,21 @@ class Permissions {
     static DISPUTE_POST = 66
     static DISPUTE_PUT = 67
     static DISPUTE_DELETE = 68
+
+    static DELIVER_GET = 69
+    static DELIVER_POST = 70
+    static DELIVER_PUT = 71
+    static DELIVER_DELETE = 72
+
+    static PLAN_GET = 73
+    static PLAN_POST = 74
+    static PLAN_PUT = 75
+    static PLAN_DELETE = 76
+
+    static SUBSCRIPTION_GET = 77
+    static SUBSCRIPTION_POST = 78
+    static SUBSCRIPTION_PUT = 79
+    static SUBSCRIPTION_DELETE = 80
 }
 
 module.exports = Permissions

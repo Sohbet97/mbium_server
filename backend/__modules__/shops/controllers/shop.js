@@ -60,26 +60,14 @@ class ShopController {
 
     static async update(req, res, next) {
         try {
-            let model = await ShopService.getById(req?.params?.id);
-            if (!model) throw ApiError.NotFound("Brand not found");
+            const existing = await ShopService.getById(req?.params?.id);
+            if (!existing) throw ApiError.NotFound("Dükan tapylmady");
 
-            model.name        = req.body?.name;
-            model.name_ru     = req.body?.name_ru     ?? model.name_ru;
-            model.name_eng    = req.body?.name_eng    ?? model.name_eng;
-            model.type_id     = FUNCTIONS.getNumber(req.body?.type_id)  || model.type_id;
-            model.is_active   = req.body?.is_active   ?? model.is_active;
-            model.order       = req.body?.order !== undefined ? (FUNCTIONS.getNumber(req.body.order) || null) : model.order;
-            model.description = req.body?.description ?? model.description;
-            model.logo        = req.body?.logo        ?? model.logo;
-            model.address     = req.body?.address     ?? model.address;
-            model.phone       = req.body?.phone       ?? model.phone;
-            model.email       = req.body?.email       ?? model.email;
-            if (req.body?.owner_id !== undefined) model.owner_id = req.body.owner_id;
-
-            const { isError, errors } = await Validator.validate(shopSchema, model);
+            const { isError, errors } = await Validator.validate(shopSchema, req.body);
             if (isError) throw ApiError.BadRequest(null, errors);
 
-            await model.save();
+            await ShopService.update(req.params.id, req);
+            const model = await ShopService.getById(req.params.id);
             res.status(200).json({ model });
             next();
         } catch (e) {
@@ -130,8 +118,30 @@ class ShopController {
         try {
             const model = await ShopService.getById(req.params.id);
             if (!model) throw ApiError.NotFound("Dükan tapylmady");
-            const updated = await ShopService.reject(req.params.id, req.user?.id, req.body?.note);
+            const updated = await ShopService.reject(req.params.id, req.user?.id, req.body?.note, req.app.io);
             return res.status(200).json({ model: updated });
+        } catch (e) { next(e); }
+    }
+
+    // ── Public self-service ───────────────────────────────────────────────────
+
+    static async applyForShop(req, res, next) {
+        try {
+            const existing = await ShopService.getByOwner(req.user.id);
+            if (existing) throw ApiError.BadRequest("Sizde eýýäm dükan bar");
+            const { isError, errors } = await Validator.validate(shopSchema, req.body);
+            if (isError) throw ApiError.BadRequest(null, errors);
+            const model = await ShopService.create(req);
+            const submitted = await ShopService.submitForReview(model.id);
+            NotificationService.createForShopReview(submitted, req.app.io).catch(() => {});
+            return res.status(201).json({ model: submitted });
+        } catch (e) { next(e); }
+    }
+
+    static async getMyShop(req, res, next) {
+        try {
+            const model = await ShopService.getByOwner(req.user.id);
+            return res.status(200).json({ model: model || null });
         } catch (e) { next(e); }
     }
 

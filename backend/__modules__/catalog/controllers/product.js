@@ -33,6 +33,19 @@ class ProductController {
         try {
             const { isError, errors } = await Validator.validate(productSchema, req.body);
             if (isError) throw ApiError.BadRequest(null, errors);
+
+            // Enforce plan product_limit
+            const shop_id = req.body?.shop_id;
+            if (shop_id) {
+                const shop = await db.Shop.findOne({ where: { id: shop_id }, include: [{ model: db.Plan, as: "plan" }] });
+                if (shop?.plan?.product_limit != null) {
+                    const count = await db.Product.count({ where: { shop_id } });
+                    if (count >= shop.plan.product_limit) {
+                        throw ApiError.NotAllowed(`Siziň planynyz diňe ${shop.plan.product_limit} haryt goşmaga rugsat berýär. Planynyz täzeläň.`);
+                    }
+                }
+            }
+
             const model = await ProductService.create(req);
             return res.status(201).json({ model });
         } catch (e) { next(e); }
@@ -68,24 +81,6 @@ class ProductController {
             const model = await db.Product.findOne({ where: { id: req.params.id }, paranoid: false });
             if (!model) throw ApiError.NotFound("Haryt tapylmady");
             if (model.deletedAt) await model.restore();
-            return res.sendStatus(200);
-        } catch (e) { next(e); }
-    }
-
-    // ── Images ──────────────────────────────────────────────────────────────────
-
-    static async addImage(req, res, next) {
-        try {
-            const { url, is_primary, order } = req.body;
-            if (!url) throw ApiError.BadRequest("Surat URL talap edilýär");
-            const image = await ProductService.addImage(req.params.id, url, is_primary, order);
-            return res.status(201).json({ model: image });
-        } catch (e) { next(e); }
-    }
-
-    static async deleteImage(req, res, next) {
-        try {
-            await ProductService.deleteImage(req.params.imageId);
             return res.sendStatus(200);
         } catch (e) { next(e); }
     }

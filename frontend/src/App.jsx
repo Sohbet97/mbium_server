@@ -24,6 +24,9 @@ import LocationsPage from '@/pages/admin/LocationsPage'
 import SettingsPage from '@/pages/admin/SettingsPage'
 import AccountPage from '@/pages/admin/AccountPage'
 import MediaPage from '@/pages/admin/MediaPage'
+import BannersPage from '@/pages/admin/BannersPage'
+import DeliveriesPage from '@/pages/admin/DeliveriesPage'
+import PlansPage from '@/pages/admin/PlansPage'
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
@@ -54,6 +57,9 @@ const router = createBrowserRouter([
           { path: 'settings', element: <SettingsPage />, handle: { titleKey: 'settings.title' } },
           { path: 'account', element: <AccountPage />, handle: { titleKey: 'account.title' } },
           { path: 'media', element: <MediaPage />, handle: { titleKey: 'media.title' } },
+          { path: 'banners', element: <BannersPage />, handle: { titleKey: 'banners.title' } },
+          { path: 'delivers', element: <DeliveriesPage />, handle: { titleKey: 'delivers.title' } },
+          { path: 'plans', element: <PlansPage />, handle: { titleKey: 'plans.title' } },
         ],
       },
     ],

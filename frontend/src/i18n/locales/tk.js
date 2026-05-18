@@ -1,13 +1,15 @@
 export default {
   common: {
-    loading: 'Ýüklenýär…', save: 'Ýatda sakla', cancel: 'Ýatyr', delete: 'Poz', edit: 'Düzelt',
-    add: 'Goş', search: 'Gözle', refresh: 'Täzele', actions: 'Hereketler',
+    loading: 'Ýüklenýär…', save: 'Ýatda sakla', cancel: 'Ýatyr', delete: 'Poz', edit: 'Üýtgetmek',
+    add: 'Goş', search: 'Gözle', refresh: 'Täzele', actions: 'Hereketler', preview: 'Görmek',
     previous: 'Öňki', next: 'Indiki',
     page: 'Sahypa {{current}} / {{total}}',
     never: 'Hiç haçan', comingSoon: 'Ýakynda', noResults: 'Hiç zat tapylmady',
     operational: 'Işleýär', confirm: 'Tassykla', create: 'Döret', update: 'Täzele',
     restore: 'Dikelt', forceDelete: 'Doly poz', yes: 'Hawa', no: 'Ýok',
-    active: 'Işjeň', inactive: 'Işjeň däl', verified: 'Tassyklanan', unverified: 'Tassyklanmadyk',
+    active: 'Işjeň', inactive: 'Işjeň däl', activate: 'Işjeňleşdir', deactivate: 'Işjeňden çykar',
+    confirmDelete: 'Pozmak isleýärsiňizmi?',
+    verified: 'Tassyklanan', unverified: 'Tassyklanmadyk',
     status: 'Ýagdaýy', name: 'Ady', description: 'Beýany', createdAt: 'Döredilen',
     optional: 'islegle', all: 'Ählisi', approve: 'Oňa', reject: 'Red et',
     deleted: 'Pozulan',
@@ -15,10 +17,10 @@ export default {
 
   nav: {
     dashboard: 'Dolandyryş paneli', users: 'Ulanyjylar', roles: 'Rollar we rugsat',
-    shops: 'Dükanllar', catalog: 'Katalog', categories: 'Kategoriýalar', products: 'Harytlar',
+    shops: 'Dükanlar', catalog: 'Katalog', categories: 'Kategoriýalar', products: 'Harytlar',
     collections: 'Kolleksiýalar',
-    orders: 'Sargytlar', reviews: 'Syn', discounts: 'Arzanladyşlar',
-    media: 'Media kitaphanasy',
+    orders: 'Sargytlar', reviews: 'Syn', discounts: 'Arzanladyşlar', banners: 'Bannerlar',
+    media: 'Media kitaphanasy', delivers: 'Eltip berýänler', plans: 'Planlar',
     locations: 'Ýerler', settings: 'Sazlamalar', logout: 'Çyk',
   },
 
@@ -42,7 +44,7 @@ export default {
   dashboard: {
     title: 'Dolandyryş paneli', overview: 'Gysgaça syn',
     subtitle: 'Platformanyň umumy görkezijileri',
-    totalUsers: 'Ähli ulanyjylar', totalShops: 'Ähli dükanllar',
+    totalUsers: 'Ähli ulanyjylar', totalShops: 'Ähli dükanlar',
     totalOrders: 'Ähli sargytlar', totalRevenue: 'Girdeji (TMT)',
     roles: 'Rollar', activeSessions: 'Işjeň sessiýalar',
     recentOrders: 'Soňky sargytlar', recentActivity: 'Soňky işjeňlik',
@@ -56,7 +58,7 @@ export default {
     createUser: 'Ulanyjy döret',
     searchPlaceholder: 'Ady, familiýasy ýa-da email boýunça gözle…',
     colUser: 'Ulanyjy', colPhone: 'Telefon', colRole: 'Rol', colStatus: 'Ýagdaýy', colLastLogin: 'Soňky giriş',
-    editUser: 'Düzelt', blockUser: 'Petikle', unblockUser: 'Açyk et',
+    editUser: 'Üýtgetmek', blockUser: 'Petikle', unblockUser: 'Açyk et',
     unlockUser: 'Açyk et (giriş petiklemesini aýyr)', deleteUser: 'Ulanyjyny poz',
     statusNotActivated: 'Işjeňleşdirilmedi', statusActive: 'Işjeň', statusBlocked: 'Petiklenen',
     filterStatus: 'Ähli ýagdaýlar', filterRole: 'Ähli rollar',
@@ -69,8 +71,8 @@ export default {
   },
 
   shops: {
-    title: 'Dükanllar', totalCount: '{{count}} dükan', addShop: 'Dükan goş',
-    editShop: 'Dükany düzelt', createShop: 'Dükan döret',
+    title: 'Dükanlar', totalCount: '{{count}} dükan', addShop: 'Dükan goş',
+    editShop: 'Dükany üýtgetmek', createShop: 'Dükan döret',
     searchPlaceholder: 'Dükan gözle…',
     colShop: 'Dükan', colType: 'Görnüşi', colOwner: 'Eýesi', colStatus: 'Ýagdaýy', colRating: 'Baha',
     viewProducts: 'Harytlar', deleteShop: 'Poz', restoreShop: 'Dikelt',
@@ -93,7 +95,7 @@ export default {
 
   categories: {
     title: 'Kategoriýalar', addCategory: 'Kategoriýa goş',
-    editCategory: 'Kategoriýany düzelt', createCategory: 'Kategoriýa döret',
+    editCategory: 'Kategoriýany üýtgetmek', createCategory: 'Kategoriýa döret',
     noParent: 'Ýok (baş kategoriýa)', parentCategory: 'Ata kategoriýa',
     slug: 'Slug', slugHint: 'URL üçin belgi, mysal: "elektronika"',
     icon: 'Nyşan (emoji ýa-da URL)', order: 'Görkeziliş tertibi',
@@ -103,7 +105,7 @@ export default {
 
   products: {
     title: 'Harytlar', totalCount: '{{count}} haryt',
-    addProduct: 'Haryt goş', editProduct: 'Haryt düzelt', createProduct: 'Haryt döret',
+    addProduct: 'Haryt goş', editProduct: 'Haryt üýtgetmek', createProduct: 'Haryt döret',
     searchPlaceholder: 'Haryt gözle…',
     filterShop: 'Ähli dükanlar', filterCategory: 'Ähli kategoriýalar', filterStatus: 'Ähli ýagdaýlar',
     colProduct: 'Haryt', colShop: 'Dükan', colCategory: 'Kategoriýa',
@@ -121,7 +123,7 @@ export default {
     handle: 'URL belgi', handleHint: 'Witrinada URL-de ulanylýar, mysal: "gyzyl-krossowka"',
     newProductHint: 'Maglumatlary dolduryp döretmek üçin ýatda sakla',
     descriptionPlaceholder: 'Harydyň beýanyny ýazyň…',
-    media: 'Mediafaýllar', saveToAddImages: 'Surat goşmak üçin harydı ilki ýatda sakla',
+    media: 'Mediafaýllar', saveToAddImages: 'Surat goşmak üçin harydı ilki ýatda sakla', addMediaHint: 'Media kitaphanasyndaky suratlary goşmak üçin basyň',
     pricing: 'Bahalar', inventory: 'Ammar', shipping: 'Eltip bermek',
     organization: 'Gurama',
     costPrice: 'Özüne düşüş bahasy', costPriceHint: 'Içerki baha — müşderilere görkezilmeýär',
@@ -134,7 +136,7 @@ export default {
 
   collections: {
     title: 'Kolleksiýalar', totalCount: '{{count}} kolleksiýa',
-    addCollection: 'Kolleksiýa goş', createCollection: 'Kolleksiýa döret', editCollection: 'Kolleksiýany düzelt',
+    addCollection: 'Kolleksiýa goş', createCollection: 'Kolleksiýa döret', editCollection: 'Kolleksiýany üýtgetmek',
     searchPlaceholder: 'Kolleksiýa gözle…',
     descriptionPlaceholder: 'Kolleksiýany beýan et…',
     image: 'Surat', imageUrl: 'Surat URL',
@@ -153,7 +155,7 @@ export default {
   },
 
   variants: {
-    title: 'Haryt görnüşleri', addVariant: 'Görnüş goş', editVariant: 'Görnüşi düzelt',
+    title: 'Haryt görnüşleri', addVariant: 'Görnüş goş', editVariant: 'Görnüşi üýtgetmek',
     variantName: 'Görnüşiň ady', sku: 'SKU', barcode: 'Ştrikod',
     price: 'Bahasy (TMT)', compareAtPrice: 'Öňki bahasy (TMT)',
     stock: 'Ammar', attributes: 'Häsiýetleri (JSON)', isActive: 'Işjeň',
@@ -193,7 +195,7 @@ export default {
 
   discounts: {
     title: 'Arzanladyşlar', totalCount: '{{count}} arzanladyş',
-    addDiscount: 'Arzanladyş goş', editDiscount: 'Düzelt', createDiscount: 'Arzanladyş döret',
+    addDiscount: 'Arzanladyş goş', editDiscount: 'Üýtgetmek', createDiscount: 'Arzanladyş döret',
     code: 'Kupon kody', codeHint: 'mysal: SUMMER20 (boş goýsaň awtomatik döredilýär)',
     type: 'Görnüş', typePercentage: 'Göterim (%)', typeFixed: 'Belli möçber (TMT)',
     typeFreeShipping: 'Mugt eltip bermek',
@@ -209,7 +211,7 @@ export default {
 
   roles: {
     title: 'Rollar we rugsat',
-    addRole: 'Rol goş', editRole: 'Roly düzelt', createRole: 'Rol döret',
+    addRole: 'Rol goş', editRole: 'Roly üýtgetmek', createRole: 'Rol döret',
     roleName: 'Roluň ady', roleOrder: 'Tertip',
     permissions: 'Rugsatlar', selectAll: 'Ählisi', clearAll: 'Arassala',
     userCount: '{{count}} ulanyjy', noRoles: 'Rol ýok',
@@ -224,11 +226,11 @@ export default {
     title: 'Ýerler',
     tabCountries: 'Ýurtlar', tabRegions: 'Welaýatlar', tabCities: 'Şäherler',
     tabDistricts: 'Etraplar', tabVillages: 'Obalar',
-    addCountry: 'Ýurt goş', editCountry: 'Ýurdy düzelt',
-    addRegion: 'Welaýat goş', editRegion: 'Welaýaty düzelt',
-    addCity: 'Şäher goş', editCity: 'Şäheri düzelt',
-    addDistrict: 'Etrap goş', editDistrict: 'Etraby düzelt',
-    addVillage: 'Oba goş', editVillage: 'Obany düzelt',
+    addCountry: 'Ýurt goş', editCountry: 'Ýurdy üýtgetmek',
+    addRegion: 'Welaýat goş', editRegion: 'Welaýaty üýtgetmek',
+    addCity: 'Şäher goş', editCity: 'Şäheri üýtgetmek',
+    addDistrict: 'Etrap goş', editDistrict: 'Etraby üýtgetmek',
+    addVillage: 'Oba goş', editVillage: 'Obany üýtgetmek',
     colName: 'Ady', colCode: 'Kody', colOrder: 'Tertip', colStatus: 'Ýagdaýy',
     colShortName: 'Gysgaça', colType: 'Görnüşi', colRegion: 'Welaýaty', colDistrict: 'Etraby',
     name: 'Ady', shortName: 'Gysgaça ady', code: 'Kody', order: 'Tertip',
@@ -282,6 +284,67 @@ export default {
     primary: 'Baş', setPrimary: 'Baş hökmünde belle',
     removeFromProduct: 'Aýyr',
     noMedia: 'Media ýok. Surat, wideo ýa-da 3D model goşuň.',
+  },
+
+  banners: {
+    title: 'Bannerlar', subtitle_page: '{{count}} banner',
+    create: 'Banner döret', edit: 'Banneri üýtgetmek',
+    image: 'Surat', pickImage: 'Media kitaphanasyndan saýla', changeImage: 'Suraty çalyş',
+    type: 'Banner görnüşi', selectType: 'Görnüş saýla',
+    fieldTitle: 'Başlyk', titleRequired: 'Başlyk hökman', titlePlaceholder: 'Tomusky arzanladyş…',
+    subtitle: 'Kiçi başlyk', subtitlePlaceholder: 'Saýlanan harytlarda 70%-e çenli arzanladyş',
+    linkUrl: 'Baglanyşyk URL', buttonText: 'Düwme ýazgysy', buttonTextPlaceholder: 'Satyn al',
+    buttonUrl: 'Düwme URL', startsAt: 'Başlanýar', endsAt: 'Tamamlanýar',
+    isActive: 'Işjeň', noImage: 'Surat ýok',
+    empty: 'Banner ýok', createFirst: 'Ilkinji banneri döret',
+  },
+
+  plans: {
+    title: 'Abuna planlary', totalCount: '{{count}} plan',
+    addPlan: 'Plan goş', editPlan: 'Üýtgetmek', createPlan: 'Plan döret',
+    name: 'Plan ID (slug)', displayName: 'Ady',
+    nameTm: 'Ady (türkmençe)', nameRu: 'Ady (rusça)', nameEn: 'Ady (iňlisce)',
+    price: 'Aýlyk bahasy (TMT)', commissionRate: 'Komissiýa (0–1)',
+    productLimit: 'Haryt çägi', unlimited: 'Çäksiz',
+    hotspotPerMonth: 'Hotspot / aý', hotspotDuration: 'Hotspot dowamlylygy (sagat)',
+    aiCredits: 'AI kreditler / aý', auctionPerWeek: 'Auktion / hepde',
+    liveStream: 'Göni efir', liveNone: 'Ýok', liveViewOnly: 'Diňe görmek',
+    liveLimited: 'Çäkli', liveUnlimited: 'Çäksiz',
+    adsDashboard: 'Mahabat paneli', coinEarn: 'Coin gazanmak',
+    coinEarnPriority: 'Prioritetli coin', verifiedBadge: 'Verified PRO nyşany',
+    virtualTour: '360° wirtual gezelenç', oemOdm: 'OEM & ODM goldawy',
+    revenueShareUser: 'Girdeji paýy (ulanyjy %)', pushNotifMonthly: 'Push habarlary / aý',
+    isActive: 'Işjeň', sortOrder: 'Tertip',
+    confirmDelete: 'Bu plany pozmak isleýärsiňizmi?',
+    features: 'Mümkinçilikler',
+  },
+
+  subscriptions: {
+    title: 'Abuna', currentPlan: 'Häzirki plan', noPlan: 'Plan bellenmedi',
+    assignPlan: 'Plan belle', changePlan: 'Plany üýtget', cancelSub: 'Abuny ýatyr',
+    history: 'Abuna taryhy',
+    statusPending: 'Garaşylýar', statusActive: 'Işjeň', statusCancelled: 'Ýatyryldy', statusExpired: 'Möhleti geçdi',
+    startsAt: 'Başlanýar', endsAt: 'Gutarýar', assignedBy: 'Bellän',
+    note: 'Bellik', selectPlan: 'Plan saýlaň…',
+    confirmCancel: 'Bu dükan üçin işjeň abuny ýatyrmagy isleýärsiňizmi?',
+    confirmAssign: 'Plan bellenmeli?',
+    noExpiry: 'Möhletsiz',
+    colPlan: 'Plan', colStatus: 'Ýagdaýy', colStarts: 'Başlanýar', colEnds: 'Gutarýar',
+  },
+
+  delivers: {
+    title: 'Eltip berýänler', totalCount: '{{count}} eltip berýän',
+    addDeliver: 'Goş', editDeliver: 'Üýtgetmek', createDeliver: 'Döret',
+    searchPlaceholder: 'Adyna görä gözle…',
+    firstName: 'Ady', lastName: 'Familiýasy',
+    avatar: 'Surat URL', city: 'Şäher', noCity: 'Şäher ýok',
+    status: 'Ýagdaýy', statusOnline: 'Onlaýn', statusOffline: 'Oflaýn',
+    filterStatus: 'Ähli ýagdaýlar', filterCity: 'Ähli şäherler',
+    phones: 'Telefon belgiler', addPhone: 'Telefon goş', phonePlaceholder: '+993XXXXXXXX',
+    colDeliver: 'Eltip berýän', colCity: 'Şäher', colStatus: 'Ýagdaýy', colPhones: 'Telefonlar',
+    confirmDelete: 'Pozmak isleýärsiňizmi?',
+    confirmForceDelete: 'Doly pozmak isleýärsiňizmi?',
+    noPhone: 'Telefon ýok',
   },
 
   account: {
