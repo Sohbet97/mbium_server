@@ -109,7 +109,7 @@ class ShopController {
         try {
             const model = await ShopService.getById(req.params.id);
             if (!model) throw ApiError.NotFound("Dükan tapylmady");
-            const updated = await ShopService.verify(req.params.id, req.user?.id);
+            const updated = await ShopService.verify(req.params.id, req.user?.id, req.app.io);
             return res.status(200).json({ model: updated });
         } catch (e) { next(e); }
     }
@@ -127,11 +127,32 @@ class ShopController {
 
     static async applyForShop(req, res, next) {
         try {
+            // Inject uploaded KYC file paths into req.body so services read them normally
+            const fileUrl = (field) => {
+                const f = req.files?.[field]?.[0];
+                return f ? `/static/shop-docs/${f.filename}` : undefined;
+            };
+            ['passport_file', 'patent_file', 'video_url'].forEach((field) => {
+                const path = fileUrl(field);
+                if (path !== undefined) req.body[field] = path;
+            });
+
             const existing = await ShopService.getByOwner(req.user.id);
-            if (existing) throw ApiError.BadRequest("Sizde eýýäm dükan bar");
             const { isError, errors } = await Validator.validate(shopSchema, req.body);
             if (isError) throw ApiError.BadRequest(null, errors);
-            const model = await ShopService.create(req);
+
+            let model;
+            if (!existing) {
+                // First-time application
+                model = await ShopService.create(req);
+            } else if (existing.verification_status === 3) {
+                // Re-apply after rejection — update fields and re-submit
+                await ShopService.update(existing.id, req);
+                model = await ShopService.getById(existing.id);
+            } else {
+                throw ApiError.BadRequest("Arzaňyz eýýäm iberildi ýa-da dükan bar");
+            }
+
             const submitted = await ShopService.submitForReview(model.id);
             NotificationService.createForShopReview(submitted, req.app.io).catch(() => {});
             return res.status(201).json({ model: submitted });

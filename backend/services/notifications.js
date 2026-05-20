@@ -121,6 +121,19 @@ class NotificationService {
         if (io) io.to(shop.owner_id).emit('notification', record);
         return record;
     }
+
+    static async createForShopApproved(shop, io) {
+        const name = shop?.name ?? 'Dükan';
+        const content = { message: `"${name}" dükanyňyz tassyklandy! Indi söwda edip bilersiňiz.` };
+        const record = await this.create({
+            userId:   shop.owner_id,
+            type:     STATUSES.NOT_SHOP_APPROVED,
+            targetId: shop.id,
+            content,
+        });
+        if (io) io.to(shop.owner_id).emit('notification', record);
+        return record;
+    }
 }
 
 module.exports = NotificationService;

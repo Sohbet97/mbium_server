@@ -8,6 +8,7 @@ import { SellerLayout } from '@/components/layout/SellerLayout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import LoginPage from '@/pages/auth/LoginPage'
 import PendingPage from '@/pages/auth/PendingPage'
+import ShopApplyPage from '@/pages/auth/ShopApplyPage'
 // Admin pages
 import DashboardPage from '@/pages/admin/DashboardPage'
 import UsersPage from '@/pages/admin/UsersPage'
@@ -30,15 +31,23 @@ import MediaPage from '@/pages/admin/MediaPage'
 import BannersPage from '@/pages/admin/BannersPage'
 import DeliveriesPage from '@/pages/admin/DeliveriesPage'
 import PlansPage from '@/pages/admin/PlansPage'
+import ShopApplicationsPage from '@/pages/admin/ShopApplicationsPage'
 // Seller pages
 import SellerDashboardPage from '@/pages/seller/SellerDashboardPage'
 import SellerProductsPage from '@/pages/seller/SellerProductsPage'
 import SellerOrdersPage from '@/pages/seller/SellerOrdersPage'
 import SellerShopPage from '@/pages/seller/SellerShopPage'
+import SellerDiscountsPage from '@/pages/seller/SellerDiscountsPage'
+import SellerPayoutsPage from '@/pages/seller/SellerPayoutsPage'
+import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
+import SellerMediaPage from '@/pages/seller/SellerMediaPage'
+import SellerBannersPage from '@/pages/seller/SellerBannersPage'
+import SellerSubscriptionPage from '@/pages/seller/SellerSubscriptionPage'
 
 const router = createBrowserRouter([
   { path: '/login',   element: <LoginPage /> },
   { path: '/pending', element: <PendingPage /> },
+  { path: '/apply',   element: <ShopApplyPage /> },
   {
     element: <ProtectedRoute />,
     children: [
@@ -70,6 +79,7 @@ const router = createBrowserRouter([
           { path: 'banners', element: <BannersPage />, handle: { titleKey: 'banners.title' } },
           { path: 'delivers', element: <DeliveriesPage />, handle: { titleKey: 'delivers.title' } },
           { path: 'plans', element: <PlansPage />, handle: { titleKey: 'plans.title' } },
+          { path: 'shop-applications', element: <ShopApplicationsPage />, handle: { titleKey: 'shopApplications.title' } },
         ],
       },
       // ── Seller panel ──────────────────────────────────────────────────────
@@ -77,10 +87,17 @@ const router = createBrowserRouter([
         path: '/seller',
         element: <SellerLayout />,
         children: [
-          { index: true,       element: <SellerDashboardPage /> },
-          { path: 'products',  element: <SellerProductsPage /> },
-          { path: 'orders',    element: <SellerOrdersPage /> },
-          { path: 'shop',      element: <SellerShopPage /> },
+          { index: true,        element: <SellerDashboardPage /> },
+          { path: 'products',          element: <SellerProductsPage /> },
+          { path: 'products/new',      element: <SellerProductFormPage /> },
+          { path: 'products/:id/edit', element: <SellerProductFormPage /> },
+          { path: 'orders',     element: <SellerOrdersPage /> },
+          { path: 'shop',       element: <SellerShopPage /> },
+          { path: 'discounts',  element: <SellerDiscountsPage /> },
+          { path: 'payouts',    element: <SellerPayoutsPage /> },
+          { path: 'media',        element: <SellerMediaPage /> },
+          { path: 'banners',      element: <SellerBannersPage /> },
+          { path: 'subscription', element: <SellerSubscriptionPage /> },
         ],
       },
     ],

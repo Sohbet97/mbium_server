@@ -4,31 +4,26 @@ const ApiError = require("../exceptions/api-error");
  * RBAC middleware factory.
  * Maps HTTP methods to permission keys and enforces them.
  *
- * @param {Object} methodPermissions - e.g. { GET: "PERM_GET", POST: "PERM_POST" }
+ * @param {Object} methodPermissions - e.g. { GET: Permissions.SHOP_GET, POST: Permissions.SHOP_POST }
  */
 function routeGuard(methodPermissions) {
-  return (req, res, next) => {
-    try {
-      // const user = req.user;
-      // const role = user?._role;
-      // const requiredPermission = methodPermissions[req.method];
-      
-      // if (!requiredPermission || role?.permissions?.includes(requiredPermission)) {
-        return next();
-      // }
+    return (req, res, next) => {
+        try {
+            const role = req.user?._role;
+            const requiredPermission = methodPermissions[req.method];
 
-      // const context = user?._assignment
-      //   ? `[${user._assignment.assignment_type} — ${user._assignment.position_name}]`
-      //   : '[no assignment]';
+            if (!requiredPermission || role?.permissions?.includes(requiredPermission)) {
+                return next();
+            }
 
-      // throw ApiError.NotAllowed(
-      //   `"${role?.name || ''}" ${context} - roly {${requiredPermission}} rugsadyna eýe däl`,
-      //   requiredPermission
-      // );
-    } catch (err) {
-      next(err);
-    }
-  };
+            throw ApiError.NotAllowed(
+                `"${role?.name || ''}" - roly {${requiredPermission}} rugsadyna eýe däl`,
+                requiredPermission
+            );
+        } catch (err) {
+            next(err);
+        }
+    };
 }
 
 module.exports = routeGuard;

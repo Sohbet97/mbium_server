@@ -33,6 +33,7 @@ const ALL_PERMISSIONS = [
     69,  70,  71,  72,  // Delivers
     73,  74,  75,  76,  // Plans
     77,  78,  79,  80,  // Subscriptions
+    81,  82,  83,  84,  // Shops
     309,                // User login-as
 ];
 
@@ -45,9 +46,11 @@ module.exports = async (db) => {
     console.log('  Creating superadmin role…');
 
     const [role, roleCreated] = await db.Role.findOrCreate({
-        where: { name: 'Superadmin' },
+        where: { slug: 'superadmin' },
         defaults: {
             name: 'Superadmin',
+            slug: 'superadmin',
+            is_system: true,
             permissions: ALL_PERMISSIONS,
             modules: ALL_PERMISSIONS,
             start_page: 0,
@@ -57,8 +60,8 @@ module.exports = async (db) => {
     });
 
     if (!roleCreated) {
-        // Keep permissions up-to-date in case new ones were added
-        await role.update({ permissions: ALL_PERMISSIONS, modules: ALL_PERMISSIONS });
+        // Keep permissions and system flag up-to-date
+        await role.update({ name: 'Superadmin', is_system: true, permissions: ALL_PERMISSIONS, modules: ALL_PERMISSIONS });
         console.log(`  Role already exists (id=${role.id}) — permissions refreshed.`);
     } else {
         console.log(`  Role created (id=${role.id}).`);

@@ -99,6 +99,11 @@ class Permissions {
     static SUBSCRIPTION_POST = 78
     static SUBSCRIPTION_PUT = 79
     static SUBSCRIPTION_DELETE = 80
+
+    static SHOP_GET    = 81
+    static SHOP_POST   = 82
+    static SHOP_PUT    = 83
+    static SHOP_DELETE = 84
 }
 
 module.exports = Permissions

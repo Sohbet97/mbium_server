@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -18,6 +18,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin', label: t('nav.dashboard'), icon: LayoutDashboard, end: true },
     { to: '/admin/users', label: t('nav.users'), icon: Users },
     { to: '/admin/shops', label: t('nav.shops'), icon: Store },
+    { to: '/admin/shop-applications', label: t('nav.shopApplications', 'Dükan arzalary'), icon: ClipboardList },
     { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart },
     { to: '/admin/reviews', label: t('nav.reviews'), icon: Star },
     { to: '/admin/discounts', label: t('nav.discounts'), icon: Percent },

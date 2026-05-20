@@ -17,8 +17,6 @@ export function NotificationProvider({ children }) {
   useEffect(() => {
     if (!user) { setNotifications([]); setUnreadCount(0); return }
     AdminApi.notifications.count().then(({ data }) => {
-      console.log('count API: ', data);
-      
       setUnreadCount(data.count ?? 0);
     }).catch(() => { })
   }, [user])

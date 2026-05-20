@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, RefreshCw, Pencil, Trash2, Shield } from 'lucide-react'
+import { Plus, RefreshCw, Pencil, Trash2, Shield, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,19 +13,29 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 // ── Permission definitions ────────────────────────────────────────────────────
-// Each group: { labelKey, perms: [GET, POST, PUT, DELETE] }
+// Each group: { label, perms: [GET, POST, PUT, DELETE] }
 const PERM_GROUPS = [
-  { labelKey: 'roles.grpRoles',      perms: [1, 2, 3, 4] },
-  { labelKey: 'roles.grpUsers',      perms: [5, 6, 7, 8] },
-  { labelKey: 'roles.grpPositions',  perms: [9, 10, 11, 12] },
-  { labelKey: 'roles.grpRegions',    perms: [13, 14, 15, 16] },
-  { labelKey: 'roles.grpVillages',   perms: [17, 18, 19, 20] },
-  { labelKey: 'roles.grpCountries',  perms: [21, 22, 23, 24] },
-  { labelKey: 'roles.grpCategories', perms: [25, 26, 27, 28] },
-  { labelKey: 'roles.grpProducts',   perms: [29, 30, 31, 32] },
-  { labelKey: 'roles.grpOrders',     perms: [33, 34, 35, 36] },
-  { labelKey: 'roles.grpReviews',    perms: [37, 38, 39, 40] },
-  { labelKey: 'roles.grpDiscounts',  perms: [41, 42, 43, 44] },
+  { label: 'Roles',         perms: [1, 2, 3, 4] },
+  { label: 'Users',         perms: [5, 6, 7, 8] },
+  { label: 'Positions',     perms: [9, 10, 11, 12] },
+  { label: 'Regions',       perms: [13, 14, 15, 16] },
+  { label: 'Villages',      perms: [17, 18, 19, 20] },
+  { label: 'Countries',     perms: [21, 22, 23, 24] },
+  { label: 'Categories',    perms: [25, 26, 27, 28] },
+  { label: 'Products',      perms: [29, 30, 31, 32] },
+  { label: 'Orders',        perms: [33, 34, 35, 36] },
+  { label: 'Reviews',       perms: [37, 38, 39, 40] },
+  { label: 'Discounts',     perms: [41, 42, 43, 44] },
+  { label: 'Banners',       perms: [45, 46, 47, 48] },
+  { label: 'Shop Members',  perms: [49, 50, 51, 52] },
+  { label: 'Payouts',       perms: [53, 54, 55, 56] },
+  { label: 'Collections',   perms: [57, 58, 59, 60] },
+  { label: 'Media',         perms: [61, 62, 63, 64] },
+  { label: 'Disputes',      perms: [65, 66, 67, 68] },
+  { label: 'Delivers',      perms: [69, 70, 71, 72] },
+  { label: 'Plans',         perms: [73, 74, 75, 76] },
+  { label: 'Subscriptions', perms: [77, 78, 79, 80] },
+  { label: 'Shops',         perms: [81, 82, 83, 84] },
 ]
 
 const ALL_PERMS = PERM_GROUPS.flatMap((g) => g.perms)
@@ -50,7 +60,7 @@ function PermissionsMatrix({ value, onChange }) {
     }
   }
 
-  const colLabels = [t('roles.pRead'), t('roles.pCreate'), t('roles.pEdit'), t('roles.pDelete')]
+  const colLabels = ['Read', 'Create', 'Edit', 'Delete']
 
   return (
     <div className="border rounded-lg overflow-hidden">
@@ -68,8 +78,8 @@ function PermissionsMatrix({ value, onChange }) {
           {PERM_GROUPS.map((group) => {
             const allGroupSelected = group.perms.every((p) => selected.has(p))
             return (
-              <tr key={group.labelKey} className="hover:bg-slate-50">
-                <td className="px-3 py-2 font-medium text-slate-700">{t(group.labelKey)}</td>
+              <tr key={group.label} className="hover:bg-slate-50">
+                <td className="px-3 py-2 font-medium text-slate-700">{group.label}</td>
                 {group.perms.map((perm, idx) => (
                   <td key={perm} className="text-center px-2 py-2">
                     <input
@@ -212,40 +222,46 @@ function RoleModal({ open, role, onClose, onSaved }) {
 
 // ── Role Card ─────────────────────────────────────────────────────────────────
 function RoleCard({ role, onEdit, onDelete }) {
-  const { t } = useTranslation()
   const permCount = role.permissions?.length ?? 0
+  const isSystem = role.is_system
 
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="shrink-0 h-9 w-9 rounded-lg bg-blue-50 flex items-center justify-center">
-              <Shield className="h-4 w-4 text-blue-600" />
+            <div className={cn('shrink-0 h-9 w-9 rounded-lg flex items-center justify-center', isSystem ? 'bg-purple-50' : 'bg-blue-50')}>
+              {isSystem ? <Lock className="h-4 w-4 text-purple-600" /> : <Shield className="h-4 w-4 text-blue-600" />}
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-slate-800 truncate">{role.name}</p>
-              <p className="text-xs text-slate-400">
-                {permCount} {permCount === 1 ? 'permission' : 'permissions'}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="font-semibold text-slate-800 dark:text-white truncate">{role.name}</p>
+                {isSystem && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-medium dark:bg-purple-900/30 dark:text-purple-300">system</span>
+                )}
+              </div>
+              {role.slug && <p className="text-xs text-slate-400 font-mono">{role.slug}</p>}
+              <p className="text-xs text-slate-400">{permCount} permissions</p>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={() => onEdit(role)}
-              className="p-1.5 rounded hover:bg-slate-100 text-slate-500 transition-colors"
-              title={t('common.edit')}
-            >
-              <Pencil className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => onDelete(role)}
-              className="p-1.5 rounded hover:bg-red-50 text-red-500 transition-colors"
-              title={t('common.delete')}
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
-          </div>
+          {!isSystem && (
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => onEdit(role)}
+                className="p-1.5 rounded hover:bg-slate-100 text-slate-500 transition-colors"
+                title="Edit"
+              >
+                <Pencil className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => onDelete(role)}
+                className="p-1.5 rounded hover:bg-red-50 text-red-500 transition-colors"
+                title="Delete"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Permission summary pills */}
@@ -256,7 +272,7 @@ function RoleCard({ role, onEdit, onDelete }) {
               const total = g.perms.length
               return (
                 <span
-                  key={g.labelKey}
+                  key={g.label}
                   className={cn(
                     'inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium',
                     has === total
@@ -264,7 +280,7 @@ function RoleCard({ role, onEdit, onDelete }) {
                       : 'bg-slate-100 text-slate-600'
                   )}
                 >
-                  {t(g.labelKey)} {has < total && `${has}/${total}`}
+                  {g.label} {has < total && `${has}/${total}`}
                 </span>
               )
             })}

@@ -22,6 +22,7 @@ export default {
     orders: 'Заказы', reviews: 'Отзывы', discounts: 'Скидки', banners: 'Баннеры',
     media: 'Медиатека', delivers: 'Курьеры', plans: 'Планы',
     locations: 'Локации', settings: 'Настройки', logout: 'Выйти',
+    shopApplications: 'Заявки магазинов',
   },
 
   login: {
@@ -257,6 +258,7 @@ export default {
     empty: 'Нет уведомлений',
     newOrder: 'Новый заказ получен',
     shopReview: 'Магазин отправлен на проверку',
+    shopApproved: 'Ваш магазин одобрен!',
     newReview: 'Новый отзыв опубликован',
     newDispute: 'Открыт новый спор',
   },
@@ -297,6 +299,10 @@ export default {
     buttonUrl: 'URL кнопки', startsAt: 'Начало', endsAt: 'Окончание',
     isActive: 'Активен', noImage: 'Нет изображения',
     empty: 'Баннеры не созданы', createFirst: 'Создайте первый баннер',
+  },
+
+  shopApplications: {
+    title: 'Заявки магазинов',
   },
 
   plans: {

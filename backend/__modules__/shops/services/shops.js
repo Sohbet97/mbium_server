@@ -132,8 +132,8 @@ class ShopService {
     return this.getById(id);
   }
 
-  static async verify(id, userId) {
-    const shop = await db.Shop.findOne({ where: { id }, attributes: ["patent_file", "bank_iban"] });
+  static async verify(id, userId, io) {
+    const shop = await db.Shop.findOne({ where: { id }, attributes: ["id", "owner_id", "name", "patent_file", "bank_iban"] });
     // Auto-classify: both patent and IBAN present → Verified PRO (2), otherwise Standard (1)
     const seller_tier = (shop?.patent_file && shop?.bank_iban) ? 2 : 1;
 
@@ -149,7 +149,20 @@ class ShopService {
       },
       { where: { id } }
     );
-    return this.getById(id);
+
+    // Ensure the owner has a ShopMember(OWNER) record for future team management
+    if (shop?.owner_id && db.ShopMember) {
+      await db.ShopMember.findOrCreate({
+        where: { shop_id: id, user_id: shop.owner_id },
+        defaults: { shop_id: id, user_id: shop.owner_id, role: 'OWNER', is_active: true },
+      });
+    }
+
+    const updated = await this.getById(id);
+    if (updated) {
+      NotificationService.createForShopApproved(updated, io).catch(() => {});
+    }
+    return updated;
   }
 
   static async reject(id, userId, note, io) {
@@ -165,6 +178,10 @@ class ShopService {
   }
 
   // Sync shop_categories rows: destroy existing, re-insert
+  static async setCategories(shopId, categoryIds) {
+    return this._syncCategories(shopId, categoryIds);
+  }
+
   static async _syncCategories(shopId, categories) {
     if (!db.ShopCategory) return;
     if (!Array.isArray(categories)) return;
