@@ -1,0 +1,16 @@
+const router = require('express').Router();
+const authorizationMiddleware = require('../../middlewares/authorization-middleware');
+const sellerMiddleware = require('../../middlewares/seller-middleware');
+
+// All seller routes require auth + an active approved shop
+router.use(authorizationMiddleware);
+router.use(sellerMiddleware);
+
+router.use('/dashboard', require('./dashboard'));
+router.use('/shop',      require('./shop'));
+router.use('/products',  require('./products'));
+router.use('/orders',    require('./orders'));
+router.use('/payouts',   require('./payouts'));
+router.use('/discounts', require('./discounts'));
+
+module.exports = router;

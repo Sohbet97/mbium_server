@@ -72,6 +72,12 @@ class ShopService {
       region_id:      FUNCTIONS.getNumber(req.body?.region_id) || null,
       is_active:      req.body?.is_active ?? false,
       order:          FUNCTIONS.getNumber(req.body?.order) || null,
+      // KYC fields
+      video_url:      req.body?.video_url || null,
+      passport_file:  req.body?.passport_file || null,
+      patent_file:    req.body?.patent_file || null,
+      bank_iban:      req.body?.bank_iban || null,
+      card_number:    req.body?.card_number || null,
       createdBy:      req.user?.id,
     });
 
@@ -101,6 +107,12 @@ class ShopService {
         region_id:      FUNCTIONS.getNumber(req.body?.region_id) || null,
         is_active:      req.body?.is_active,
         order:          req.body?.order !== undefined ? (FUNCTIONS.getNumber(req.body.order) || null) : undefined,
+        // KYC fields (only update if explicitly provided)
+        ...(req.body?.video_url     !== undefined && { video_url:     req.body.video_url }),
+        ...(req.body?.passport_file !== undefined && { passport_file: req.body.passport_file }),
+        ...(req.body?.patent_file   !== undefined && { patent_file:   req.body.patent_file }),
+        ...(req.body?.bank_iban     !== undefined && { bank_iban:     req.body.bank_iban }),
+        ...(req.body?.card_number   !== undefined && { card_number:   req.body.card_number }),
       },
       { where: { id } }
     );
@@ -121,8 +133,20 @@ class ShopService {
   }
 
   static async verify(id, userId) {
+    const shop = await db.Shop.findOne({ where: { id }, attributes: ["patent_file", "bank_iban"] });
+    // Auto-classify: both patent and IBAN present → Verified PRO (2), otherwise Standard (1)
+    const seller_tier = (shop?.patent_file && shop?.bank_iban) ? 2 : 1;
+
     await db.Shop.update(
-      { verification_status: 2, is_verified: true, is_active: true, verified_by: userId, verified_at: new Date(), verification_note: null },
+      {
+        verification_status: 2,
+        is_verified: seller_tier === 2,
+        is_active: true,
+        seller_tier,
+        verified_by: userId,
+        verified_at: new Date(),
+        verification_note: null,
+      },
       { where: { id } }
     );
     return this.getById(id);

@@ -18,8 +18,9 @@ const configMiddleware = require("../middlewares/config-middleware");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("../swagger");
 
-const adminRouter = require("../routes/admin");
-const authRouter = require("../routes/auth/auth");
+const adminRouter  = require("../routes/admin");
+const authRouter   = require("../routes/auth/auth");
+const sellerRouter = require("../routes/seller");
 
 const { CONSTANTS } = require("./constants");
 
@@ -108,8 +109,9 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 app.get("/api-docs.json", (req, res) => res.json(swaggerSpec));
 
 // Authenticate user by accesstoken
-app.use("/auth", authRouter);
-app.use("/admin", adminRouter);
+app.use("/auth",   authRouter);
+app.use("/admin",  adminRouter);
+app.use("/seller", sellerRouter);
 app.use(errorMiddleware);
 app.use("*", loggerMiddleware);
 

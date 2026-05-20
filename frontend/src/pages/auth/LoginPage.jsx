@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Eye, EyeOff, AlertCircle, Globe, ArrowLeft } from 'lucide-react'
 import { ThemeSwitcher } from '../../components/layout/TopBar'
+import { useTheme } from '@/store/theme'
 
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧' },
@@ -24,6 +25,7 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 export default function LoginPage() {
   const { login, verifyOtp: verifyOtpAuth, loginWithGoogle } = useAuth()
+  const { theme } = useTheme()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
 
@@ -48,8 +50,8 @@ export default function LoginPage() {
           setError('')
           setLoading(true)
           try {
-            await loginWithGoogle(credential)
-            navigate('/admin')
+            const result = await loginWithGoogle(credential)
+            navigate(resolveDestination(result.user))
           } catch (err) {
             setError(err.response?.data?.message ?? t('login.error'))
           } finally {
@@ -59,7 +61,7 @@ export default function LoginPage() {
       })
       if (googleBtnRef.current) {
         window.google.accounts.id.renderButton(googleBtnRef.current, {
-          theme: 'outline',
+          theme: theme === 'dark' ? 'filled_black' : 'outline',
           size: 'large',
           width: googleBtnRef.current.offsetWidth || 340,
           logo_alignment: 'center',
@@ -78,7 +80,15 @@ export default function LoginPage() {
       script.onload = initGoogle
       document.head.appendChild(script)
     }
-  }, [loginWithGoogle, navigate, t])
+  }, [loginWithGoogle, navigate, t, theme])
+
+  function resolveDestination(user) {
+    if (user?.shop?.is_active) return '/seller'
+    // Users with any permissions are platform staff → admin panel
+    if (user?.permissions?.length > 0 || user?._role?.permissions?.length > 0) return '/admin'
+    // Pending shop application or no shop yet
+    return '/pending'
+  }
 
   async function handleCredentialSubmit(e) {
     e.preventDefault()
@@ -91,7 +101,7 @@ export default function LoginPage() {
         setStep('otp')
         return
       }
-      navigate('/admin')
+      navigate(resolveDestination(result.user))
     } catch (err) {
       setError(err.response?.data?.message ?? t('login.error'))
     } finally {
@@ -104,8 +114,8 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
     try {
-      await verifyOtpAuth(sessionId, otp)
-      navigate('/admin')
+      const result = await verifyOtpAuth(sessionId, otp)
+      navigate(resolveDestination(result.user))
     } catch (err) {
       setError(err.response?.data?.message ?? t('login.error'))
     } finally {
@@ -134,7 +144,7 @@ export default function LoginPage() {
   const current = LANGUAGES.find((l) => l.code === i18n.language) ?? LANGUAGES[0]
 
   return (
-    <div className={"min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#232727] bg-[#f6f6f7]"}>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-[#1a1f2e] dark:via-[#232727] dark:to-[#1f2937]">
       <div className="absolute top-4 right-4 flex items-center gap-1">
         <ThemeSwitcher />
         <DropdownMenu>
@@ -233,7 +243,7 @@ export default function LoginPage() {
                         <span className="bg-white dark:bg-card px-2 text-slate-400">{t('login.orContinueWith')}</span>
                       </div>
                     </div>
-                    <div ref={googleBtnRef} className="flex justify-center" />
+                    <div key={theme} ref={googleBtnRef} className="flex justify-center" />
                   </>
                 )}
               </CardContent>

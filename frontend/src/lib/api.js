@@ -1,6 +1,8 @@
 import axios from 'axios'
 import { ADMIN, AUTH, PATHS } from './endpoints'
 
+const SELLER = '/seller'
+
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
 const http = axios.create({ baseURL: BASE, withCredentials: true })
@@ -169,6 +171,48 @@ export class AdminApi {
       http.patch(a(`${PATHS.MEDIA}/product/${productId}/${mediaId}`), data),
     detachFromProduct: (productId, mediaId) =>
       http.delete(a(`${PATHS.MEDIA}/product/${productId}/${mediaId}`)),
+  }
+}
+
+const s = (path) => `${SELLER}${path}`
+
+export class SellerApi {
+  static dashboard = {
+    get: () => http.get(s('/dashboard')),
+  }
+  static shop = {
+    get:    ()     => http.get(s('/shop')),
+    update: (data) => http.patch(s('/shop'), data),
+  }
+  static products = {
+    getAll:  (params)       => http.get(s('/products'), { params }),
+    getOne:  (id)           => http.get(s(`/products/${id}`)),
+    create:  (data)         => http.post(s('/products'), data),
+    update:  (id, data)     => http.put(s(`/products/${id}`), data),
+    delete:  (id)           => http.delete(s(`/products/${id}`)),
+    variants: {
+      create: (productId, data)             => http.post(s(`/products/${productId}/variants`), data),
+      update: (productId, variantId, data)  => http.put(s(`/products/${productId}/variants/${variantId}`), data),
+      delete: (productId, variantId)        => http.delete(s(`/products/${productId}/variants/${variantId}`)),
+    },
+  }
+  static orders = {
+    getAll:       (params)       => http.get(s('/orders'), { params }),
+    getOne:       (id)           => http.get(s(`/orders/${id}`)),
+    updateStatus: (id, data)     => http.patch(s(`/orders/${id}/status`), data),
+    getShipments: (id)           => http.get(s(`/orders/${id}/shipments`)),
+    addShipment:  (id, data)     => http.post(s(`/orders/${id}/shipments`), data),
+  }
+  static payouts = {
+    getBalance:  ()     => http.get(s('/payouts/balance')),
+    getHistory:  (params) => http.get(s('/payouts/history'), { params }),
+    request:     (data) => http.post(s('/payouts/request'), data),
+  }
+  static discounts = {
+    getAll:  (params)       => http.get(s('/discounts'), { params }),
+    create:  (data)         => http.post(s('/discounts'), data),
+    update:  (id, data)     => http.put(s(`/discounts/${id}`), data),
+    delete:  (id)           => http.delete(s(`/discounts/${id}`)),
   }
 }
 
