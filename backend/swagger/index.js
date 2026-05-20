@@ -1,17 +1,21 @@
-const components = require("./components");
-const authPaths = require("./paths/auth");
-const usersPaths = require("./paths/users");
-const shopsPaths = require("./paths/shops");
-const catalogPaths = require("./paths/catalog");
+const components       = require("./components");
+const authPaths        = require("./paths/auth");
+const usersPaths       = require("./paths/users");
+const shopsPaths       = require("./paths/shops");
+const catalogPaths     = require("./paths/catalog");
 const collectionsPaths = require("./paths/collections");
-const ordersPaths = require("./paths/orders");
-const reviewsPaths = require("./paths/reviews");
-const discountsPaths = require("./paths/discounts");
-const payoutsPaths = require("./paths/payouts");
-const disputesPaths = require("./paths/disputes");
-const mediaPaths = require("./paths/media");
-const bannersPaths = require("./paths/banners");
-const deliversPaths = require("./paths/delivers");
+const ordersPaths      = require("./paths/orders");
+const reviewsPaths     = require("./paths/reviews");
+const discountsPaths   = require("./paths/discounts");
+const payoutsPaths     = require("./paths/payouts");
+const disputesPaths    = require("./paths/disputes");
+const mediaPaths       = require("./paths/media");
+const bannersPaths     = require("./paths/banners");
+const deliversPaths    = require("./paths/delivers");
+const plansPaths       = require("./paths/plans");
+const notifPaths       = require("./paths/notifications");
+const locationsPaths   = require("./paths/locations");
+const sellerPaths      = require("./paths/seller");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -21,6 +25,7 @@ const swaggerSpec = {
         description:
             "Marketplace backend API for the Turkmenistan market. " +
             "All `/admin/*` routes require a Bearer token unless stated otherwise. " +
+            "All `/seller/*` routes require a Bearer token AND an active approved shop. " +
             "Obtain tokens via `POST /auth/login` → `POST /auth/verify-otp`.",
         contact: { name: "mbium dev", email: "dovletli.dev@gmail.com" },
     },
@@ -34,24 +39,32 @@ const swaggerSpec = {
         schemas: components.schemas,
     },
     tags: [
-        { name: "Auth",        description: "Authentication, OTP, sessions, and self-service profile" },
-        { name: "Users",       description: "User management and roles" },
-        { name: "Shops",       description: "Shop CRUD, shop types, members, verification, and shop application" },
-        { name: "Catalog",     description: "Categories, products, and variants" },
-        { name: "Collections", description: "Curated product collections" },
-        { name: "Media",       description: "Media library upload, management, and product attachment" },
-        { name: "Banners",     description: "Banner types and banner CRUD with scheduling" },
-        { name: "Cart",        description: "Shopping cart" },
-        { name: "Orders",      description: "Order placement, lifecycle, shipments, and delivery addresses" },
-        { name: "Reviews",     description: "Product reviews, moderation, and seller replies" },
-        { name: "Discounts",   description: "Discount codes and coupon management" },
-        { name: "Flash Sales", description: "Time-limited flash sale campaigns" },
-        { name: "Payouts",     description: "Seller payout requests and balance tracking" },
-        { name: "Disputes",    description: "Order dispute management" },
-        { name: "Delivers",    description: "Platform delivery driver management" },
+        // Auth & Users
+        { name: "Auth",          description: "Authentication, OTP, sessions, and self-service profile" },
+        { name: "Users",         description: "User management and roles" },
+        // Admin — core
+        { name: "Shops",         description: "Shop CRUD, shop types, members, verification, and shop applications" },
+        { name: "Catalog",       description: "Categories, products, and variants" },
+        { name: "Collections",   description: "Curated product collections" },
+        { name: "Media",         description: "Media library upload, management, and product attachment" },
+        { name: "Banners",       description: "Banner types and banner CRUD with scheduling" },
+        { name: "Orders",        description: "Order placement, lifecycle, shipments, and delivery addresses" },
+        { name: "Reviews",       description: "Product reviews, moderation, and seller replies" },
+        { name: "Discounts",     description: "Discount codes and coupon management" },
+        { name: "Flash Sales",   description: "Time-limited flash sale campaigns" },
+        { name: "Payouts",       description: "Seller payout requests and balance tracking" },
+        { name: "Disputes",      description: "Order dispute management" },
+        { name: "Delivers",      description: "Platform delivery driver management" },
+        { name: "Plans",         description: "Subscription plans and shop subscription management" },
+        { name: "Notifications", description: "Admin in-app notification inbox" },
+        { name: "Locations",     description: "Countries, regions, districts, villages, and cities" },
+        // Seller panel
+        { name: "Seller",        description: "Seller-panel routes — require auth + active approved shop" },
     ],
     paths: {
+        // Auth
         ...authPaths,
+        // Admin
         ...usersPaths,
         ...shopsPaths,
         ...catalogPaths,
@@ -64,6 +77,11 @@ const swaggerSpec = {
         ...payoutsPaths,
         ...disputesPaths,
         ...deliversPaths,
+        ...plansPaths,
+        ...notifPaths,
+        ...locationsPaths,
+        // Seller panel
+        ...sellerPaths,
     },
 };
 

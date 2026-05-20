@@ -137,6 +137,7 @@ class STATUSES {
     static NOT_ORDER          = 100
     static NOT_SHOP_REVIEW    = 110
     static NOT_SHOP_REJECTED  = 111
+    static NOT_SHOP_APPROVED  = 112
     static NOT_REVIEW         = 120
     static NOT_DISPUTE        = 130
 

@@ -22,6 +22,7 @@ export default {
     orders: 'Sargytlar', reviews: 'Syn', discounts: 'Arzanladyşlar', banners: 'Bannerlar',
     media: 'Media kitaphanasy', delivers: 'Eltip berýänler', plans: 'Planlar',
     locations: 'Ýerler', settings: 'Sazlamalar', logout: 'Çyk',
+    shopApplications: 'Dükan arzalary',
   },
 
   login: {
@@ -257,6 +258,7 @@ export default {
     empty: 'Bildiriş ýok',
     newOrder: 'Täze sargyt geldi',
     shopReview: 'Dükan barlag üçin ugradyldy',
+    shopApproved: 'Dükanyňyz tassyklanan!',
     newReview: 'Täze syn geldi',
     newDispute: 'Täze jedel açyldy',
   },
@@ -297,6 +299,10 @@ export default {
     buttonUrl: 'Düwme URL', startsAt: 'Başlanýar', endsAt: 'Tamamlanýar',
     isActive: 'Işjeň', noImage: 'Surat ýok',
     empty: 'Banner ýok', createFirst: 'Ilkinji banneri döret',
+  },
+
+  shopApplications: {
+    title: 'Dükan arzalary',
   },
 
   plans: {

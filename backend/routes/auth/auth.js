@@ -4,7 +4,14 @@ const rbacMiddleware = require('../../middlewares/rbac-middleware');
 const Permissions = require('../../utils/permissions');
 const UserController = require('../../__modules__/user/controllers/user-controller');
 const ShopController = require('../../__modules__/shops/controllers/shop');
-const { avatarUpload } = require('../../utils/upload');
+const ShopTypeController = require('../../__modules__/shops/controllers/shop-type');
+const { avatarUpload, kycUpload } = require('../../utils/upload');
+
+const KYC_FIELDS = kycUpload.fields([
+  { name: 'passport_file', maxCount: 1 },
+  { name: 'patent_file',   maxCount: 1 },
+  { name: 'video_url',     maxCount: 1 },
+]);
 
 // ── Public ────────────────────────────────────────────────────────────────────
 authRouter.get('/captcha', UserController.captcha);
@@ -29,7 +36,8 @@ authRouter.delete('/me/google', authorizationMiddleware, UserController.disconne
 authRouter.post('/me/avatar', authorizationMiddleware, avatarUpload.single('avatar'), UserController.uploadAvatar.bind(UserController));
 
 // ── Shop application ──────────────────────────────────────────────────────────
-authRouter.post('/me/shop', authorizationMiddleware, ShopController.applyForShop.bind(ShopController));
+authRouter.get('/shop-types', authorizationMiddleware, ShopTypeController.get.bind(ShopTypeController));
+authRouter.post('/me/shop', authorizationMiddleware, KYC_FIELDS, ShopController.applyForShop.bind(ShopController));
 authRouter.get('/me/shop',  authorizationMiddleware, ShopController.getMyShop.bind(ShopController));
 
 // ── FCM device token ──────────────────────────────────────────────────────────

@@ -20,6 +20,16 @@ module.exports = (sequelize) => {
             type: DataTypes.ARRAY(DataTypes.INTEGER),
             defaultValue: []
         },
+        slug: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+            unique: true,
+        },
+        is_system: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
         start_page: {
             type: DataTypes.INTEGER,
             allowNull: true,

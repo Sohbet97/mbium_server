@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Store,
-  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, ChevronDown,
+  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
@@ -20,6 +20,9 @@ function SellerSidebar({ collapsed, onToggle }) {
     { to: '/seller/shop',     label: 'Dükanym',    icon: Store },
     { to: '/seller/discounts',label: 'Arzanladyş', icon: Percent },
     { to: '/seller/payouts',  label: 'Tölegler',   icon: Wallet },
+    { to: '/seller/media',        label: 'Media',      icon: Images },
+    { to: '/seller/banners',      label: 'Bannerler',  icon: LayoutTemplate },
+    { to: '/seller/subscription', label: 'Abunalyk',   icon: Crown },
   ]
 
   const itemBase = cn(

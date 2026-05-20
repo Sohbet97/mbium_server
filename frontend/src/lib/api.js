@@ -172,6 +172,11 @@ export class AdminApi {
     detachFromProduct: (productId, mediaId) =>
       http.delete(a(`${PATHS.MEDIA}/product/${productId}/${mediaId}`)),
   }
+  static shopApplications = {
+    getAll:  (params) => http.get(a('/shop-applications'), { params }),
+    verify:  (id)     => http.post(a(`/shop-applications/${id}/verify`)),
+    reject:  (id, data) => http.post(a(`/shop-applications/${id}/reject`), data),
+  }
 }
 
 const s = (path) => `${SELLER}${path}`
@@ -180,9 +185,15 @@ export class SellerApi {
   static dashboard = {
     get: () => http.get(s('/dashboard')),
   }
+  static categories = {
+    getAll: (params) => http.get(s('/categories'), { params }),
+  }
   static shop = {
-    get:    ()     => http.get(s('/shop')),
-    update: (data) => http.patch(s('/shop'), data),
+    get:           ()             => http.get(s('/shop')),
+    update:        (data)         => http.patch(s('/shop'), data),
+    setCategories: (category_ids) => http.put(s('/shop/categories'), { category_ids }),
+    uploadLogo:    (formData)     => http.post(s('/shop/logo'), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    uploadDocs:    (formData)     => http.post(s('/shop/docs'), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   }
   static products = {
     getAll:  (params)       => http.get(s('/products'), { params }),
@@ -214,6 +225,28 @@ export class SellerApi {
     update:  (id, data)     => http.put(s(`/discounts/${id}`), data),
     delete:  (id)           => http.delete(s(`/discounts/${id}`)),
   }
+  static banners = {
+    getAll:  ()             => http.get(s('/banners')),
+    create:  (data)         => http.post(s('/banners'), data),
+    update:  (id, data)     => http.put(s(`/banners/${id}`), data),
+    delete:  (id)           => http.delete(s(`/banners/${id}`)),
+  }
+  static plans = {
+    getAll:          () => http.get(s('/plans')),
+    getSubscription: () => http.get(s('/subscription')),
+  }
+  static media = {
+    list:   (params)              => http.get(s('/media'), { params }),
+    upload: (formData, mediaType) =>
+      http.post(s(`/media/upload${mediaType ? `?media_type=${mediaType}` : ''}`), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+    delete: (id)                  => http.delete(s(`/media/${id}`)),
+    getProductMedia:    (productId)             => http.get(s(`/media/product/${productId}`)),
+    attachToProduct:    (productId, data)       => http.post(s(`/media/product/${productId}`), data),
+    updateProductMedia: (productId, mediaId, data) => http.patch(s(`/media/product/${productId}/${mediaId}`), data),
+    detachFromProduct:  (productId, mediaId)   => http.delete(s(`/media/product/${productId}/${mediaId}`)),
+  }
 }
 
 export const AuthApi = {
@@ -230,6 +263,9 @@ export const AuthApi = {
   deleteSession:    (id)   => http.delete(`${AUTH}/sessions/${id}`),
   changePassword:   (data) => http.post(`${AUTH}/change-password`, data),
   uploadAvatar:     (formData) => http.post(`${AUTH}/me/avatar`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getShopTypes:     ()         => http.get(`${AUTH}/shop-types`),
+  applyForShop:     (data)     => http.post(`${AUTH}/me/shop`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getMyShop:        ()         => http.get(`${AUTH}/me/shop`),
 }
 
 export default http

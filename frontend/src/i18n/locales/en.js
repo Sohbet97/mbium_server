@@ -23,6 +23,7 @@ export default {
     orders: 'Orders', reviews: 'Reviews', discounts: 'Discounts', banners: 'Banners',
     media: 'Media', delivers: 'Delivers', plans: 'Plans',
     locations: 'Locations', settings: 'Settings', logout: 'Logout',
+    shopApplications: 'Shop Applications',
   },
 
   login: {
@@ -244,6 +245,7 @@ export default {
     empty: 'No notifications',
     newOrder: 'New order received',
     shopReview: 'Shop submitted for review',
+    shopApproved: 'Your shop has been approved!',
     newReview: 'New review posted',
     newDispute: 'New dispute opened',
   },
@@ -298,6 +300,10 @@ export default {
     buttonUrl: 'Button URL', startsAt: 'Starts at', endsAt: 'Ends at',
     isActive: 'Active', noImage: 'No image',
     empty: 'No banners yet', createFirst: 'Create your first banner',
+  },
+
+  shopApplications: {
+    title: 'Shop Applications',
   },
 
   plans: {

@@ -9,10 +9,10 @@ const shopMemberRouter = require('./routes/shop-member');
 const shopModuleRouter = require('express').Router();
 
 shopModuleRouter.use(authorizationMiddleware, routeGuard({
-    GET: Permissions.WM_GET,
-    POST: Permissions.WM_POST,
-    PUT: Permissions.WM_PUT,
-    DELETE: Permissions.WM_DELETE
+    GET: Permissions.SHOP_GET,
+    POST: Permissions.SHOP_POST,
+    PUT: Permissions.SHOP_PUT,
+    DELETE: Permissions.SHOP_DELETE,
 }));
 
 shopModuleRouter.use('/shops', shopRouter);

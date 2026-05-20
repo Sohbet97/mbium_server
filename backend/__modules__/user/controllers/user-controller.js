@@ -37,6 +37,13 @@ class UserController {
         db.User.findOne({
           where: { id: req.user.id },
           attributes: { exclude: ['password'] },
+          include: [
+            {
+              model: db.Role,
+              as: '_role',
+              attributes: ['name', 'permissions', 'start_page', 'slug'],
+            },
+          ],
         }),
         ShopService.getByOwner(req.user.id),
       ]);
@@ -148,12 +155,13 @@ class UserController {
       });
       const payload = ticket.getPayload();
 
-      const { user } = await UserService.findOrCreateByGoogle({
+      const { user: rawUser } = await UserService.findOrCreateByGoogle({
         google_id: payload.sub,
         email: payload.email,
         given_name: payload.given_name,
         family_name: payload.family_name,
       });
+      const user = await UserService.getById(rawUser.id);
 
       return this._issueTokenResponse(req, res, user, null);
     } catch (e) {
@@ -169,7 +177,7 @@ class UserController {
       if (!phone_number || (!password && !isForce))
         throw ApiError.BadRequest("Missing required parameters");
 
-      const user = await UserService.getByPhone(phone_number);
+      const user = await UserService.getByLogin(phone_number);
       if (!user) throw ApiError.BadRequest("Invalid phone_number or password");
 
       if (!isForce && !(await bcrypt.compare(req.body.password, user.password))) {
@@ -440,7 +448,7 @@ class UserController {
       model.email = req.body?.email;
       model.birth_date = req.body?.birth_date;
       model.status = req.body?.status;
-      model.role = req.body?.role ?? null;
+      model.role_id = req.body?.role_id ?? null;
 
       if (req.body?.password)
         model.password = await FUNCTIONS.getHashedPassword(req.body.password);

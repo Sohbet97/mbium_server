@@ -45,6 +45,11 @@ class UserService {
       attributes: { exclude: ["password", "token"] },
       include: [
         {
+          model: db.Role,
+          as: "_role",
+          attributes: { exclude: ["id", "createdBy", "createdAt", "updatedAt"] },
+        },
+        {
           model: db.UserLogin,
           as: "last_logins",
           limit: 10,
@@ -294,6 +299,11 @@ class UserService {
           as: "_user",
           attributes: { exclude: ["password"] },
           include: [
+            {
+              model: db.Role,
+              as: "_role",
+              attributes: { exclude: ["id", "createdBy", "createdAt", "updatedAt"] },
+            },
             { model: db.UserLogin, as: "last_logins", limit: 10, order: [FUNCTIONS.getSort("-date")] },
             {
               model: db.UserPositionAssignment,
