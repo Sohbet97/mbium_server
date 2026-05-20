@@ -25,7 +25,7 @@ export function DialogContent({ className, children, ...props }) {
       <DialogOverlay />
       <DialogPrimitive.Content
         className={cn(
-          'fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-white shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+          'fixed left-[50%] top-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-lg border bg-white dark:bg-black shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
           className
         )}
         {...props}
@@ -48,7 +48,7 @@ export function DialogFooter({ className, ...props }) {
 }
 
 export function DialogTitle({ className, ...props }) {
-  return <DialogPrimitive.Title className={cn('text-lg font-semibold text-slate-900', className)} {...props} />
+  return <DialogPrimitive.Title className={cn('text-lg dark:text-white font-semibold text-slate-900', className)} {...props} />
 }
 
 export function DialogDescription({ className, ...props }) {

@@ -175,7 +175,7 @@ function VariantsTab({ productId, variants, onRefresh }) {
           <CardContent className="p-0">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <tr className="border-b bg-slate-50 dark:bg-black dark:text-white text-xs font-medium text-slate-500 uppercase tracking-wide">
                   <th className="px-4 py-3">{t('variants.colName')}</th>
                   <th className="px-4 py-3">{t('variants.colSku')}</th>
                   <th className="px-4 py-3">{t('variants.colPrice')}</th>

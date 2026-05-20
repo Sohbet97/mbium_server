@@ -27,19 +27,19 @@ import { toast } from 'sonner'
 // ─── Order helpers (shared with OrdersPage) ────────────────────────────────────
 
 const ORDER_STATUSES = [
-  { value: 0,  labelKey: 'orders.statusPending',    color: 'bg-yellow-100 text-yellow-800' },
-  { value: 1,  labelKey: 'orders.statusConfirmed',  color: 'bg-blue-100 text-blue-800' },
-  { value: 2,  labelKey: 'orders.statusProcessing', color: 'bg-purple-100 text-purple-800' },
-  { value: 3,  labelKey: 'orders.statusShipped',    color: 'bg-indigo-100 text-indigo-800' },
-  { value: 4,  labelKey: 'orders.statusDelivered',  color: 'bg-green-100 text-green-800' },
-  { value: 10, labelKey: 'orders.statusCancelled',  color: 'bg-red-100 text-red-800' },
-  { value: 11, labelKey: 'orders.statusRefunded',   color: 'bg-gray-100 text-gray-700' },
+  { value: 0, labelKey: 'orders.statusPending', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 1, labelKey: 'orders.statusConfirmed', color: 'bg-blue-100 text-blue-800' },
+  { value: 2, labelKey: 'orders.statusProcessing', color: 'bg-purple-100 text-purple-800' },
+  { value: 3, labelKey: 'orders.statusShipped', color: 'bg-indigo-100 text-indigo-800' },
+  { value: 4, labelKey: 'orders.statusDelivered', color: 'bg-green-100 text-green-800' },
+  { value: 10, labelKey: 'orders.statusCancelled', color: 'bg-red-100 text-red-800' },
+  { value: 11, labelKey: 'orders.statusRefunded', color: 'bg-gray-100 text-gray-700' },
 ]
 
 const PAYMENT_STATUSES = [
-  { value: 0, labelKey: 'orders.paymentStatusPending',  color: 'bg-yellow-100 text-yellow-700' },
-  { value: 1, labelKey: 'orders.paymentStatusSuccess',  color: 'bg-green-100 text-green-700' },
-  { value: 2, labelKey: 'orders.paymentStatusFailed',   color: 'bg-red-100 text-red-700' },
+  { value: 0, labelKey: 'orders.paymentStatusPending', color: 'bg-yellow-100 text-yellow-700' },
+  { value: 1, labelKey: 'orders.paymentStatusSuccess', color: 'bg-green-100 text-green-700' },
+  { value: 2, labelKey: 'orders.paymentStatusFailed', color: 'bg-red-100 text-red-700' },
   { value: 3, labelKey: 'orders.paymentStatusRefunded', color: 'bg-gray-100 text-gray-600' },
 ]
 
@@ -59,9 +59,9 @@ function OrderStatusBadge({ status, type = 'order' }) {
 function UpdateStatusModal({ open, orderId, onClose, onSaved }) {
   const { t } = useTranslation()
   const [status, setStatus] = useState('')
-  const [note,   setNote]   = useState('')
+  const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
-  const [error,  setError]  = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (open) { setStatus(''); setNote(''); setError('') }
@@ -114,7 +114,7 @@ function AddPaymentModal({ open, orderId, onClose, onSaved }) {
   const [amount, setAmount] = useState('')
   const [method, setMethod] = useState('CASH')
   const [saving, setSaving] = useState(false)
-  const [error,  setError]  = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (open) { setAmount(''); setMethod('CASH'); setError('') }
@@ -167,7 +167,7 @@ function AddPaymentModal({ open, orderId, onClose, onSaved }) {
 
 function OrderDetailPanel({ order, onClose, onRefresh }) {
   const { t } = useTranslation()
-  const [statusModal,  setStatusModal]  = useState(false)
+  const [statusModal, setStatusModal] = useState(false)
   const [paymentModal, setPaymentModal] = useState(false)
 
   if (!order) return null
@@ -308,17 +308,17 @@ const VER = { NONE: 0, PENDING: 1, APPROVED: 2, REJECTED: 3 }
 
 function VerificationBadge({ status }) {
   const { t } = useTranslation()
-  if (status === VER.APPROVED)  return <Badge variant="success">{t('shops.verStatusApproved')}</Badge>
-  if (status === VER.PENDING)   return <Badge variant="warning">{t('shops.verStatusPending')}</Badge>
-  if (status === VER.REJECTED)  return <Badge variant="destructive">{t('shops.verStatusRejected')}</Badge>
+  if (status === VER.APPROVED) return <Badge variant="success">{t('shops.verStatusApproved')}</Badge>
+  if (status === VER.PENDING) return <Badge variant="warning">{t('shops.verStatusPending')}</Badge>
+  if (status === VER.REJECTED) return <Badge variant="destructive">{t('shops.verStatusRejected')}</Badge>
   return <Badge variant="secondary">{t('shops.verStatusNone')}</Badge>
 }
 
 function VerificationSection({ shop, onRefresh }) {
   const { t } = useTranslation()
-  const [rejectNote,     setRejectNote]     = useState('')
+  const [rejectNote, setRejectNote] = useState('')
   const [showRejectForm, setShowRejectForm] = useState(false)
-  const [saving,         setSaving]         = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const status = shop.verification_status ?? VER.NONE
 
@@ -432,24 +432,24 @@ function VerificationSection({ shop, onRefresh }) {
 function InfoTab({ shop, shopTypes, onRefresh }) {
   const { t } = useTranslation()
   const [editing, setEditing] = useState(false)
-  const [form,    setForm]    = useState({})
-  const [saving,  setSaving]  = useState(false)
-  const [error,   setError]   = useState('')
+  const [form, setForm] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   function startEdit() {
     setError('')
     setForm({
-      name:        shop.name        ?? '',
-      name_ru:     shop.name_ru     ?? '',
-      name_eng:    shop.name_eng    ?? '',
-      type_id:     shop.type_id     ?? '',
-      phone:       shop.phone       ?? '',
-      email:       shop.email       ?? '',
-      address:     shop.address     ?? '',
-      logo:        shop.logo        ?? '',
+      name: shop.name ?? '',
+      name_ru: shop.name_ru ?? '',
+      name_eng: shop.name_eng ?? '',
+      type_id: shop.type_id ?? '',
+      phone: shop.phone ?? '',
+      email: shop.email ?? '',
+      address: shop.address ?? '',
+      logo: shop.logo ?? '',
       description: shop.description ?? '',
-      is_active:   shop.is_active   ?? true,
-      order:       shop.order       ?? '',
+      is_active: shop.is_active ?? true,
+      order: shop.order ?? '',
     })
     setEditing(true)
   }
@@ -460,17 +460,17 @@ function InfoTab({ shop, shopTypes, onRefresh }) {
     setSaving(true); setError('')
     try {
       await AdminApi.shops.update(shop.id, {
-        name:        form.name.trim(),
-        name_ru:     form.name_ru.trim()  || null,
-        name_eng:    form.name_eng.trim() || null,
-        type_id:     Number(form.type_id),
-        phone:       form.phone       || null,
-        email:       form.email       || null,
-        address:     form.address     || null,
-        logo:        form.logo        || null,
+        name: form.name.trim(),
+        name_ru: form.name_ru.trim() || null,
+        name_eng: form.name_eng.trim() || null,
+        type_id: Number(form.type_id),
+        phone: form.phone || null,
+        email: form.email || null,
+        address: form.address || null,
+        logo: form.logo || null,
         description: form.description || null,
-        is_active:   form.is_active,
-        order:       form.order !== '' ? Number(form.order) : null,
+        is_active: form.is_active,
+        order: form.order !== '' ? Number(form.order) : null,
       })
       setEditing(false)
       onRefresh()
@@ -495,7 +495,7 @@ function InfoTab({ shop, shopTypes, onRefresh }) {
             <CardHeader><CardTitle className="text-sm">{t('common.name')}</CardTitle></CardHeader>
             <CardContent className="pt-0 space-y-1">
               <p className="text-sm">🇹🇲 {shop.name}</p>
-              {shop.name_ru  && <p className="text-sm">🇷🇺 {shop.name_ru}</p>}
+              {shop.name_ru && <p className="text-sm">🇷🇺 {shop.name_ru}</p>}
               {shop.name_eng && <p className="text-sm">🇬🇧 {shop.name_eng}</p>}
             </CardContent>
           </Card>
@@ -627,12 +627,12 @@ function ProductsTab({ shopId }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const [products,     setProducts]     = useState([])
-  const [total,        setTotal]        = useState(0)
-  const [loading,      setLoading]      = useState(true)
-  const [search,       setSearch]       = useState('')
-  const [page,         setPage]         = useState(1)
-  const [refreshTick,  setRefreshTick]  = useState(0)
+  const [products, setProducts] = useState([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [refreshTick, setRefreshTick] = useState(0)
   const limit = 20
 
   useEffect(() => {
@@ -643,8 +643,8 @@ function ProductsTab({ shopId }) {
     AdminApi.products.getAll(params)
       .then(({ data }) => {
         if (cancelled) return
-        setProducts(data.data  ?? [])
-        setTotal(data.count    ?? 0)
+        setProducts(data.data ?? [])
+        setTotal(data.count ?? 0)
         setLoading(false)
       })
       .catch(() => {
@@ -684,7 +684,7 @@ function ProductsTab({ shopId }) {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <tr className="border-b bg-slate-50 dark:bg-black text-xs font-medium text-slate-500 dark:text-white uppercase tracking-wide">
                   <th className="px-4 py-3">{t('products.colProduct')}</th>
                   <th className="px-4 py-3">{t('products.colCategory')}</th>
                   <th className="px-4 py-3">{t('products.colPrice')}</th>
@@ -791,7 +791,7 @@ function UsersTab({ shop }) {
   }
 
   const statusVariant = owner.status === 1 ? 'success' : owner.status === 90 ? 'destructive' : 'secondary'
-  const statusLabel   = owner.status === 1
+  const statusLabel = owner.status === 1
     ? t('common.active')
     : owner.status === 90
       ? t('users.statusBlocked')
@@ -828,12 +828,12 @@ function UsersTab({ shop }) {
 function OrdersTab({ shopId }) {
   const { t } = useTranslation()
 
-  const [orders,        setOrders]        = useState([])
-  const [total,         setTotal]         = useState(0)
-  const [loading,       setLoading]       = useState(true)
-  const [filterStatus,  setFilterStatus]  = useState('')
-  const [page,          setPage]          = useState(1)
-  const [refreshTick,   setRefreshTick]   = useState(0)
+  const [orders, setOrders] = useState([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [filterStatus, setFilterStatus] = useState('')
+  const [page, setPage] = useState(1)
+  const [refreshTick, setRefreshTick] = useState(0)
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const limit = 20
@@ -846,8 +846,8 @@ function OrdersTab({ shopId }) {
     AdminApi.orders.getAll(params)
       .then(({ data }) => {
         if (cancelled) return
-        setOrders(data.data  ?? [])
-        setTotal(data.count  ?? 0)
+        setOrders(data.data ?? [])
+        setTotal(data.count ?? 0)
         setLoading(false)
       })
       .catch(() => {
@@ -878,7 +878,7 @@ function OrdersTab({ shopId }) {
       const { data } = await AdminApi.orders.getOne(selectedOrder.id)
       setSelectedOrder(data.model)
       setRefreshTick((k) => k + 1)
-    } catch {}
+    } catch { }
   }
 
   const totalPages = Math.ceil(total / limit)
@@ -909,14 +909,14 @@ function OrdersTab({ shopId }) {
 
         <Card className="flex-1 overflow-hidden">
           <CardContent className="p-0 h-full overflow-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b sticky top-0 z-10">
+            <table className="w-full text-sm ">
+              <thead className="bg-slate-50 text-slate-600 border-b sticky top-0 z-10 dark:bg-black dark:text-white">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colOrder')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colCustomer')}</th>
-                  <th className="text-right px-4 py-3 font-medium text-slate-600">{t('orders.colTotal')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colStatus')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colDate')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colOrder')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colCustomer')}</th>
+                  <th className="text-right px-4 py-3 font-medium">{t('orders.colTotal')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colStatus')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colDate')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -1007,10 +1007,10 @@ function OrdersTab({ shopId }) {
 // ─── Subscription Tab ─────────────────────────────────────────────────────────
 
 const SUB_STATUS = {
-  0: { label: 'subscriptions.statusPending',   color: 'bg-yellow-100 text-yellow-800' },
-  1: { label: 'subscriptions.statusActive',    color: 'bg-green-100 text-green-800' },
+  0: { label: 'subscriptions.statusPending', color: 'bg-yellow-100 text-yellow-800' },
+  1: { label: 'subscriptions.statusActive', color: 'bg-green-100 text-green-800' },
   2: { label: 'subscriptions.statusCancelled', color: 'bg-gray-100 text-gray-600' },
-  3: { label: 'subscriptions.statusExpired',   color: 'bg-red-100 text-red-700' },
+  3: { label: 'subscriptions.statusExpired', color: 'bg-red-100 text-red-700' },
 }
 
 function SubscriptionTab({ shopId }) {
@@ -1193,13 +1193,13 @@ function SubscriptionTab({ shopId }) {
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ShopDetailPage() {
-  const { id }   = useParams()
+  const { id } = useParams()
   const navigate = useNavigate()
-  const { t }    = useTranslation()
+  const { t } = useTranslation()
 
-  const [shop,        setShop]        = useState(null)
-  const [shopTypes,   setShopTypes]   = useState([])
-  const [loading,     setLoading]     = useState(true)
+  const [shop, setShop] = useState(null)
+  const [shopTypes, setShopTypes] = useState([])
+  const [loading, setLoading] = useState(true)
   const [refreshTick, setRefreshTick] = useState(0)
 
   function refresh() { setLoading(true); setRefreshTick((k) => k + 1) }
@@ -1223,7 +1223,7 @@ export default function ShopDetailPage() {
   useEffect(() => {
     AdminApi.shopTypes.getAll({ limit: 200 })
       .then(({ data }) => setShopTypes(data.data ?? []))
-      .catch(() => {})
+      .catch(() => { })
   }, [])
 
   if (loading || !shop) {
@@ -1250,13 +1250,13 @@ export default function ShopDetailPage() {
                 onError={(e) => { e.currentTarget.style.display = 'none' }}
               />
             ) : (
-              <div className="h-14 w-14 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+              <div className="h-14 w-14 rounded-lg bg-slate-100 dark:bg-black/[0.4] flex items-center justify-center flex-shrink-0">
                 <Store className="h-6 w-6 text-slate-300" />
               </div>
             )
           }
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold text-slate-900 truncate">{shop.name}</h2>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white truncate">{shop.name}</h2>
             <p className="text-sm text-slate-400">
               {shop.type?.name ?? '—'}
               {shop.owner && ` · ${shop.owner.name} ${shop.owner.surname}`}

@@ -113,13 +113,13 @@ export default function ReviewsPage() {
       <Card className="flex-1 overflow-hidden">
         <CardContent className="p-0 h-full overflow-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b sticky top-0 z-10">
+            <thead className="bg-slate-50 text-slate-600 border-b sticky top-0 z-10 dark:bg-black dark:text-white">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-slate-600 w-1/3">{t('reviews.colReview')}</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('reviews.colProduct')}</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('reviews.colRating')}</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('reviews.colStatus')}</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('reviews.colDate')}</th>
+                <th className="text-left px-4 py-3 font-medium w-1/3">{t('reviews.colReview')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('reviews.colProduct')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('reviews.colRating')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('reviews.colStatus')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('reviews.colDate')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -129,16 +129,16 @@ export default function ReviewsPage() {
               ) : reviews.length === 0 ? (
                 <tr><td colSpan={6} className="text-center py-12 text-slate-400">{t('common.noResults')}</td></tr>
               ) : reviews.map((review) => (
-                <tr key={review.id} className="hover:bg-slate-50">
+                <tr key={review.id} className="border-b last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.08] cursor-pointer">
                   <td className="px-4 py-3">
-                    <p className="font-medium text-xs text-slate-500">
+                    <p className="font-medium text-xs text-slate-500 dark:text-white">
                       {review.author?.name} {review.author?.surname}
                     </p>
                     {review.comment && (
-                      <p className="text-slate-700 mt-0.5 line-clamp-2">{review.comment}</p>
+                      <p className="text-slate-700 dark:text-white/[0.5] mt-0.5 line-clamp-2">{review.comment}</p>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{review.product?.name ?? `#${review.product_id}`}</td>
+                  <td className="px-4 py-3 text-slate-600 dark:text-white/[0.5]">{review.product?.name ?? `#${review.product_id}`}</td>
                   <td className="px-4 py-3"><StarRating rating={review.rating} /></td>
                   <td className="px-4 py-3"><StatusBadge status={review.status} /></td>
                   <td className="px-4 py-3 text-slate-400 text-xs">{new Date(review.createdAt).toLocaleDateString()}</td>

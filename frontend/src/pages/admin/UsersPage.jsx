@@ -346,7 +346,7 @@ export default function UsersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b bg-slate-50 dark:bg-[#0f0f10] text-xs font-medium text-slate-500 dark:text-white uppercase tracking-wide">
+                <tr className="border-b bg-slate-50 dark:bg-black dark:text-white text-xs font-medium text-slate-500 uppercase tracking-wide">
                   <th className="px-4 py-3">{t('users.colUser')}</th>
                   <th className="px-4 py-3">{t('users.colPhone')}</th>
                   <th className="px-4 py-3">{t('users.colRole')}</th>

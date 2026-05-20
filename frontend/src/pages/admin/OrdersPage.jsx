@@ -335,7 +335,7 @@ export default function OrdersPage() {
     try {
       const { data } = await AdminApi.shops.getAll({ limit: 200 })
       setShops(data.data ?? [])
-    } catch {}
+    } catch { }
   }, [])
 
   useEffect(() => { fetchShops() }, [fetchShops])
@@ -358,7 +358,7 @@ export default function OrdersPage() {
       const { data } = await AdminApi.orders.getOne(selectedOrder.id)
       setSelectedOrder(data.model)
       fetchOrders()
-    } catch {}
+    } catch { }
   }
 
   const totalPages = Math.ceil(count / PAGE_SIZE)
@@ -393,14 +393,14 @@ export default function OrdersPage() {
         <Card className="flex-1 overflow-hidden">
           <CardContent className="p-0 h-full overflow-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b sticky top-0 z-10">
+              <thead className="bg-slate-50 text-slate-600 border-b sticky top-0 z-10 dark:bg-black dark:text-white">
                 <tr>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colOrder')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colCustomer')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colShop')}</th>
-                  <th className="text-right px-4 py-3 font-medium text-slate-600">{t('orders.colTotal')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colStatus')}</th>
-                  <th className="text-left px-4 py-3 font-medium text-slate-600">{t('orders.colDate')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colOrder')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colCustomer')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colShop')}</th>
+                  <th className="text-right px-4 py-3 font-medium">{t('orders.colTotal')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colStatus')}</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('orders.colDate')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -413,7 +413,7 @@ export default function OrdersPage() {
                     key={order.id}
                     onClick={() => openDetail(order)}
                     className={cn(
-                      'cursor-pointer hover:bg-slate-50 transition-colors',
+                      'cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-colors',
                       selectedOrder?.id === order.id && 'bg-blue-50'
                     )}
                   >
