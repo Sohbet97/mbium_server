@@ -268,19 +268,19 @@ export default function DiscountsPage() {
         </Button>
       </div>
 
-      <p className="text-sm text-slate-500 mb-3">{t('discounts.totalCount', { count })}</p>
+      <p className="text-sm text-slate-500 dark:text-white/[0.8] mb-3">{t('discounts.totalCount', { count })}</p>
 
       <Card className="flex-1 overflow-hidden">
         <CardContent className="p-0 h-full overflow-auto">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b sticky top-0 z-10">
+            <thead className="bg-slate-50 text-slate-600 dark:bg-black dark:text-white border-b sticky top-0 z-10">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('discounts.colCode')}</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('discounts.colType')}</th>
-                <th className="text-right px-4 py-3 font-medium text-slate-600">{t('discounts.colValue')}</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('discounts.colUsage')}</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('discounts.colValid')}</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-600">{t('discounts.colStatus')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('discounts.colCode')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('discounts.colType')}</th>
+                <th className="text-right px-4 py-3 font-medium">{t('discounts.colValue')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('discounts.colUsage')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('discounts.colValid')}</th>
+                <th className="text-left px-4 py-3 font-medium">{t('discounts.colStatus')}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>

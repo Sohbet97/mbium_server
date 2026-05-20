@@ -92,7 +92,7 @@ export default function CollectionsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                <tr className="border-b bg-slate-50 dark:bg-black dark:text-white text-xs font-medium text-slate-500 uppercase tracking-wide">
                   <th className="px-4 py-3">{t('collections.colCollection')}</th>
                   <th className="px-4 py-3">{t('collections.colProducts')}</th>
                   <th className="px-4 py-3">{t('collections.colStatus')}</th>

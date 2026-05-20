@@ -273,7 +273,7 @@ export default function ShopsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide dark:bg-[#0f0f10] dark:text-white">
+                <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide dark:bg-black dark:text-white">
                   <th className="px-4 py-3">{t('shops.colShop')}</th>
                   <th className="px-4 py-3">{t('shops.colType')}</th>
                   <th className="px-4 py-3">{t('shops.colStatus')}</th>
@@ -306,33 +306,39 @@ export default function ShopsPage() {
                         {shop.logo
                           ? <img src={absUrl(shop.logo)} alt="" className="h-10 w-10 rounded object-cover border" />
                           : (
-                            <div className="h-10 w-10 rounded bg-slate-100 flex items-center justify-center text-slate-500 text-sm font-bold">
+                            <div className="h-10 w-10 rounded bg-slate-100 dark:bg-black/[0.4] flex items-center justify-center text-slate-500 text-sm font-bold">
                               {shop.name?.[0]?.toUpperCase()}
                             </div>
                           )
                         }
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{shop.name}</p>
-                          <p className="text-xs text-slate-400">{shop.phone || shop.email || '—'}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{shop.name}</p>
+                          <p className="text-xs text-slate-400 dark:text-white/[0.8]">{shop.phone || shop.email || '—'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{shop.type?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-white/[0.8]">{shop.type?.name ?? '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
-                        <Badge variant={shop.is_active ? 'success' : 'secondary'}>
-                          {shop.is_active ? t('common.active') : t('common.inactive')}
-                        </Badge>
-                        {shop.is_verified && (
-                          <Badge variant="outline" className="text-xs">{t('common.verified')}</Badge>
-                        )}
-                        {shop.deletedAt && (
-                          <Badge variant="destructive" className="text-xs">{t('common.deleted')}</Badge>
-                        )}
+                        <div>
+                          <Badge variant={shop.is_active ? 'success' : 'secondary'}>
+                            {shop.is_active ? t('common.active') : t('common.inactive')}
+                          </Badge>
+                        </div>
+                        <div>
+                          {shop.is_verified && (
+                            <Badge variant="outline" className="text-xs">{t('common.verified')}</Badge>
+                          )}
+                        </div>
+                        <div>
+                          {shop.deletedAt && (
+                            <Badge variant="destructive" className="text-xs">{t('common.deleted')}</Badge>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="flex items-center gap-1 text-sm text-slate-600">
+                      <span className="flex items-center gap-1 text-sm text-slate-600 dark:text-white/[0.8]">
                         <Star className="h-3.5 w-3.5 text-yellow-400 fill-yellow-400" />
                         {Number(shop.rating ?? 0).toFixed(2)}
                       </span>

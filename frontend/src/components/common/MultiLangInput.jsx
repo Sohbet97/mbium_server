@@ -9,34 +9,25 @@ const LANGS = [
   { code: 'en', flag: '🇬🇧', fieldSuffix: '_eng' },
 ]
 
-export function MultiLangInput({ baseField, label, values, onChange, multiline = false, required = false }) {
+export function MultiLangInput({ baseField, label, values, onChange, multiline = false, required = false, isAllLangsRequired = false }) {
   const Component = multiline ? Textarea : Input
 
   return (
     <div className="space-y-1.5">
-      <Label>{label}{required && <span className="text-red-500 ml-0.5">*</span>}</Label>
-      <Tabs defaultValue="tk">
-        <TabsList className="h-8">
-          {LANGS.map(({ code, flag }) => (
-            <TabsTrigger key={code} value={code} className="text-xs px-2 py-1 h-6">
-              {flag} {code.toUpperCase()}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {LANGS.map(({ code, fieldSuffix }) => {
-          const fieldName = `${baseField}${fieldSuffix}`
-          return (
-            <TabsContent key={code} value={code} className="mt-2">
-              <Component
-                value={values[fieldName] ?? ''}
-                onChange={(e) => onChange(fieldName, e.target.value)}
-                placeholder={code === 'tk' ? (required ? 'Hökman' : 'Goşmaça') : code === 'ru' ? 'Необязательно' : 'Optional'}
-                rows={multiline ? 3 : undefined}
-              />
-            </TabsContent>
-          )
-        })}
-      </Tabs>
+      {LANGS.map(({ code, fieldSuffix }) => {
+        const fieldName = `${baseField}${fieldSuffix}`
+        return (
+          <>
+            <Label>{label} ({code}){required && (isAllLangsRequired || code == 'tk') && <span className="text-red-500 ml-0.5">*</span>}</Label>
+            <Component
+              value={values[fieldName] ?? ''}
+              onChange={(e) => onChange(fieldName, e.target.value)}
+              placeholder={code === 'tk' ? (required ? 'Hökman' : 'Goşmaça') : code === 'ru' ? 'Необязательно' : 'Optional'}
+              rows={multiline ? 3 : undefined}
+            />
+          </>
+        )
+      })}
     </div>
   )
 }
