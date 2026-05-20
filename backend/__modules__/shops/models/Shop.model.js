@@ -127,6 +127,14 @@ module.exports = (sequelize) => {
             references: { model: "plans", key: "id" },
             onDelete: "SET NULL",
         },
+        // KYC / two-tier seller fields
+        video_url:     { type: DataTypes.TEXT, allowNull: true },
+        passport_file: { type: DataTypes.TEXT, allowNull: true },
+        patent_file:   { type: DataTypes.TEXT, allowNull: true },
+        bank_iban:     { type: DataTypes.STRING(34), allowNull: true },
+        card_number:   { type: DataTypes.STRING(20), allowNull: true },
+        // 0 = pending, 1 = standard seller, 2 = verified_pro
+        seller_tier:   { type: DataTypes.SMALLINT, allowNull: false, defaultValue: 0 },
         createdBy: {
             type: DataTypes.UUID,
             allowNull: true,

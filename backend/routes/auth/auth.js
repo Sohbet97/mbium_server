@@ -32,6 +32,9 @@ authRouter.post('/me/avatar', authorizationMiddleware, avatarUpload.single('avat
 authRouter.post('/me/shop', authorizationMiddleware, ShopController.applyForShop.bind(ShopController));
 authRouter.get('/me/shop',  authorizationMiddleware, ShopController.getMyShop.bind(ShopController));
 
+// ── FCM device token ──────────────────────────────────────────────────────────
+authRouter.patch('/me/device-token', authorizationMiddleware, UserController.registerDeviceToken.bind(UserController));
+
 // ── Admin ─────────────────────────────────────────────────────────────────────
 authRouter.post(
   '/force-login',

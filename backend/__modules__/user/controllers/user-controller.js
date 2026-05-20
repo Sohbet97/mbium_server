@@ -78,6 +78,24 @@ class UserController {
     }
   }
 
+  static async registerDeviceToken(req, res, next) {
+    try {
+      const { token } = req.body;
+      if (!token || typeof token !== 'string') throw ApiError.BadRequest('token required');
+      const user = await db.User.findOne({ where: { id: req.user.id } });
+      if (!user) throw ApiError.NotFound();
+      const tokens = Array.isArray(user.device_tokens) ? user.device_tokens : [];
+      if (!tokens.includes(token)) {
+        // Keep max 5 tokens per user (oldest removed first)
+        const updated = [...tokens, token].slice(-5);
+        await db.User.update({ device_tokens: updated }, { where: { id: user.id } });
+      }
+      return res.sendStatus(200);
+    } catch (e) {
+      next(e);
+    }
+  }
+
   static async uploadAvatar(req, res, next) {
     try {
       if (!req.file) throw ApiError.BadRequest("No file uploaded");

@@ -105,11 +105,25 @@ class OrderService {
         const order = await db.Order.findOne({
             where: { id: orderId },
             attributes: ["shop_id", "total_price"],
+            include: [
+                {
+                    model: db.Shop,
+                    as: "shop",
+                    attributes: ["id", "plan_id"],
+                    include: [{ model: db.Plan, as: "plan", attributes: ["commission_rate"] }],
+                },
+            ],
         });
         if (!order) return;
 
-        const config = await db.Config.findOne();
-        const rate = Math.min(1, Math.max(0, parseFloat(config?.platform_commission_rate ?? 0)));
+        // Use plan-level commission rate; fall back to global config
+        let rate = order.shop?.plan?.commission_rate;
+        if (rate == null) {
+            const config = await db.Config.findOne();
+            rate = config?.platform_commission_rate ?? 0.15;
+        }
+        rate = Math.min(1, Math.max(0, parseFloat(rate)));
+
         const platformFee = parseFloat((parseFloat(order.total_price) * rate).toFixed(2));
         const sellerAmount = parseFloat((parseFloat(order.total_price) - platformFee).toFixed(2));
 

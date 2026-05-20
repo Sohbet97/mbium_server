@@ -3,6 +3,12 @@ import { AuthApi } from '@/lib/api'
 
 const AuthContext = createContext(null)
 
+// Fetch full profile (includes shop) and return it
+async function fetchFullProfile() {
+  const { data } = await AuthApi.me()
+  return data.model ?? null
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -11,9 +17,11 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem('accessToken')
     if (!token) { setLoading(false); return }
 
-    AuthApi.refresh().then(({ data }) => {
+    AuthApi.refresh().then(async ({ data }) => {
       if (data.token) localStorage.setItem('accessToken', data.token)
-      setUser(data.user ?? null)
+      // Fetch full profile to get shop data
+      const full = await fetchFullProfile().catch(() => data.user ?? null)
+      setUser(full)
     }).catch(() => {
       localStorage.removeItem('accessToken')
     }).finally(() => setLoading(false))
@@ -28,22 +36,25 @@ export function AuthProvider({ children }) {
     }
 
     if (data.token) localStorage.setItem('accessToken', data.token)
-    setUser(data.user ?? null)
-    return { is2FA: false, user: data.user }
+    const full = await fetchFullProfile().catch(() => data.user ?? null)
+    setUser(full)
+    return { is2FA: false, user: full }
   }
 
   async function verifyOtp(session_id, otp) {
     const { data } = await AuthApi.verifyOtp({ session_id, otp })
     if (data.token) localStorage.setItem('accessToken', data.token)
-    setUser(data.user ?? null)
-    return data
+    const full = await fetchFullProfile().catch(() => data.user ?? null)
+    setUser(full)
+    return { ...data, user: full }
   }
 
   async function loginWithGoogle(id_token) {
     const { data } = await AuthApi.googleLogin(id_token)
     if (data.token) localStorage.setItem('accessToken', data.token)
-    setUser(data.user ?? null)
-    return data
+    const full = await fetchFullProfile().catch(() => data.user ?? null)
+    setUser(full)
+    return { ...data, user: full }
   }
 
   function updateUser(fields) {

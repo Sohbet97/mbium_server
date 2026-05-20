@@ -92,6 +92,12 @@ module.exports = (sequelize) => {
                 type: DataTypes.DATE,
                 allowNull: true,
             },
+
+            device_tokens: {
+                type: DataTypes.JSONB,
+                allowNull: false,
+                defaultValue: [],
+            },
         },
         {
             timestamps: true,

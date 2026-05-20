@@ -4,8 +4,11 @@ import { AuthProvider } from '@/store/auth'
 import { NotificationProvider } from '@/store/notifications'
 import { ThemeProvider } from '@/store/theme'
 import { AdminLayout } from '@/components/layout/AdminLayout'
+import { SellerLayout } from '@/components/layout/SellerLayout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import LoginPage from '@/pages/auth/LoginPage'
+import PendingPage from '@/pages/auth/PendingPage'
+// Admin pages
 import DashboardPage from '@/pages/admin/DashboardPage'
 import UsersPage from '@/pages/admin/UsersPage'
 import ShopsPage from '@/pages/admin/ShopsPage'
@@ -27,12 +30,19 @@ import MediaPage from '@/pages/admin/MediaPage'
 import BannersPage from '@/pages/admin/BannersPage'
 import DeliveriesPage from '@/pages/admin/DeliveriesPage'
 import PlansPage from '@/pages/admin/PlansPage'
+// Seller pages
+import SellerDashboardPage from '@/pages/seller/SellerDashboardPage'
+import SellerProductsPage from '@/pages/seller/SellerProductsPage'
+import SellerOrdersPage from '@/pages/seller/SellerOrdersPage'
+import SellerShopPage from '@/pages/seller/SellerShopPage'
 
 const router = createBrowserRouter([
-  { path: '/login', element: <LoginPage /> },
+  { path: '/login',   element: <LoginPage /> },
+  { path: '/pending', element: <PendingPage /> },
   {
     element: <ProtectedRoute />,
     children: [
+      // ── Platform admin panel ──────────────────────────────────────────────
       {
         path: '/admin',
         element: <AdminLayout />,
@@ -62,10 +72,21 @@ const router = createBrowserRouter([
           { path: 'plans', element: <PlansPage />, handle: { titleKey: 'plans.title' } },
         ],
       },
+      // ── Seller panel ──────────────────────────────────────────────────────
+      {
+        path: '/seller',
+        element: <SellerLayout />,
+        children: [
+          { index: true,       element: <SellerDashboardPage /> },
+          { path: 'products',  element: <SellerProductsPage /> },
+          { path: 'orders',    element: <SellerOrdersPage /> },
+          { path: 'shop',      element: <SellerShopPage /> },
+        ],
+      },
     ],
   },
-  { path: '/', element: <Navigate to="/admin" replace /> },
-  { path: '*', element: <Navigate to="/admin" replace /> },
+  { path: '/', element: <Navigate to="/login" replace /> },
+  { path: '*', element: <Navigate to="/login" replace /> },
 ])
 
 export default function App() {
