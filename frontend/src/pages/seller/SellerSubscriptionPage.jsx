@@ -3,8 +3,7 @@ import { SellerApi } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Check, X, Crown, Clock, AlertTriangle, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-const LIVE_LABELS = ['Ýok', 'Diňe görmek', 'Çäkli', 'Çäksiz']
+import { useTranslation } from 'react-i18next'
 
 function fmtDate(d) {
   if (!d) return null
@@ -17,7 +16,7 @@ function daysLeft(date) {
 }
 
 // ── Single feature row ────────────────────────────────────────────────────────
-function FeatRow({ label, value, isBool }) {
+function FeatRow({ label, value, isBool, t }) {
   return (
     <div className="flex items-center justify-between py-1.5 text-sm border-b last:border-0 dark:border-white/[0.06]">
       <span className="text-slate-500 dark:text-slate-400">{label}</span>
@@ -33,8 +32,9 @@ function FeatRow({ label, value, isBool }) {
 }
 
 // ── Plan card ─────────────────────────────────────────────────────────────────
-function PlanCard({ plan, isCurrent }) {
+function PlanCard({ plan, isCurrent, t }) {
   const free = Number(plan.price_monthly) === 0
+  const LIVE_LABELS = [t('seller.liveNone'), t('seller.liveViewOnly'), t('seller.liveLimited'), t('seller.liveUnlimited')]
 
   return (
     <Card className={cn(
@@ -53,40 +53,41 @@ function PlanCard({ plan, isCurrent }) {
           </div>
           {isCurrent && (
             <span className="shrink-0 text-[10px] px-2 py-0.5 rounded-full bg-blue-600 text-white font-semibold">
-              Häzirki
+              {t('seller.currentPlanBadge')}
             </span>
           )}
         </div>
 
         <div className="flex items-baseline gap-1.5 mt-3">
           <span className="text-3xl font-bold text-slate-900 dark:text-white">
-            {free ? 'Mugt' : plan.price_monthly}
+            {free ? t('seller.freePlan') : plan.price_monthly}
           </span>
-          {!free && <span className="text-sm text-slate-400">TMT / aý</span>}
+          {!free && <span className="text-sm text-slate-400">{t('seller.perMonth')}</span>}
         </div>
         <p className="text-xs text-slate-400 mt-0.5">
-          Komissiýa: {(Number(plan.commission_rate) * 100).toFixed(0)}%
+          {t('seller.commission')}: {(Number(plan.commission_rate) * 100).toFixed(0)}%
         </p>
       </CardHeader>
 
       <CardContent className="flex-1 space-y-0">
-        <FeatRow label="Haryt limiti"       value={plan.product_limit ?? '∞'} />
-        <FeatRow label="AI kreditler / aý"  value={plan.ai_credits_monthly} />
-        <FeatRow label="Auksion / hepde"    value={plan.auction_per_week ?? '∞'} />
-        <FeatRow label="Janly ýaýlym"       value={LIVE_LABELS[plan.live_stream_mode ?? 0]} />
+        <FeatRow label={t('seller.productLimit')}   value={plan.product_limit ?? '∞'} t={t} />
+        <FeatRow label={t('seller.aiCredits')}      value={plan.ai_credits_monthly} t={t} />
+        <FeatRow label={t('seller.auctionPerWeek')} value={plan.auction_per_week ?? '∞'} t={t} />
+        <FeatRow label={t('seller.liveStream')}     value={LIVE_LABELS[plan.live_stream_mode ?? 0]} t={t} />
         <FeatRow
-          label="Hotspot / aý"
+          label={t('seller.hotspot')}
           value={plan.hotspot_per_month > 0
             ? `${plan.hotspot_per_month} × ${plan.hotspot_duration_hrs}s`
             : '—'}
+          t={t}
         />
-        <FeatRow label="Push bildiriş / aý" value={plan.push_notif_monthly || '—'} />
-        <FeatRow label="Mahabat paneli"     isBool value={plan.ads_dashboard} />
-        <FeatRow label="Coin gazanmak"      isBool value={plan.coin_earn} />
-        <FeatRow label="Coin ileri"         isBool value={plan.coin_earn_priority} />
-        <FeatRow label="Tassyklanan nyşan"  isBool value={plan.verified_badge} />
-        <FeatRow label="Virtual syýahat"    isBool value={plan.virtual_tour} />
-        <FeatRow label="OEM / ODM goldaw"   isBool value={plan.oem_odm_support} />
+        <FeatRow label={t('seller.pushNotif')}      value={plan.push_notif_monthly || '—'} t={t} />
+        <FeatRow label={t('seller.adsDashboard')}   isBool value={plan.ads_dashboard} t={t} />
+        <FeatRow label={t('seller.coinEarn')}       isBool value={plan.coin_earn} t={t} />
+        <FeatRow label={t('seller.coinPriority')}   isBool value={plan.coin_earn_priority} t={t} />
+        <FeatRow label={t('seller.verifiedBadge')}  isBool value={plan.verified_badge} t={t} />
+        <FeatRow label={t('seller.virtualTour')}    isBool value={plan.virtual_tour} t={t} />
+        <FeatRow label={t('seller.oemSupport')}     isBool value={plan.oem_odm_support} t={t} />
       </CardContent>
 
       {!isCurrent && (
@@ -96,7 +97,7 @@ function PlanCard({ plan, isCurrent }) {
             className="flex items-center justify-center gap-1.5 w-full text-sm px-4 py-2 rounded-lg border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
           >
             <ExternalLink className="h-3.5 w-3.5" />
-            Habarlaşmak
+            {t('seller.contactSupport')}
           </a>
         </div>
       )}
@@ -105,14 +106,14 @@ function PlanCard({ plan, isCurrent }) {
 }
 
 // ── Subscription status banner ────────────────────────────────────────────────
-function SubscriptionBanner({ sub }) {
+function SubscriptionBanner({ sub, t }) {
   if (!sub) {
     return (
       <div className="rounded-xl border-2 border-dashed border-slate-200 dark:border-white/[0.10] p-6 text-center">
         <Crown className="h-8 w-8 mx-auto mb-2 text-slate-300 dark:text-white/20" />
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Häzirki wagtda abunalyk ýok</p>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{t('seller.noPlan')}</p>
         <p className="text-xs text-slate-400 mt-1">
-          Plan saýlamak üçin goldaw bilen habarlaşyň:{' '}
+          {t('seller.noPlanDesc')}{' '}
           <a href="mailto:support@mbium.tm" className="text-blue-600 dark:text-blue-400 hover:underline">
             support@mbium.tm
           </a>
@@ -152,16 +153,16 @@ function SubscriptionBanner({ sub }) {
               ? 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'
               : 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300'
           )}>
-            {expired ? 'Möhleti doldy' : 'Işjeň'}
+            {expired ? t('seller.planExpired') : t('seller.planActive')}
           </span>
         </div>
 
         <div className="flex flex-wrap gap-4 mt-2 text-xs text-slate-500 dark:text-slate-400">
-          <span>Başlandy: <strong className="text-slate-700 dark:text-slate-200">{fmtDate(sub.starts_at)}</strong></span>
+          <span>{t('seller.planStartedAt')}: <strong className="text-slate-700 dark:text-slate-200">{fmtDate(sub.starts_at)}</strong></span>
           <span>
-            Gutarýar:{' '}
+            {t('seller.planEndsAt')}:{' '}
             <strong className={cn(expired ? 'text-red-600' : expiring ? 'text-amber-600' : 'text-slate-700 dark:text-slate-200')}>
-              {sub.ends_at ? fmtDate(sub.ends_at) : 'Möhletsiz'}
+              {sub.ends_at ? fmtDate(sub.ends_at) : t('seller.planNoExpiry')}
             </strong>
           </span>
         </div>
@@ -169,13 +170,13 @@ function SubscriptionBanner({ sub }) {
         {expired && (
           <p className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 font-medium mt-2">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            Abunalyk möhleti doldy. Dowam etmek üçin goldaw bilen habarlaşyň.
+            {t('seller.expiredMsg')}
           </p>
         )}
         {expiring && !expired && (
           <p className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 font-medium mt-2">
             <Clock className="h-3.5 w-3.5 shrink-0" />
-            {left} gün galdy. Uzaltmak üçin goldaw bilen habarlaşyň.
+            {t('seller.daysLeft', { count: left })}
           </p>
         )}
         {sub.note && (
@@ -187,13 +188,13 @@ function SubscriptionBanner({ sub }) {
 }
 
 // ── Key metrics strip for current plan ───────────────────────────────────────
-function CurrentPlanMetrics({ plan }) {
+function CurrentPlanMetrics({ plan, t }) {
   if (!plan) return null
   const metrics = [
-    { label: 'Komissiýa',     value: `${(Number(plan.commission_rate) * 100).toFixed(0)}%` },
-    { label: 'Haryt limiti',  value: plan.product_limit ?? '∞' },
-    { label: 'AI kredit/aý', value: plan.ai_credits_monthly },
-    { label: 'Auksion/hepde', value: plan.auction_per_week ?? '∞' },
+    { label: t('seller.commission'),     value: `${(Number(plan.commission_rate) * 100).toFixed(0)}%` },
+    { label: t('seller.productLimit'),   value: plan.product_limit ?? '∞' },
+    { label: t('seller.aiCredits'),      value: plan.ai_credits_monthly },
+    { label: t('seller.auctionPerWeek'), value: plan.auction_per_week ?? '∞' },
   ]
 
   return (
@@ -210,6 +211,7 @@ function CurrentPlanMetrics({ plan }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SellerSubscriptionPage() {
+  const { t } = useTranslation()
   const [plans, setPlans]   = useState([])
   const [sub, setSub]       = useState(undefined)
   const [loading, setLoading] = useState(true)
@@ -239,23 +241,23 @@ export default function SellerSubscriptionPage() {
     <div className="space-y-6 max-w-5xl">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-semibold dark:text-white">Abunalyk we Planlar</h1>
+        <h1 className="text-xl font-semibold dark:text-white">{t('seller.subscriptionTitle')}</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-          Häzirki abunalyk ýagdaýy we elýeterli planlar
+          {t('seller.subscriptionSubtitle')}
         </p>
       </div>
 
       {/* Current subscription */}
-      <SubscriptionBanner sub={sub} />
+      <SubscriptionBanner sub={sub} t={t} />
 
       {/* Current plan key metrics */}
-      {sub?.plan && <CurrentPlanMetrics plan={sub.plan} />}
+      {sub?.plan && <CurrentPlanMetrics plan={sub.plan} t={t} />}
 
       {/* Plans comparison */}
       {plans.length > 0 && (
         <div>
           <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
-            {currentPlanId ? 'Beýleki planlar' : 'Elýeterli planlar'}
+            {currentPlanId ? t('seller.otherPlans') : t('seller.availablePlans')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {plans.map((plan) => (
@@ -263,15 +265,15 @@ export default function SellerSubscriptionPage() {
                 key={plan.id}
                 plan={plan}
                 isCurrent={plan.id === currentPlanId}
+                t={t}
               />
             ))}
           </div>
           <p className="text-xs text-slate-400 mt-4 text-center">
-            Plan üýtgetmek ýa-da täzelemek üçin{' '}
+            {t('seller.planFooter')}{' '}
             <a href="mailto:support@mbium.tm" className="text-blue-600 dark:text-blue-400 hover:underline">
               support@mbium.tm
-            </a>{' '}
-            salga ýüz tutuň.
+            </a>
           </p>
         </div>
       )}

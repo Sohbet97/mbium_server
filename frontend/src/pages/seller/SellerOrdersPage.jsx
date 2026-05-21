@@ -5,45 +5,34 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { RefreshCw, ShoppingBag, X, ChevronRight, Truck } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
-const STATUSES = {
-  0:  { label: 'Garaşylýar',       color: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400' },
-  1:  { label: 'Tassyklanan',      color: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400' },
-  2:  { label: 'Taýýarlanylýar',   color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400' },
-  3:  { label: 'Ugradyldy',        color: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400' },
-  4:  { label: 'Gowşuryldy',       color: 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400' },
-  5:  { label: 'Ýapyldy',          color: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-400' },
-  10: { label: 'Ýatyryldy',        color: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400' },
-  11: { label: 'Yzyna gaýtaryldy', color: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' },
+const STATUS_COLORS = {
+  0:  'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
+  1:  'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400',
+  2:  'bg-indigo-100 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400',
+  3:  'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400',
+  4:  'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400',
+  5:  'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-400',
+  10: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+  11: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400',
 }
 
 const NEXT_STATUS = { 0: 1, 1: 2, 2: 3 }
-const NEXT_LABEL  = { 0: 'Tassykla', 1: 'Taýýarlamaga başla', 2: 'Ugrat' }
 
 const PAGE = 20
 
-const TABS = [
-  { value: '',    label: 'Ählisi' },
-  { value: '0',   label: 'Garaşylýar' },
-  { value: '1',   label: 'Tassyklanan' },
-  { value: '2',   label: 'Taýýarlanylýar' },
-  { value: '3',   label: 'Ugradyldy' },
-  { value: '4',   label: 'Gowşuryldy' },
-  { value: '5',   label: 'Ýapyldy' },
-  { value: '10',  label: 'Ýatyryldy' },
-]
-
-function StatusBadge({ status }) {
-  const s = STATUSES[status]
-  if (!s) return null
+function StatusBadge({ status, label }) {
+  const color = STATUS_COLORS[status]
+  if (!color) return null
   return (
-    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap', s.color)}>
-      {s.label}
+    <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap', color)}>
+      {label}
     </span>
   )
 }
 
-function OrderDetail({ orderId, onClose, onStatusChange }) {
+function OrderDetail({ orderId, onClose, onStatusChange, t, statusLabels, nextLabel }) {
   const [order, setOrder]           = useState(null)
   const [loading, setLoading]       = useState(true)
   const [advancing, setAdvancing]   = useState(false)
@@ -66,9 +55,9 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
       const { data } = await SellerApi.orders.updateStatus(order.id, { status: next })
       setOrder(data.model)
       onStatusChange(data.model)
-      toast.success('Status üýtgedildi')
+      toast.success(t('seller.statusUpdated'))
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setAdvancing(false) }
   }
 
@@ -83,9 +72,9 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
       const { data } = await SellerApi.orders.getOne(order.id)
       setOrder(data.model)
       setCarrier(''); setTracking('')
-      toast.success('Ugratma goşuldy')
+      toast.success(t('seller.shipmentAdded'))
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setAddingShip(false) }
   }
 
@@ -97,8 +86,8 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b dark:border-white/[0.06] shrink-0">
           <div className="flex items-center gap-2.5">
-            <h2 className="font-semibold dark:text-white">Sargyt #{orderId}</h2>
-            {order && <StatusBadge status={order.status} />}
+            <h2 className="font-semibold dark:text-white">{t('nav.orders')} #{orderId}</h2>
+            {order && <StatusBadge status={order.status} label={statusLabels[order.status] ?? order.status} />}
           </div>
           <button
             onClick={onClose}
@@ -113,13 +102,13 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
             <div className="h-7 w-7 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         ) : !order ? (
-          <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">Tapylmady</div>
+          <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">{t('seller.notFound')}</div>
         ) : (
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
 
             {/* Customer */}
             <section>
-              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Müşderi</h3>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">{t('seller.customer')}</h3>
               <div className="text-sm font-medium dark:text-white">
                 {order.customer?.name} {order.customer?.surname}
               </div>
@@ -134,7 +123,7 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
               )}
               {order.note && (
                 <div className="mt-2 px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 text-xs text-amber-700 dark:text-amber-400">
-                  Bellik: {order.note}
+                  {t('seller.orderNote')}: {order.note}
                 </div>
               )}
             </section>
@@ -142,7 +131,7 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
             {/* Items */}
             <section>
               <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                Harytlar ({order.items?.length ?? 0})
+                {t('seller.items')} ({order.items?.length ?? 0})
               </h3>
               <div className="space-y-2">
                 {order.items?.map((item) => (
@@ -163,7 +152,7 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
                 ))}
               </div>
               <div className="mt-3 pt-3 border-t dark:border-white/[0.06] flex justify-between">
-                <span className="text-sm text-slate-500">Jemi</span>
+                <span className="text-sm text-slate-500">{t('seller.total')}</span>
                 <span className="font-bold dark:text-white">
                   {parseFloat(order.total_price).toFixed(2)} {order.currency}
                 </span>
@@ -173,13 +162,13 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
             {/* Existing shipments */}
             {order.shipments?.length > 0 && (
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Ugratmalar</h3>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">{t('seller.shipments')}</h3>
                 <div className="space-y-2">
                   {order.shipments.map((s) => (
                     <div key={s.id} className="flex items-start gap-2.5 text-xs px-3 py-2.5 rounded-lg border dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
                       <Truck className="h-4 w-4 text-slate-400 mt-0.5 shrink-0" />
                       <div>
-                        <div className="font-medium dark:text-white">{s.carrier || 'Daşaýjy görkezilmedi'}</div>
+                        <div className="font-medium dark:text-white">{s.carrier || t('seller.noCarrier')}</div>
                         {s.tracking_number && (
                           <div className="text-slate-400 font-mono mt-0.5">{s.tracking_number}</div>
                         )}
@@ -196,16 +185,16 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
             {/* Add shipment (processing or shipped) */}
             {[2, 3].includes(order.status) && (
               <section>
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Ugratma goş</h3>
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">{t('seller.addShipment')}</h3>
                 <div className="space-y-2">
                   <Input
-                    placeholder="Daşaýjy (mysal: THEX)"
+                    placeholder={t('seller.carrier')}
                     value={carrier}
                     onChange={(e) => setCarrier(e.target.value)}
                     className="h-8 text-sm"
                   />
                   <Input
-                    placeholder="Yzarlaýyş belgisi"
+                    placeholder={t('seller.trackingNo')}
                     value={tracking}
                     onChange={(e) => setTracking(e.target.value)}
                     className="h-8 text-sm font-mono"
@@ -217,7 +206,7 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
                     disabled={addingShip || (!carrier.trim() && !tracking.trim())}
                     onClick={addShipment}
                   >
-                    {addingShip ? 'Goşulýar...' : 'Ugratma goş'}
+                    {addingShip ? t('seller.adding') : t('seller.addShipment')}
                   </Button>
                 </div>
               </section>
@@ -229,7 +218,7 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
         {order && NEXT_STATUS[order.status] != null && (
           <div className="shrink-0 border-t dark:border-white/[0.06] px-5 py-4">
             <Button className="w-full" disabled={advancing} onClick={advance}>
-              {advancing ? 'Ýüklenýär...' : NEXT_LABEL[order.status]}
+              {advancing ? t('common.loading') : nextLabel[order.status]}
               <ChevronRight className="h-4 w-4 ml-1.5" />
             </Button>
           </div>
@@ -240,12 +229,36 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
 }
 
 export default function SellerOrdersPage() {
+  const { t } = useTranslation()
   const [orders, setOrders]   = useState([])
   const [count, setCount]     = useState(0)
   const [loading, setLoading] = useState(true)
   const [tab, setTab]         = useState('')
   const [page, setPage]       = useState(0)
   const [detail, setDetail]   = useState(null)
+
+  const STATUS_LABELS = {
+    0: t('seller.orderPending'), 1: t('seller.orderConfirmed'), 2: t('seller.orderProcessing'),
+    3: t('seller.orderShipped'), 4: t('seller.orderDelivered'), 5: t('seller.orderClosed'),
+    10: t('seller.orderCancelled'), 11: t('seller.orderReturned'),
+  }
+
+  const NEXT_LABEL = {
+    0: t('seller.actionConfirm'),
+    1: t('seller.actionProcess'),
+    2: t('seller.actionShip'),
+  }
+
+  const TABS = [
+    { value: '',    label: t('seller.allOrders') },
+    { value: '0',   label: t('seller.orderPending') },
+    { value: '1',   label: t('seller.orderConfirmed') },
+    { value: '2',   label: t('seller.orderProcessing') },
+    { value: '3',   label: t('seller.orderShipped') },
+    { value: '4',   label: t('seller.orderDelivered') },
+    { value: '5',   label: t('seller.orderClosed') },
+    { value: '10',  label: t('seller.orderCancelled') },
+  ]
 
   const load = useCallback((p = 0) => {
     setLoading(true)
@@ -273,7 +286,7 @@ export default function SellerOrdersPage() {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold dark:text-white">
-          Sargytlar <span className="text-slate-400 font-normal text-base">({count})</span>
+          {t('nav.orders')} <span className="text-slate-400 font-normal text-base">({count})</span>
         </h1>
         <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => load(page)}>
           <RefreshCw className="h-4 w-4" />
@@ -306,17 +319,17 @@ export default function SellerOrdersPage() {
       ) : orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
           <ShoppingBag className="h-12 w-12 text-slate-200 dark:text-white/10" />
-          <p className="text-sm">Sargyt tapylmady</p>
+          <p className="text-sm">{t('seller.noOrdersFound')}</p>
         </div>
       ) : (
         <div className="rounded-xl border dark:border-white/[0.06] overflow-hidden bg-white dark:bg-[#111114]">
           {/* Header */}
           <div className="grid grid-cols-[4.5rem_1fr_auto_auto_auto] gap-x-4 px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide border-b dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
             <div>№</div>
-            <div>Müşderi</div>
-            <div className="text-right">Jemi</div>
-            <div>Sene</div>
-            <div>Ýagdaý</div>
+            <div>{t('seller.customer')}</div>
+            <div className="text-right">{t('seller.total')}</div>
+            <div>{t('seller.date')}</div>
+            <div>{t('common.status')}</div>
           </div>
 
           {/* Rows */}
@@ -344,7 +357,7 @@ export default function SellerOrdersPage() {
                   {new Date(order.createdAt).toLocaleDateString('ru-RU')}
                 </div>
                 <div className="shrink-0">
-                  <StatusBadge status={order.status} />
+                  <StatusBadge status={order.status} label={STATUS_LABELS[order.status] ?? order.status} />
                 </div>
               </div>
             ))}
@@ -369,6 +382,9 @@ export default function SellerOrdersPage() {
           orderId={detail}
           onClose={() => setDetail(null)}
           onStatusChange={handleStatusChange}
+          t={t}
+          statusLabels={STATUS_LABELS}
+          nextLabel={NEXT_LABEL}
         />
       )}
     </div>

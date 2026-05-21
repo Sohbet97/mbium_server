@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Search, RefreshCw, PackageX, Eye, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
@@ -19,7 +20,7 @@ function StockBadge({ stock, track }) {
   return <span className="text-xs text-slate-600 dark:text-slate-300">{stock}</span>
 }
 
-function StatusDot({ active }) {
+function StatusDot({ active, t }) {
   return (
     <span className={cn('inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium',
       active
@@ -27,12 +28,13 @@ function StatusDot({ active }) {
         : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
     )}>
       <span className={cn('w-1.5 h-1.5 rounded-full', active ? 'bg-green-500' : 'bg-slate-400')} />
-      {active ? 'Işjeň' : 'Gizlin'}
+      {active ? t('seller.statusActive') : t('seller.statusHidden')}
     </span>
   )
 }
 
 export default function SellerProductsPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [products, setProducts]   = useState([])
   const [count, setCount]         = useState(0)
@@ -69,15 +71,15 @@ export default function SellerProductsPage() {
   function search() { setPage(0); load(0) }
 
   async function handleDelete(id) {
-    if (!confirm('Harydy pozmak isleýärsiňizmi?')) return
+    if (!confirm(t('seller.confirmDeleteProduct'))) return
     setDeleting(id)
     try {
       await SellerApi.products.delete(id)
       setProducts((prev) => prev.filter((p) => p.id !== id))
       setCount((c) => c - 1)
-      toast.success('Haryt pozuldy')
+      toast.success(t('seller.productDeleted'))
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setDeleting(null) }
   }
 
@@ -87,7 +89,7 @@ export default function SellerProductsPage() {
       const { data } = await SellerApi.products.update(product.id, { is_active: !product.is_active })
       setProducts((prev) => prev.map((p) => p.id === product.id ? { ...p, is_active: data.model?.is_active ?? !product.is_active } : p))
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setToggling(null) }
   }
 
@@ -98,10 +100,10 @@ export default function SellerProductsPage() {
       {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-xl font-semibold dark:text-white">
-          Harytlar <span className="text-slate-400 font-normal text-base">({count})</span>
+          {t('nav.products')} <span className="text-slate-400 font-normal text-base">({count})</span>
         </h1>
         <Button size="sm" onClick={() => navigate('/seller/products/new')}>
-          <Plus className="h-4 w-4 mr-1.5" />Haryt goş
+          <Plus className="h-4 w-4 mr-1.5" />{t('products.addProduct')}
         </Button>
       </div>
 
@@ -109,7 +111,7 @@ export default function SellerProductsPage() {
       <div className="flex flex-wrap gap-2">
         <div className="flex gap-1.5 flex-1 min-w-0 max-w-sm">
           <Input
-            placeholder="Gözle…"
+            placeholder={t('common.search')}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && search()}
@@ -125,7 +127,7 @@ export default function SellerProductsPage() {
           onChange={(e) => setCatFilter(e.target.value)}
           className="h-8 border rounded-md px-2.5 text-sm bg-white dark:bg-[#111114] dark:border-white/10 dark:text-white"
         >
-          <option value="">Ähli kategoriýalar</option>
+          <option value="">{t('seller.allCategories')}</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
 
@@ -134,9 +136,9 @@ export default function SellerProductsPage() {
           onChange={(e) => setStatus(e.target.value)}
           className="h-8 border rounded-md px-2.5 text-sm bg-white dark:bg-[#111114] dark:border-white/10 dark:text-white"
         >
-          <option value="">Ähli ýagdaý</option>
-          <option value="true">Işjeň</option>
-          <option value="false">Gizlin</option>
+          <option value="">{t('seller.allStatuses')}</option>
+          <option value="true">{t('seller.statusActive')}</option>
+          <option value="false">{t('seller.statusHidden')}</option>
         </select>
 
         <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => { setPage(0); load(0) }}>
@@ -152,9 +154,9 @@ export default function SellerProductsPage() {
       ) : products.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
           <PackageX className="h-12 w-12 text-slate-200 dark:text-white/10" />
-          <p className="text-sm">Haryt tapylmady</p>
+          <p className="text-sm">{t('seller.noProducts')}</p>
           <Button size="sm" variant="outline" onClick={() => navigate('/seller/products/new')}>
-            <Plus className="h-4 w-4 mr-1.5" />Ilkinji harydy goş
+            <Plus className="h-4 w-4 mr-1.5" />{t('seller.addFirstProduct')}
           </Button>
         </div>
       ) : (
@@ -162,10 +164,10 @@ export default function SellerProductsPage() {
           {/* Table header */}
           <div className="grid grid-cols-[2.5rem_1fr_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide border-b dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
             <div />
-            <div>Haryt</div>
-            <div className="text-right">Baha</div>
-            <div className="text-center">Stok</div>
-            <div>Ýagdaý</div>
+            <div>{t('products.colProduct')}</div>
+            <div className="text-right">{t('products.colPrice')}</div>
+            <div className="text-center">{t('products.colStock')}</div>
+            <div>{t('products.colStatus')}</div>
             <div />
           </div>
 
@@ -198,7 +200,7 @@ export default function SellerProductsPage() {
                     </Link>
                     <div className="text-xs text-slate-400 truncate mt-0.5">
                       {p.category?.name}
-                      {p.variants?.length > 0 && ` · ${p.variants.length} görnüş`}
+                      {p.variants?.length > 0 && ` · ${t('seller.variantsCount', { count: p.variants.length })}`}
                     </div>
                   </div>
 
@@ -219,7 +221,7 @@ export default function SellerProductsPage() {
 
                   {/* Status */}
                   <div className="shrink-0">
-                    <StatusDot active={p.is_active} />
+                    <StatusDot active={p.is_active} t={t} />
                   </div>
 
                   {/* Actions */}
@@ -227,7 +229,7 @@ export default function SellerProductsPage() {
                     <button
                       onClick={() => handleToggle(p)}
                       disabled={toggling === p.id}
-                      title={p.is_active ? 'Gizle' : 'Işjeňleşdir'}
+                      title={p.is_active ? t('seller.hideProduct') : t('seller.activateProduct')}
                       className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors disabled:opacity-40"
                     >
                       {p.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

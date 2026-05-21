@@ -63,6 +63,9 @@ async function run() {
         console.log('\n[19/19] Test shop applications');
         await require('./17-shop-applications')(fullDb);
 
+        console.log('\n[20/20] AI recommendations');
+        await require('./18-ai-recommendations')(fullDb);
+
         console.log('\nAll seeds complete.');
     } catch (err) {
         console.error('\nSeeding failed:', err.message);

@@ -7,15 +7,24 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Wallet } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
-const STATUS_LABELS = {
-  0: { label: 'Garaşylýar', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
-  1: { label: 'Tassyklanan', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
-  2: { label: 'Tölendi',    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
-  9: { label: 'Ret edildi', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+const STATUS_COLORS = {
+  0: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  1: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+  2: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  9: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
 }
 
 export default function SellerPayoutsPage() {
+  const { t } = useTranslation()
+
+  const STATUS_LABELS = {
+    0: { label: t('seller.payoutPending'), color: STATUS_COLORS[0] },
+    1: { label: t('seller.payoutApproved'), color: STATUS_COLORS[1] },
+    2: { label: t('seller.payoutPaid'),    color: STATUS_COLORS[2] },
+    9: { label: t('seller.payoutRejected'), color: STATUS_COLORS[9] },
+  }
   const [balance, setBalance]     = useState(null)
   const [history, setHistory]     = useState([])
   const [loading, setLoading]     = useState(true)
@@ -36,11 +45,11 @@ export default function SellerPayoutsPage() {
   }, [])
 
   async function handleRequest() {
-    if (!amount || parseFloat(amount) <= 0) { toast.error('Möçberi giriziň'); return }
+    if (!amount || parseFloat(amount) <= 0) { toast.error(t('seller.enterAmount')); return }
     setRequesting(true)
     try {
       await SellerApi.payouts.request({ amount: parseFloat(amount), bank_iban: iban || undefined })
-      toast.success('Töleg soragy ugradyldy')
+      toast.success(t('seller.payoutRequestSent'))
       setOpen(false)
       setAmount('')
       setIban('')
@@ -48,7 +57,7 @@ export default function SellerPayoutsPage() {
       const { data } = await SellerApi.payouts.getHistory({ limit: 20 })
       setHistory(data?.data ?? [])
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally {
       setRequesting(false)
     }
@@ -63,14 +72,14 @@ export default function SellerPayoutsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold dark:text-white">Tölegler</h1>
-        <Button size="sm" onClick={() => setOpen(true)}><Wallet className="h-4 w-4 mr-1" />Pul çykarmak</Button>
+        <h1 className="text-xl font-semibold dark:text-white">{t('seller.payoutsTitle')}</h1>
+        <Button size="sm" onClick={() => setOpen(true)}><Wallet className="h-4 w-4 mr-1" />{t('seller.requestPayout')}</Button>
       </div>
 
       {/* Balance card */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-500">Häzirki balans</CardTitle>
+          <CardTitle className="text-sm font-medium text-slate-500">{t('seller.currentBalance')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold dark:text-white">
@@ -81,9 +90,9 @@ export default function SellerPayoutsPage() {
       </Card>
 
       {/* Payout history */}
-      <h2 className="text-sm font-medium text-slate-500">Töleg taryhy</h2>
+      <h2 className="text-sm font-medium text-slate-500">{t('seller.payoutHistory')}</h2>
       {!history.length ? (
-        <Card><CardContent className="py-10 text-center text-slate-500 text-sm">Töleg ýok</CardContent></Card>
+        <Card><CardContent className="py-10 text-center text-slate-500 text-sm">{t('seller.noPayouts')}</CardContent></Card>
       ) : history.map((p) => {
         const st = STATUS_LABELS[p.status] ?? STATUS_LABELS[0]
         return (
@@ -105,14 +114,14 @@ export default function SellerPayoutsPage() {
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Pul çykarmak soragy</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t('seller.withdrawTitle')}</DialogTitle></DialogHeader>
           <div className="grid gap-3">
-            <div><Label>Möçber (TMT)</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="100.00" /></div>
-            <div><Label>Bank IBAN (islege görä)</Label><Input value={iban} onChange={(e) => setIban(e.target.value)} placeholder="TM..." /></div>
+            <div><Label>{t('seller.payoutAmount')}</Label><Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="100.00" /></div>
+            <div><Label>{t('seller.bankIbanOptional')}</Label><Input value={iban} onChange={(e) => setIban(e.target.value)} placeholder="TM..." /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Ýatyr</Button>
-            <Button onClick={handleRequest} disabled={requesting}>{requesting ? 'Ugradylýar…' : 'Ugrat'}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleRequest} disabled={requesting}>{requesting ? t('seller.sending') : t('seller.send')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

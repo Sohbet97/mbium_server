@@ -16,6 +16,8 @@ const plansPaths       = require("./paths/plans");
 const notifPaths       = require("./paths/notifications");
 const locationsPaths   = require("./paths/locations");
 const sellerPaths      = require("./paths/seller");
+const buyerPaths       = require("./paths/buyer");
+const aiRecPaths       = require("./paths/ai-recommendations");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -26,11 +28,12 @@ const swaggerSpec = {
             "Marketplace backend API for the Turkmenistan market. " +
             "All `/admin/*` routes require a Bearer token unless stated otherwise. " +
             "All `/seller/*` routes require a Bearer token AND an active approved shop. " +
+            "Most `/buyer/*` routes are public; cart/orders/addresses/reviews require a Bearer token. " +
             "Obtain tokens via `POST /auth/login` → `POST /auth/verify-otp`.",
         contact: { name: "mbium dev", email: "dovletli.dev@gmail.com" },
     },
     servers: [
-        { url: "http://localhost:5000", description: "Local dev" },
+        { url: "http://localhost:4000", description: "Local dev" },
         { url: "http://216.250.11.232/api", description: "Mbium server" },
     ],
     security: [],
@@ -59,7 +62,17 @@ const swaggerSpec = {
         { name: "Notifications", description: "Admin in-app notification inbox" },
         { name: "Locations",     description: "Countries, regions, districts, villages, and cities" },
         // Seller panel
-        { name: "Seller",        description: "Seller-panel routes — require auth + active approved shop" },
+        { name: "Seller",             description: "Seller-panel routes — require auth + active approved shop" },
+        // Buyer (mobile app)
+        { name: "Buyer — Catalog",    description: "Public product/category/shop/collection browse (no auth)" },
+        { name: "Buyer — Discounts",  description: "Public coupon validation" },
+        { name: "Buyer — Cart",       description: "Shopping cart — requires auth" },
+        { name: "Buyer — Orders",     description: "Order placement and tracking — requires auth" },
+        { name: "Buyer — Addresses",  description: "Delivery address book — requires auth" },
+        { name: "Buyer — Reviews",    description: "Product reviews — requires auth" },
+        { name: "Buyer — AI",         description: "AI agent suggestion cards — public" },
+        // Admin — AI
+        { name: "AI Recommendations", description: "Admin CRUD for AI agent suggestion cards" },
     ],
     paths: {
         // Auth
@@ -82,6 +95,10 @@ const swaggerSpec = {
         ...locationsPaths,
         // Seller panel
         ...sellerPaths,
+        // Buyer (mobile app)
+        ...buyerPaths,
+        // Admin — AI Recommendations
+        ...aiRecPaths,
     },
 };
 
