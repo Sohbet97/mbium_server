@@ -855,5 +855,41 @@ module.exports = {
                 district_id: { type: "integer", nullable: true },
             },
         },
+
+        // ── AI Recommendations ────────────────────────────────────────────────────
+        AiRecommendation: {
+            type: "object",
+            properties: {
+                id:          { type: "integer" },
+                title_tk:    { type: "string" },
+                title_ru:    { type: "string" },
+                title_en:    { type: "string" },
+                subtitle_tk: { type: "string", nullable: true },
+                subtitle_ru: { type: "string", nullable: true },
+                subtitle_en: { type: "string", nullable: true },
+                emoji:       { type: "string", nullable: true, example: "🛍️" },
+                prompt:      { type: "string", description: "Prompt sent to the AI when the card is tapped" },
+                sort_order:  { type: "integer", default: 0 },
+                is_active:   { type: "boolean", default: true },
+                createdAt:   { type: "string", format: "date-time" },
+                updatedAt:   { type: "string", format: "date-time" },
+            },
+        },
+        AiRecommendationRequest: {
+            type: "object",
+            required: ["title_tk", "title_ru", "title_en", "prompt"],
+            properties: {
+                title_tk:    { type: "string" },
+                title_ru:    { type: "string" },
+                title_en:    { type: "string" },
+                subtitle_tk: { type: "string" },
+                subtitle_ru: { type: "string" },
+                subtitle_en: { type: "string" },
+                emoji:       { type: "string", example: "🛍️" },
+                prompt:      { type: "string" },
+                sort_order:  { type: "integer", default: 0 },
+                is_active:   { type: "boolean", default: true },
+            },
+        },
     },
 };

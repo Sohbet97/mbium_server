@@ -34,6 +34,7 @@ const ALL_PERMISSIONS = [
     73,  74,  75,  76,  // Plans
     77,  78,  79,  80,  // Subscriptions
     81,  82,  83,  84,  // Shops
+    85,  86,  87,  88,  // AI Recommendations
     309,                // User login-as
 ];
 

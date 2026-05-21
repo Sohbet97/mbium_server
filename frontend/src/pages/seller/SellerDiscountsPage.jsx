@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Eye, EyeOff, Percent, X, Loader2, RefreshCw, Tag } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 const PAGE = 20
 
@@ -16,7 +17,7 @@ const EMPTY = {
   is_active: true,
 }
 
-function DiscountFormModal({ discount, onClose, onSaved }) {
+function DiscountFormModal({ discount, onClose, onSaved, t }) {
   const [form, setForm] = useState(discount ? {
     code:             discount.code             ?? '',
     type:             discount.type             ?? 'PERCENTAGE',
@@ -31,8 +32,8 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   async function handleSave() {
-    if (!form.code.trim()) { toast.error('Kody giriziň'); return }
-    if (!form.value)        { toast.error('Bahany giriziň'); return }
+    if (!form.code.trim()) { toast.error(t('seller.codeRequired')); return }
+    if (!form.value)        { toast.error(t('seller.valueRequired')); return }
     setSaving(true)
     try {
       const payload = {
@@ -48,9 +49,9 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
         ? await SellerApi.discounts.update(discount.id, payload)
         : await SellerApi.discounts.create(payload)
       onSaved(data.model)
-      toast.success(discount ? 'Üýtgedildi' : 'Döredildi')
+      toast.success(t('seller.discountSaved'))
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setSaving(false) }
   }
 
@@ -59,7 +60,7 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
       <div className="w-full max-w-md bg-white dark:bg-[#1a1a1f] rounded-xl shadow-2xl flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b dark:border-white/[0.08]">
-          <h2 className="font-semibold dark:text-white">{discount ? 'Arzanladyşy üýtget' : 'Täze arzanladyş'}</h2>
+          <h2 className="font-semibold dark:text-white">{discount ? t('seller.editDiscountTitle') : t('seller.newDiscountTitle')}</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400">
             <X className="h-5 w-5" />
           </button>
@@ -80,20 +81,20 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
           {/* Type + Value */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="mb-1 block">Görnüş</Label>
+              <Label className="mb-1 block">{t('seller.discountType')}</Label>
               <select
                 value={form.type}
                 onChange={(e) => set('type', e.target.value)}
                 className="w-full h-9 border rounded-md px-3 text-sm bg-white dark:bg-[#111114] dark:border-white/10 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="PERCENTAGE">Göterim (%)</option>
-                <option value="FIXED">Göni (TMT)</option>
-                <option value="FREE_SHIPPING">Mugt eltip beriş</option>
+                <option value="PERCENTAGE">{t('seller.typePercentage')}</option>
+                <option value="FIXED">{t('seller.typeFixed')}</option>
+                <option value="FREE_SHIPPING">{t('seller.typeFreeShipping')}</option>
               </select>
             </div>
             <div>
               <Label className="mb-1 block">
-                {form.type === 'PERCENTAGE' ? 'Göterim' : form.type === 'FIXED' ? 'Mukdar (TMT)' : 'Baha'}
+                {form.type === 'PERCENTAGE' ? t('seller.valuePercent') : form.type === 'FIXED' ? t('seller.valueFixed') : t('seller.valueLabel')}
               </Label>
               <Input
                 type="number"
@@ -110,7 +111,7 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
           {/* Min order + max uses */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="mb-1 block">Min sargyt (TMT)</Label>
+              <Label className="mb-1 block">{t('seller.minOrder')}</Label>
               <Input
                 type="number"
                 min="0"
@@ -121,13 +122,13 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
               />
             </div>
             <div>
-              <Label className="mb-1 block">Maks ulanyş</Label>
+              <Label className="mb-1 block">{t('seller.maxUses')}</Label>
               <Input
                 type="number"
                 min="1"
                 value={form.max_uses}
                 onChange={(e) => set('max_uses', e.target.value)}
-                placeholder="Çäksiz"
+                placeholder={t('seller.unlimited')}
               />
             </div>
           </div>
@@ -135,7 +136,7 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="mb-1 block">Başlanýar</Label>
+              <Label className="mb-1 block">{t('seller.startsAt')}</Label>
               <Input
                 type="date"
                 value={form.starts_at}
@@ -144,7 +145,7 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
               />
             </div>
             <div>
-              <Label className="mb-1 block">Tamamlanýar</Label>
+              <Label className="mb-1 block">{t('seller.endsAt')}</Label>
               <Input
                 type="date"
                 value={form.ends_at}
@@ -161,15 +162,15 @@ function DiscountFormModal({ discount, onClose, onSaved }) {
               <div className={cn('w-9 h-5 rounded-full transition-colors', form.is_active ? 'bg-blue-600' : 'bg-slate-200 dark:bg-white/20')} />
               <div className={cn('absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform', form.is_active ? 'translate-x-4' : '')} />
             </div>
-            <span className="text-sm dark:text-white">Işjeň</span>
+            <span className="text-sm dark:text-white">{t('seller.statusActive')}</span>
           </label>
         </div>
 
         <div className="flex items-center justify-end gap-2 px-5 py-4 border-t dark:border-white/[0.08]">
-          <Button variant="outline" onClick={onClose}>Ýatyr</Button>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-1.5" />}
-            Sakla
+            {t('common.save')}
           </Button>
         </div>
       </div>
@@ -184,6 +185,7 @@ function TypeBadge({ type }) {
 }
 
 export default function SellerDiscountsPage() {
+  const { t } = useTranslation()
   const [discounts, setDiscounts] = useState([])
   const [count, setCount]         = useState(0)
   const [loading, setLoading]     = useState(true)
@@ -211,15 +213,15 @@ export default function SellerDiscountsPage() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Arzanladyşy pozmak isleýärsiňizmi?')) return
+    if (!confirm(t('seller.confirmDeleteDiscount'))) return
     setDeleting(id)
     try {
       await SellerApi.discounts.delete(id)
       setDiscounts((prev) => prev.filter((d) => d.id !== id))
       setCount((c) => c - 1)
-      toast.success('Pozuldy')
+      toast.success(t('seller.discountDeleted'))
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setDeleting(null) }
   }
 
@@ -234,7 +236,7 @@ export default function SellerDiscountsPage() {
   }
 
   function fmtValue(d) {
-    if (d.type === 'FREE_SHIPPING') return 'Mugt eltip beriş'
+    if (d.type === 'FREE_SHIPPING') return t('seller.freeShipping')
     const val = parseFloat(d.value)
     return d.type === 'PERCENTAGE' ? `${val}%` : `${val.toFixed(2)} TMT`
   }
@@ -246,14 +248,14 @@ export default function SellerDiscountsPage() {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold dark:text-white">
-          Arzanladyşlar <span className="text-slate-400 font-normal text-base">({count})</span>
+          {t('seller.discountsTitle')} <span className="text-slate-400 font-normal text-base">({count})</span>
         </h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => load(page)}>
             <RefreshCw className="h-4 w-4" />
           </Button>
           <Button size="sm" onClick={() => setEditTarget(null)}>
-            <Plus className="h-4 w-4 mr-1.5" />Täze
+            <Plus className="h-4 w-4 mr-1.5" />{t('seller.newDiscount')}
           </Button>
         </div>
       </div>
@@ -266,20 +268,20 @@ export default function SellerDiscountsPage() {
       ) : discounts.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
           <Tag className="h-12 w-12 text-slate-200 dark:text-white/10" />
-          <p className="text-sm">Arzanladyş ýok</p>
+          <p className="text-sm">{t('seller.noDiscounts')}</p>
           <Button size="sm" variant="outline" onClick={() => setEditTarget(null)}>
-            <Plus className="h-4 w-4 mr-1.5" />Ilkinji arzanladyşy goş
+            <Plus className="h-4 w-4 mr-1.5" />{t('seller.addFirstDiscount')}
           </Button>
         </div>
       ) : (
         <div className="rounded-xl border dark:border-white/[0.06] overflow-hidden bg-white dark:bg-[#111114]">
           {/* Header */}
           <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-4 px-4 py-2.5 text-xs font-semibold text-slate-400 uppercase tracking-wide border-b dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
-            <div>Kod</div>
-            <div className="text-right">Arzanladyş</div>
-            <div className="text-right">Min sargyt</div>
-            <div className="text-center">Ulanyş</div>
-            <div>Ýagdaý</div>
+            <div>{t('seller.discountCode')}</div>
+            <div className="text-right">{t('seller.discountValue')}</div>
+            <div className="text-right">{t('seller.discountMin')}</div>
+            <div className="text-center">{t('seller.discountUsage')}</div>
+            <div>{t('common.status')}</div>
             <div />
           </div>
 
@@ -302,7 +304,7 @@ export default function SellerDiscountsPage() {
                         {d.starts_at ? new Date(d.starts_at).toLocaleDateString('ru-RU') : '…'}
                         {' → '}
                         {d.ends_at   ? new Date(d.ends_at).toLocaleDateString('ru-RU')   : '∞'}
-                        {expired && ' · Möhleti geçdi'}
+                        {expired && ` · ${t('seller.statusExpired')}`}
                       </div>
                     )}
                   </div>
@@ -330,7 +332,7 @@ export default function SellerDiscountsPage() {
                         ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400'
                         : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
                     )}>
-                      {expired ? 'Möhleti geçdi' : d.is_active ? 'Işjeň' : 'Gizlin'}
+                      {expired ? t('seller.statusExpired') : d.is_active ? t('seller.statusActive') : t('seller.statusHidden')}
                     </span>
                   </div>
 
@@ -339,7 +341,7 @@ export default function SellerDiscountsPage() {
                     <button
                       onClick={() => handleToggle(d)}
                       disabled={toggling === d.id}
-                      title={d.is_active ? 'Gizle' : 'Işjeňleşdir'}
+                      title={d.is_active ? t('seller.hideProduct') : t('seller.activateProduct')}
                       className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors disabled:opacity-40"
                     >
                       {d.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -382,6 +384,7 @@ export default function SellerDiscountsPage() {
           discount={editTarget}
           onClose={() => setEditTarget(undefined)}
           onSaved={handleSaved}
+          t={t}
         />
       )}
     </div>

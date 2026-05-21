@@ -24,6 +24,7 @@ const shopApplicationsRouter = require('./shops')
 const mediaModuleRouter = require("../../__modules__/media")
 const deliversModuleRouter = require("../../__modules__/delivers")
 const subscriptionsModuleRouter = require("../../__modules__/subscriptions")
+const aiModuleRouter = require("../../__modules__/ai")
 const authorizationMiddleware = require("../../middlewares/authorization-middleware")
 //#endregion
 
@@ -53,6 +54,7 @@ adminRouter.use('/shop-applications', shopApplicationsRouter)
 adminRouter.use(mediaModuleRouter)
 adminRouter.use(deliversModuleRouter)
 adminRouter.use(subscriptionsModuleRouter)
+adminRouter.use(aiModuleRouter)
 //#endregion
 
 module.exports = adminRouter;

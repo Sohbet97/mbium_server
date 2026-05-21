@@ -2,15 +2,17 @@ import { useEffect, useState } from 'react'
 import { SellerApi } from '@/lib/api'
 import { Package, ShoppingCart, Wallet, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-
-const ORDER_STATUS_LABELS = {
-  0: 'Garaşylýar', 1: 'Tassyklanan', 2: 'Taýýarlanylýar',
-  3: 'Ugradyldy', 4: 'Gowşuryldy', 5: 'Ýapyldy', 6: 'Ýatyryldy',
-}
+import { useTranslation } from 'react-i18next'
 
 export default function SellerDashboardPage() {
+  const { t } = useTranslation()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  const ORDER_STATUS_LABELS = {
+    0: t('seller.orderPending'), 1: t('seller.orderConfirmed'), 2: t('seller.orderProcessing'),
+    3: t('seller.orderShipped'), 4: t('seller.orderDelivered'), 5: t('seller.orderClosed'), 6: t('seller.orderCancelled'),
+  }
 
   useEffect(() => {
     SellerApi.dashboard.get()
@@ -27,11 +29,11 @@ export default function SellerDashboardPage() {
   const { stats, recent_orders, shop } = data ?? {}
 
   const cards = [
-    { label: 'Harytlar', value: stats?.total_products ?? 0,   icon: Package,      color: 'text-blue-600' },
-    { label: 'Sargytlar (jemi)', value: stats?.total_orders ?? 0, icon: ShoppingCart, color: 'text-indigo-600' },
-    { label: 'Garaşylýan', value: stats?.pending_orders ?? 0, icon: ShoppingCart, color: 'text-amber-600' },
-    { label: 'Bu aýky girdeji', value: `${stats?.revenue_this_month?.toFixed(2) ?? '0.00'} TMT`, icon: TrendingUp, color: 'text-green-600' },
-    { label: 'Balans', value: `${stats?.balance?.toFixed(2) ?? '0.00'} TMT`, icon: Wallet, color: 'text-purple-600' },
+    { label: t('seller.totalProducts'), value: stats?.total_products ?? 0,   icon: Package,      color: 'text-blue-600' },
+    { label: t('seller.totalOrders'),   value: stats?.total_orders ?? 0,     icon: ShoppingCart, color: 'text-indigo-600' },
+    { label: t('seller.pendingOrders'), value: stats?.pending_orders ?? 0,   icon: ShoppingCart, color: 'text-amber-600' },
+    { label: t('seller.revenueMonth'),  value: `${stats?.revenue_this_month?.toFixed(2) ?? '0.00'} TMT`, icon: TrendingUp, color: 'text-green-600' },
+    { label: t('seller.balance'),       value: `${stats?.balance?.toFixed(2) ?? '0.00'} TMT`, icon: Wallet, color: 'text-purple-600' },
   ]
 
   return (
@@ -57,20 +59,20 @@ export default function SellerDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Soňky sargytlar</CardTitle>
+          <CardTitle className="text-base">{t('seller.recentOrders')}</CardTitle>
         </CardHeader>
         <CardContent>
           {!recent_orders?.length ? (
-            <p className="text-sm text-slate-500">Sargyt ýok</p>
+            <p className="text-sm text-slate-500">{t('seller.noOrders')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-slate-500 border-b dark:border-white/10">
                     <th className="pb-2 font-medium">#</th>
-                    <th className="pb-2 font-medium">Müşderi</th>
-                    <th className="pb-2 font-medium">Status</th>
-                    <th className="pb-2 font-medium text-right">Bahasy</th>
+                    <th className="pb-2 font-medium">{t('seller.colCustomer')}</th>
+                    <th className="pb-2 font-medium">{t('seller.colStatus')}</th>
+                    <th className="pb-2 font-medium text-right">{t('seller.colPrice')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y dark:divide-white/[0.05]">

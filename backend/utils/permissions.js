@@ -104,6 +104,11 @@ class Permissions {
     static SHOP_POST   = 82
     static SHOP_PUT    = 83
     static SHOP_DELETE = 84
+
+    static AI_GET    = 85
+    static AI_POST   = 86
+    static AI_PUT    = 87
+    static AI_DELETE = 88
 }
 
 module.exports = Permissions

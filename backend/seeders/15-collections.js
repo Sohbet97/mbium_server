@@ -1,6 +1,6 @@
 /**
  * Seeder: Curated Collections
- * Idempotent — skips if any collections already exist.
+ * Idempotent — deduplicates by handle (the URL-friendly slug field on the model).
  */
 
 const COLLECTIONS = [
@@ -9,9 +9,7 @@ const COLLECTIONS = [
         name_ru:     'Новинки',
         name_eng:    'New Arrivals',
         description: 'Platforma goşulan iň täze harytlar.',
-        description_ru: 'Самые новые товары, добавленные на платформу.',
-        description_en: 'The freshest products just added to the platform.',
-        slug:        'new-arrivals',
+        handle:      'new-arrivals',
         is_active:   true,
         sort_order:  1,
     },
@@ -20,9 +18,7 @@ const COLLECTIONS = [
         name_ru:     'Лидеры продаж',
         name_eng:    'Best Sellers',
         description: 'Müşderileriň iň köp satyn alýan harytlary.',
-        description_ru: 'Самые популярные товары среди покупателей.',
-        description_en: 'The most purchased products by our customers.',
-        slug:        'best-sellers',
+        handle:      'best-sellers',
         is_active:   true,
         sort_order:  2,
     },
@@ -31,9 +27,7 @@ const COLLECTIONS = [
         name_ru:     'Скидки',
         name_eng:    'On Sale',
         description: 'Aýratyn baha arzanladyşly harytlar.',
-        description_ru: 'Товары с особыми скидками.',
-        description_en: 'Products with special price reductions.',
-        slug:        'on-sale',
+        handle:      'on-sale',
         is_active:   true,
         sort_order:  3,
     },
@@ -42,9 +36,7 @@ const COLLECTIONS = [
         name_ru:     'Избранное',
         name_eng:    'Featured',
         description: 'Redaktory tarapyndan saýlanan premium harytlar.',
-        description_ru: 'Премиум товары, отобранные редакторами.',
-        description_en: 'Premium products hand-picked by our editors.',
-        slug:        'featured',
+        handle:      'featured',
         is_active:   true,
         sort_order:  4,
     },
@@ -53,9 +45,7 @@ const COLLECTIONS = [
         name_ru:     'Сезонная коллекция',
         name_eng:    'Seasonal Collection',
         description: 'Häzirki möwsüm üçin iň amatly önümler.',
-        description_ru: 'Лучшие товары для текущего сезона.',
-        description_en: 'Best products suited for the current season.',
-        slug:        'seasonal',
+        handle:      'seasonal',
         is_active:   true,
         sort_order:  5,
     },
@@ -67,11 +57,11 @@ module.exports = async (db) => {
     let created = 0;
     for (const col of COLLECTIONS) {
         const [, wasCreated] = await db.Collection.findOrCreate({
-            where: { slug: col.slug },
+            where: { handle: col.handle },
             defaults: col,
         });
         if (wasCreated) created++;
-        else console.log(`  Collection '${col.slug}' already exists — skipping`);
+        else console.log(`  Collection '${col.handle}' already exists — skipping`);
     }
 
     if (created > 0) console.log(`  Done: ${created} collections created`);

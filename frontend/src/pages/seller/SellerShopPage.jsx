@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { Camera, FileText, Upload, CheckCircle2, Clock, XCircle, Star, CreditCard, Video, FileImage, Loader2, Tag } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTranslation } from 'react-i18next'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -32,6 +33,7 @@ const VS = {
 
 // ── Logo upload area ──────────────────────────────────────────────────────────
 function LogoUpload({ logoUrl, onUploaded }) {
+  const { t } = useTranslation()
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
 
@@ -44,9 +46,9 @@ function LogoUpload({ logoUrl, onUploaded }) {
       fd.append('logo', file)
       const { data } = await SellerApi.shop.uploadLogo(fd)
       onUploaded(data.model)
-      toast.success('Logo ýüklenildi')
+      toast.success(t('seller.logoUploaded'))
     } catch (err) {
-      toast.error(err.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(err.response?.data?.message ?? t('toast.error'))
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -79,6 +81,7 @@ function LogoUpload({ logoUrl, onUploaded }) {
 
 // ── Single document upload row ────────────────────────────────────────────────
 function DocRow({ icon: Icon, label, fieldName, currentPath, onUploaded, accept = '*' }) {
+  const { t } = useTranslation()
   const inputRef = useRef(null)
   const [uploading, setUploading] = useState(false)
   const filename = currentPath ? currentPath.split('/').pop() : null
@@ -92,9 +95,9 @@ function DocRow({ icon: Icon, label, fieldName, currentPath, onUploaded, accept 
       fd.append(fieldName, file)
       const { data } = await SellerApi.shop.uploadDocs(fd)
       onUploaded(data.model)
-      toast.success(`${label} ýüklenildi`)
+      toast.success(t('seller.docUploaded', { name: label }))
     } catch (err) {
-      toast.error(err.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(err.response?.data?.message ?? t('toast.error'))
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -126,7 +129,7 @@ function DocRow({ icon: Icon, label, fieldName, currentPath, onUploaded, accept 
           ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
           : <Upload className="h-3.5 w-3.5" />
         }
-        {uploading ? 'Ýüklenýär…' : 'Saýla'}
+        {uploading ? t('common.loading') : t('media.upload')}
       </button>
       <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleFile} />
     </div>
@@ -135,6 +138,7 @@ function DocRow({ icon: Icon, label, fieldName, currentPath, onUploaded, accept 
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SellerShopPage() {
+  const { t } = useTranslation()
   const [shop, setShop]                       = useState(null)
   const [form, setForm]                       = useState({})
   const [ibanForm, setIbanForm]               = useState({ bank_iban: '', card_number: '' })
@@ -188,9 +192,9 @@ export default function SellerShopPage() {
     try {
       const { data } = await SellerApi.shop.update(form)
       setShop(data.model)
-      toast.success('Maglumatlar ýatda saklandy')
+      toast.success(t('toast.saved'))
     } catch (err) {
-      toast.error(err.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(err.response?.data?.message ?? t('toast.error'))
     } finally {
       setSaving(false)
     }
@@ -208,9 +212,9 @@ export default function SellerShopPage() {
       const { data } = await SellerApi.shop.setCategories(selectedCatIds)
       setShop(data.model)
       setSelectedCatIds((data.model.categories ?? []).map((c) => c.id))
-      toast.success('Kategoriýalar ýatda saklandy')
+      toast.success(t('seller.categoriesSaved'))
     } catch (err) {
-      toast.error(err.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(err.response?.data?.message ?? t('toast.error'))
     } finally {
       setSavingCats(false)
     }
@@ -225,9 +229,9 @@ export default function SellerShopPage() {
       if (ibanForm.card_number !== undefined) fd.append('card_number', ibanForm.card_number)
       const { data } = await SellerApi.shop.uploadDocs(fd)
       setShop(data.model)
-      toast.success('Töleg maglumatlary ýatda saklandy')
+      toast.success(t('toast.saved'))
     } catch (err) {
-      toast.error(err.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(err.response?.data?.message ?? t('toast.error'))
     } finally {
       setSavingIban(false)
     }
@@ -285,7 +289,7 @@ export default function SellerShopPage() {
 
       {/* ── Basic info ─────────────────────────────────────────────────────── */}
       <Card>
-        <CardHeader><CardTitle>Dükan maglumatlary</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('shops.tabInfo')}</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={handleSaveInfo} className="space-y-5">
             {/* Names */}
@@ -349,7 +353,7 @@ export default function SellerShopPage() {
 
             <div className="flex justify-end">
               <Button type="submit" disabled={saving}>
-                {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saklanyp dur…</> : 'Ýatda sakla'}
+                {saving ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t('seller.saving')}</> : t('common.save')}
               </Button>
             </div>
           </form>
@@ -359,7 +363,7 @@ export default function SellerShopPage() {
       {/* ── Categories ─────────────────────────────────────────────────────── */}
       <Card>
         <CardHeader>
-          <CardTitle>Kategoriýalar</CardTitle>
+          <CardTitle>{t('seller.categoriesTitle')}</CardTitle>
           <p className="text-sm text-slate-500 mt-0.5">
             Dükanyňyzyň hödürleýän haryt kategoriýalaryny saýlaň.
           </p>
@@ -377,11 +381,11 @@ export default function SellerShopPage() {
           <div className="flex items-center justify-between pt-1">
             <span className="text-xs text-slate-400">
               {selectedCatIds.length > 0
-                ? `${selectedCatIds.length} kategoriýa saýlandy`
-                : 'Saýlanmady'}
+                ? `${selectedCatIds.length} ${t('seller.categoriesTitle').toLowerCase()}`
+                : t('seller.notSelected')}
             </span>
             <Button size="sm" onClick={handleSaveCategories} disabled={savingCats}>
-              {savingCats ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />Saklanyp dur…</> : 'Ýatda sakla'}
+              {savingCats ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />{t('seller.saving')}</> : t('seller.saveCategories')}
             </Button>
           </div>
         </CardContent>
@@ -400,7 +404,7 @@ export default function SellerShopPage() {
         <CardContent className="space-y-0 divide-y divide-slate-100 dark:divide-white/[0.06]">
           <DocRow
             icon={FileImage}
-            label="Passport / Şahadatnama"
+            label={t('seller.passport')}
             fieldName="passport_file"
             currentPath={shop?.passport_file}
             onUploaded={setShop}
@@ -408,7 +412,7 @@ export default function SellerShopPage() {
           />
           <DocRow
             icon={FileText}
-            label="Patent faýly"
+            label={t('seller.patent')}
             fieldName="patent_file"
             currentPath={shop?.patent_file}
             onUploaded={setShop}
@@ -416,7 +420,7 @@ export default function SellerShopPage() {
           />
           <DocRow
             icon={Video}
-            label="Tanyşdyryş wideo"
+            label={t('seller.verVideo')}
             fieldName="video_url"
             currentPath={shop?.video_url}
             onUploaded={setShop}

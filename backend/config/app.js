@@ -21,6 +21,7 @@ const swaggerSpec = require("../swagger");
 const adminRouter  = require("../routes/admin");
 const authRouter   = require("../routes/auth/auth");
 const sellerRouter = require("../routes/seller");
+const buyerRouter  = require("../routes/buyer");
 
 const { CONSTANTS } = require("./constants");
 
@@ -112,6 +113,7 @@ app.get("/api-docs.json", (req, res) => res.json(swaggerSpec));
 app.use("/auth",   authRouter);
 app.use("/admin",  adminRouter);
 app.use("/seller", sellerRouter);
+app.use("/buyer",  buyerRouter);
 app.use(errorMiddleware);
 app.use("*", loggerMiddleware);
 

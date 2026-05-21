@@ -6,23 +6,25 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
+import { useTranslation } from 'react-i18next'
 import { TopBar } from './TopBar'
 
 function SellerSidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const shop = user?.shop
 
   const nav = [
-    { to: '/seller',          label: 'Dashboard',  icon: LayoutDashboard, end: true },
-    { to: '/seller/products', label: 'Harytlar',   icon: Package },
-    { to: '/seller/orders',   label: 'Sargytlar',  icon: ShoppingCart },
-    { to: '/seller/shop',     label: 'Dükanym',    icon: Store },
-    { to: '/seller/discounts',label: 'Arzanladyş', icon: Percent },
-    { to: '/seller/payouts',  label: 'Tölegler',   icon: Wallet },
-    { to: '/seller/media',        label: 'Media',      icon: Images },
-    { to: '/seller/banners',      label: 'Bannerler',  icon: LayoutTemplate },
-    { to: '/seller/subscription', label: 'Abunalyk',   icon: Crown },
+    { to: '/seller',          label: t('nav.dashboard'),    icon: LayoutDashboard, end: true },
+    { to: '/seller/products', label: t('nav.products'),     icon: Package },
+    { to: '/seller/orders',   label: t('nav.orders'),       icon: ShoppingCart },
+    { to: '/seller/shop',     label: t('nav.myShop'),       icon: Store },
+    { to: '/seller/discounts',label: t('nav.discounts'),    icon: Percent },
+    { to: '/seller/payouts',  label: t('nav.payouts'),      icon: Wallet },
+    { to: '/seller/media',    label: t('nav.media'),        icon: Images },
+    { to: '/seller/banners',  label: t('nav.banners'),      icon: LayoutTemplate },
+    { to: '/seller/subscription', label: t('nav.subscription'), icon: Crown },
   ]
 
   const itemBase = cn(
@@ -89,10 +91,10 @@ function SellerSidebar({ collapsed, onToggle }) {
         <button
           onClick={handleLogout}
           className={cn(itemBase, inactive, 'text-red-500 dark:text-red-400 hover:!text-red-600')}
-          title={collapsed ? 'Çykmak' : undefined}
+          title={collapsed ? t('nav.logout') : undefined}
         >
           <LogOut className="h-[18px] w-[18px] shrink-0 opacity-70" />
-          {!collapsed && <span>Çykmak</span>}
+          {!collapsed && <span>{t('nav.logout')}</span>}
         </button>
       </div>
     </aside>
