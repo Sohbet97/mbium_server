@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SellerApi } from '@/lib/api'
+import { useAuth } from '@/store/auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Check, X, Crown, Clock, AlertTriangle, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -122,7 +123,7 @@ function SubscriptionBanner({ sub, t }) {
     )
   }
 
-  const left  = daysLeft(sub.ends_at)
+  const left    = daysLeft(sub.ends_at)
   const expired = sub.ends_at && left !== null && left < 0
   const expiring = left !== null && left >= 0 && left <= 30
 
@@ -209,21 +210,104 @@ function CurrentPlanMetrics({ plan, t }) {
   )
 }
 
+// ── Status badge ──────────────────────────────────────────────────────────────
+const STATUS_STYLES = {
+  1: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  2: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  3: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+}
+
+function SubStatusBadge({ status, t }) {
+  const label = status === 1
+    ? t('seller.planActive')
+    : status === 2
+      ? t('seller.subStatusCancelled')
+      : t('seller.planExpired')
+  return (
+    <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-semibold', STATUS_STYLES[status] ?? STATUS_STYLES[3])}>
+      {label}
+    </span>
+  )
+}
+
+// ── Subscription history ──────────────────────────────────────────────────────
+function SubscriptionHistory({ history, t }) {
+  return (
+    <div>
+      <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+        {t('seller.subscriptionHistory')}
+      </h2>
+
+      {history.length === 0 ? (
+        <p className="text-sm text-slate-400 py-6 text-center">{t('seller.noHistory')}</p>
+      ) : (
+        <div className="rounded-xl border dark:border-white/[0.06] overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
+                <th className="text-left px-4 py-2.5 font-medium text-slate-500 dark:text-slate-400">{t('seller.currentPlanBadge')}</th>
+                <th className="text-left px-4 py-2.5 font-medium text-slate-500 dark:text-slate-400">{t('seller.subscriptionTitle').split(' ')[0]}</th>
+                <th className="text-left px-4 py-2.5 font-medium text-slate-500 dark:text-slate-400">{t('seller.planStartedAt')}</th>
+                <th className="text-left px-4 py-2.5 font-medium text-slate-500 dark:text-slate-400">{t('seller.planEndsAt')}</th>
+                <th className="px-4 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {history.map((item, i) => (
+                <tr
+                  key={item.id}
+                  className={cn(
+                    'border-b last:border-0 dark:border-white/[0.06]',
+                    i % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-white/[0.01]'
+                  )}
+                >
+                  <td className="px-4 py-3 font-medium dark:text-white">
+                    {item.plan?.display_name_tm || item.plan?.name || '—'}
+                    {item.plan?.display_name_ru && (
+                      <span className="block text-xs text-slate-400">{item.plan.display_name_ru}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <SubStatusBadge status={item.status} t={t} />
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    {fmtDate(item.starts_at) ?? '—'}
+                  </td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    {item.ends_at ? fmtDate(item.ends_at) : <span className="text-slate-300 dark:text-white/30">{t('seller.planNoExpiry')}</span>}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-slate-400 italic max-w-[180px] truncate">
+                    {item.note ?? ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SellerSubscriptionPage() {
   const { t } = useTranslation()
-  const [plans, setPlans]   = useState([])
-  const [sub, setSub]       = useState(undefined)
+  const { user } = useAuth()
+  const [plans, setPlans]     = useState([])
+  const [sub, setSub]         = useState(undefined)
+  const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
       SellerApi.plans.getAll(),
       SellerApi.plans.getSubscription(),
+      SellerApi.plans.getHistory(),
     ])
-      .then(([plansRes, subRes]) => {
+      .then(([plansRes, subRes, historyRes]) => {
         setPlans(plansRes.data.data ?? [])
         setSub(subRes.data.model ?? null)
+        setHistory(historyRes.data.data ?? [])
       })
       .catch(() => { setSub(null) })
       .finally(() => setLoading(false))
@@ -235,7 +319,8 @@ export default function SellerSubscriptionPage() {
     </div>
   )
 
-  const currentPlanId = sub?.plan_id ?? null
+  // Fallback to shop.plan_id if there's no active subscription record
+  const currentPlanId = sub?.plan_id ?? user?.shop?.plan_id ?? null
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -247,11 +332,14 @@ export default function SellerSubscriptionPage() {
         </p>
       </div>
 
-      {/* Current subscription */}
+      {/* Current subscription banner */}
       <SubscriptionBanner sub={sub} t={t} />
 
       {/* Current plan key metrics */}
       {sub?.plan && <CurrentPlanMetrics plan={sub.plan} t={t} />}
+
+      {/* Subscription history */}
+      <SubscriptionHistory history={history} t={t} />
 
       {/* Plans comparison */}
       {plans.length > 0 && (

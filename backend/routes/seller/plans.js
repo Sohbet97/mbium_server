@@ -18,4 +18,12 @@ router.get('/subscription', async (req, res, next) => {
     } catch (e) { next(e); }
 });
 
+// GET /seller/subscription/history — all subscriptions for this shop
+router.get('/subscription/history', async (req, res, next) => {
+    try {
+        const data = await ShopSubscriptionService.getAll({ shop_id: req.shop.id });
+        return res.status(200).json({ data });
+    } catch (e) { next(e); }
+});
+
 module.exports = router;

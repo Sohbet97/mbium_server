@@ -92,6 +92,7 @@ app.use(
 // Configure static folder
 app.use(
   "/static",
+  (req, res, next) => { res.setHeader("Cross-Origin-Resource-Policy", "cross-origin"); next() },
   cors(corsOptionsDelegate),
   express.static(CONSTANTS.PUBLIC_FOLDER, {
     dotfiles: "ignore",

@@ -3,6 +3,7 @@ import { Toaster } from 'sonner'
 import { AuthProvider } from '@/store/auth'
 import { NotificationProvider } from '@/store/notifications'
 import { ThemeProvider } from '@/store/theme'
+import { AiAssistantProvider } from '@/store/aiAssistant'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { SellerLayout } from '@/components/layout/SellerLayout'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
@@ -32,6 +33,8 @@ import BannersPage from '@/pages/admin/BannersPage'
 import DeliveriesPage from '@/pages/admin/DeliveriesPage'
 import PlansPage from '@/pages/admin/PlansPage'
 import ShopApplicationsPage from '@/pages/admin/ShopApplicationsPage'
+import ShopTypeRequestsPage from '@/pages/admin/ShopTypeRequestsPage'
+import AiRecommendationsPage from '@/pages/admin/AiRecommendationsPage'
 // Seller pages
 import SellerDashboardPage from '@/pages/seller/SellerDashboardPage'
 import SellerProductsPage from '@/pages/seller/SellerProductsPage'
@@ -43,6 +46,7 @@ import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
 import SellerMediaPage from '@/pages/seller/SellerMediaPage'
 import SellerBannersPage from '@/pages/seller/SellerBannersPage'
 import SellerSubscriptionPage from '@/pages/seller/SellerSubscriptionPage'
+import SellerAccountPage from '@/pages/admin/AccountPage'
 
 const router = createBrowserRouter([
   { path: '/login',   element: <LoginPage /> },
@@ -80,6 +84,8 @@ const router = createBrowserRouter([
           { path: 'delivers', element: <DeliveriesPage />, handle: { titleKey: 'delivers.title' } },
           { path: 'plans', element: <PlansPage />, handle: { titleKey: 'plans.title' } },
           { path: 'shop-applications', element: <ShopApplicationsPage />, handle: { titleKey: 'shopApplications.title' } },
+          { path: 'shop-type-requests', element: <ShopTypeRequestsPage />, handle: { titleKey: 'nav.shopTypeRequests' } },
+          { path: 'ai-recommendations', element: <AiRecommendationsPage />, handle: { titleKey: 'aiRecommendations.title' } },
         ],
       },
       // ── Seller panel ──────────────────────────────────────────────────────
@@ -98,6 +104,7 @@ const router = createBrowserRouter([
           { path: 'media',        element: <SellerMediaPage /> },
           { path: 'banners',      element: <SellerBannersPage /> },
           { path: 'subscription', element: <SellerSubscriptionPage /> },
+          { path: 'account',      element: <SellerAccountPage /> },
         ],
       },
     ],
@@ -111,8 +118,10 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
-          <RouterProvider router={router} />
-          <Toaster position="top-right" richColors closeButton />
+          <AiAssistantProvider>
+            <RouterProvider router={router} />
+            <Toaster position="top-right" richColors closeButton />
+          </AiAssistantProvider>
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>

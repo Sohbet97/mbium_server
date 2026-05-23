@@ -32,4 +32,8 @@ export const PATHS = {
   // Subscriptions
   PLANS:              '/plans',
   SHOP_SUBSCRIPTIONS: '/shop-subscriptions',
+  // AI
+  AI_RECOMMENDATIONS: '/ai-recommendations',
+  // Shop type change requests
+  SHOP_TYPE_REQUESTS: '/shop-type-requests',
 }

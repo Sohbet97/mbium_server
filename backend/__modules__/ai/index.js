@@ -4,6 +4,24 @@ const routeGuard              = require('../../middlewares/route-guard')
 const Permissions             = require('../../utils/permissions')
 const ApiError                = require('../../exceptions/api-error')
 const AiRecommendationService = require('./services/ai-recommendations')
+const AiChatService           = require('./services/ai-chat')
+
+// ── Chat (auth only, no extra permission needed) ──────────────────────────────
+router.post('/ai/chat', authorizationMiddleware, async (req, res, next) => {
+    try {
+        const { messages } = req.body
+        if (!Array.isArray(messages) || !messages.length)
+            return res.status(400).json({ message: 'messages[] hökman' })
+
+        // Sanitise: only allow role + content, max 40 turns
+        const history = messages.slice(-40).map(({ role, content }) => ({
+            role: role === 'assistant' ? 'assistant' : 'user',
+            content: String(content).slice(0, 4000),
+        }))
+
+        await AiChatService.streamChat(history, res)
+    } catch (e) { next(e) }
+})
 
 router.use(authorizationMiddleware)
 router.use(routeGuard({

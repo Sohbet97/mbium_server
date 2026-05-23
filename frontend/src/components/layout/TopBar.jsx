@@ -1,4 +1,4 @@
-import { Globe, LogOut, Sun, Moon, Check, PlusCircle } from 'lucide-react'
+import { Globe, LogOut, Sun, Moon, Check, PlusCircle, Bot } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/store/auth'
 import { useTheme } from '@/store/theme'
+import { useAiAssistant } from '@/store/aiAssistant'
 import { NotificationPanel } from './NotificationPanel'
 import { cn } from '@/lib/utils'
 
@@ -41,9 +42,11 @@ export function TopBar({ title }) {
   const navigate = useNavigate()
   const { pathname } = useLocation()
 
-  const hideSidebar = pathname.startsWith('/admin/account')
+  const hideSidebar = pathname.startsWith('/admin/account') || pathname.startsWith('/seller/account')
   const inSeller    = pathname.startsWith('/seller')
+  const inAdmin     = pathname.startsWith('/admin')
   const shop        = user?.shop
+  const { open: aiOpen, toggle: aiToggle } = useAiAssistant()
 
   const userInitials = [user?.name?.[0], user?.surname?.[0]].filter(Boolean).join('').toUpperCase() || '?'
   const current      = LANGUAGES.find((l) => l.code === i18n.language) ?? LANGUAGES[0]
@@ -77,6 +80,20 @@ export function TopBar({ title }) {
 
       <div className="flex items-center gap-0.5">
         <ThemeSwitcher />
+
+        {/* Chat / AI Assistant toggle — admin + seller */}
+        {(inAdmin || inSeller) && (
+          <button
+            onClick={aiToggle}
+            title={t('aiAssistant.title')}
+            className={cn(
+              iconBtn,
+              aiOpen && 'dark:bg-white/[0.10] bg-slate-100 dark:text-white text-slate-800'
+            )}
+          >
+            <Bot className="h-4 w-4" />
+          </button>
+        )}
 
         {/* Language switcher */}
         <DropdownMenu>
@@ -148,11 +165,11 @@ export function TopBar({ title }) {
 
             {/* User info — navigates to account page */}
             <DropdownMenuItem
-              onClick={() => navigate(inSeller ? '/seller' : '/admin/account')}
+              onClick={() => navigate(inSeller ? '/seller/account' : '/admin/account')}
               className="flex items-center gap-3 px-2.5 py-2.5 rounded-lg h-auto cursor-pointer"
             >
-              <Avatar className="h-8 w-8 shrink-0">
-                <AvatarFallback className="bg-blue-600 text-white text-[11px] font-semibold">
+              <Avatar className="h-8 w-8 shrink-0 rounded-lg">
+                <AvatarFallback className="bg-blue-600 text-white text-[11px] font-semibold rounded-lg">
                   {userInitials}
                 </AvatarFallback>
               </Avatar>

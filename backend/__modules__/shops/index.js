@@ -1,4 +1,3 @@
-const authorizationMiddleware = require('../../middlewares/authorization-middleware');
 const routeGuard = require('../../middlewares/route-guard');
 const Permissions = require('../../utils/permissions');
 
@@ -8,15 +7,15 @@ const shopMemberRouter = require('./routes/shop-member');
 
 const shopModuleRouter = require('express').Router();
 
-shopModuleRouter.use(authorizationMiddleware, routeGuard({
+const shopGuard = routeGuard({
     GET: Permissions.SHOP_GET,
     POST: Permissions.SHOP_POST,
     PUT: Permissions.SHOP_PUT,
     DELETE: Permissions.SHOP_DELETE,
-}));
+});
 
-shopModuleRouter.use('/shops', shopRouter);
+shopModuleRouter.use('/shops', shopGuard, shopRouter);
 shopModuleRouter.use('/shop-types', shopTypeRouter);
-shopModuleRouter.use('/shop-members', shopMemberRouter);
+shopModuleRouter.use('/shop-members', shopGuard, shopMemberRouter);
 
 module.exports = shopModuleRouter;

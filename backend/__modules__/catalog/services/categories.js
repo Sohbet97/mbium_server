@@ -1,6 +1,7 @@
 const { Op } = require("sequelize");
 const db = require("../../../models");
 const CATALOG_CONSTANTS = require("../utils/constants");
+const { STATUSE_ACTIVE } = require("../../../utils/statuses");
 
 class CategoryService {
     static async get(filter = {}, limit, sort = CATALOG_CONSTANTS.CATEGORY_SORT, skip = 0, paranoid = true) {
@@ -34,13 +35,13 @@ class CategoryService {
 
     static async getTree() {
         return db.Category.findAll({
-            where: { parent_id: null, status: 1 },
+            where: { parent_id: null, status: STATUSE_ACTIVE },
             order: CATALOG_CONSTANTS.CATEGORY_SORT,
             include: [
                 {
                     model: db.Category,
                     as: "children",
-                    where: { status: 1 },
+                    where: { status: STATUSE_ACTIVE },
                     required: false,
                     order: CATALOG_CONSTANTS.CATEGORY_SORT,
                 },

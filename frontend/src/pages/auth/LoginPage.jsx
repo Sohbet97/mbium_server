@@ -24,7 +24,7 @@ const LANGUAGES = [
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
 export default function LoginPage() {
-  const { login, verifyOtp: verifyOtpAuth, loginWithGoogle } = useAuth()
+  const { login, verifyOtp: verifyOtpAuth, loginWithGoogle, user } = useAuth()
   const { theme } = useTheme()
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
@@ -83,12 +83,17 @@ export default function LoginPage() {
   }, [loginWithGoogle, navigate, t, theme])
 
   function resolveDestination(user) {
-    if (user?.shop?.is_active) return '/seller'
-    // Users with any permissions are platform staff → admin panel
+    // Platform staff take priority even if they also own a shop
     if (user?.permissions?.length > 0 || user?._role?.permissions?.length > 0) return '/admin'
-    // Pending shop application or no shop yet
+    if (user?.shop?.is_active) return '/seller'
     return '/pending'
   }
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate(resolveDestination(user), { replace: true })
+    }
+  }, [loading, user, navigate])
 
   async function handleCredentialSubmit(e) {
     e.preventDefault()

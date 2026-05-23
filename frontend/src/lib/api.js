@@ -144,6 +144,7 @@ export class AdminApi {
     updateStatus:     (id, data)    => http.patch(a(`${PATHS.SHOP_SUBSCRIPTIONS}/${id}/status`), data),
     remove:           (id)          => http.delete(a(`${PATHS.SHOP_SUBSCRIPTIONS}/${id}`)),
   }
+  static aiRecommendations = crud(PATHS.AI_RECOMMENDATIONS)
   static banners = {
     getAll:  (params) => http.get(a(PATHS.BANNERS), { params }),
     getOne:  (id)     => http.get(a(`${PATHS.BANNERS}/${id}`)),
@@ -173,9 +174,22 @@ export class AdminApi {
       http.delete(a(`${PATHS.MEDIA}/product/${productId}/${mediaId}`)),
   }
   static shopApplications = {
-    getAll:  (params) => http.get(a('/shop-applications'), { params }),
-    verify:  (id)     => http.post(a(`/shop-applications/${id}/verify`)),
-    reject:  (id, data) => http.post(a(`/shop-applications/${id}/reject`), data),
+    getAll:      (params)      => http.get(a('/shop-applications'), { params }),
+    getHistory:  (params)      => http.get(a('/shop-applications/history'), { params }),
+    getLogs:     (id)          => http.get(a(`/shop-applications/${id}/history`)),
+    verify:      (id)          => http.post(a(`/shop-applications/${id}/verify`)),
+    reject:      (id, data)    => http.post(a(`/shop-applications/${id}/reject`), data),
+    reopen:      (id)          => http.post(a(`/shop-applications/${id}/reopen`)),
+  }
+  static shopTypeRequests = {
+    getAll:  (params) => http.get(a('/shop-type-requests'), { params }),
+    approve: (id)     => http.post(a(`/shop-type-requests/${id}/approve`)),
+    reject:  (id, data) => http.post(a(`/shop-type-requests/${id}/reject`), data),
+  }
+  static support = {
+    getRooms:    ()           => http.get(a('/support/rooms')),
+    getMessages: (roomId)     => http.get(a(`/support/rooms/${roomId}/messages`)),
+    sendMessage: (roomId, data) => http.post(a(`/support/rooms/${roomId}/messages`), data),
   }
 }
 
@@ -194,6 +208,9 @@ export class SellerApi {
     setCategories: (category_ids) => http.put(s('/shop/categories'), { category_ids }),
     uploadLogo:    (formData)     => http.post(s('/shop/logo'), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
     uploadDocs:    (formData)     => http.post(s('/shop/docs'), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    getTypes:                ()       => http.get(s('/shop/types')),
+    getTypeChangeRequest:    ()       => http.get(s('/shop/type-change-request')),
+    createTypeChangeRequest: (data)   => http.post(s('/shop/type-change-request'), data),
   }
   static products = {
     getAll:  (params)       => http.get(s('/products'), { params }),
@@ -211,8 +228,12 @@ export class SellerApi {
     getAll:       (params)       => http.get(s('/orders'), { params }),
     getOne:       (id)           => http.get(s(`/orders/${id}`)),
     updateStatus: (id, data)     => http.patch(s(`/orders/${id}/status`), data),
-    getShipments: (id)           => http.get(s(`/orders/${id}/shipments`)),
-    addShipment:  (id, data)     => http.post(s(`/orders/${id}/shipments`), data),
+    getShipments:   (id)                          => http.get(s(`/orders/${id}/shipments`)),
+    addShipment:    (id, data)                    => http.post(s(`/orders/${id}/shipments`), data),
+    updateShipment: (id, shipmentId, data)        => http.patch(s(`/orders/${id}/shipments/${shipmentId}`), data),
+    deleteShipment: (id, shipmentId)              => http.delete(s(`/orders/${id}/shipments/${shipmentId}`)),
+    updateItem:     (id, itemId, data)            => http.patch(s(`/orders/${id}/items/${itemId}`), data),
+    deleteItem:     (id, itemId)                  => http.delete(s(`/orders/${id}/items/${itemId}`)),
   }
   static payouts = {
     getBalance:  ()     => http.get(s('/payouts/balance')),
@@ -234,6 +255,7 @@ export class SellerApi {
   static plans = {
     getAll:          () => http.get(s('/plans')),
     getSubscription: () => http.get(s('/subscription')),
+    getHistory:      () => http.get(s('/subscription/history')),
   }
   static media = {
     list:   (params)              => http.get(s('/media'), { params }),
@@ -246,6 +268,11 @@ export class SellerApi {
     attachToProduct:    (productId, data)       => http.post(s(`/media/product/${productId}`), data),
     updateProductMedia: (productId, mediaId, data) => http.patch(s(`/media/product/${productId}/${mediaId}`), data),
     detachFromProduct:  (productId, mediaId)   => http.delete(s(`/media/product/${productId}/${mediaId}`)),
+  }
+  static support = {
+    getRoom:     ()     => http.get(s('/support/room')),
+    getMessages: ()     => http.get(s('/support/messages')),
+    sendMessage: (data) => http.post(s('/support/messages'), data),
   }
 }
 

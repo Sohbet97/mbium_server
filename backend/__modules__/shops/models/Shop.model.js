@@ -175,6 +175,9 @@ module.exports = (sequelize) => {
                 as: "categories",
             });
         }
+        if (db.ShopVerificationLog) {
+            Model.hasMany(db.ShopVerificationLog, { foreignKey: "shop_id", as: "verificationLogs" });
+        }
     };
 
     return Model;
