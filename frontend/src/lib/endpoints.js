@@ -38,4 +38,6 @@ export const PATHS = {
   SHOP_TYPE_REQUESTS: '/shop-type-requests',
   // Push notifications
   PUSH_NOTIFICATIONS: '/push-notifications',
+  // Audit logs
+  AUDIT_LOGS: '/audit-logs',
 }

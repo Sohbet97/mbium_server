@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X, Send, Bot, RefreshCw, Loader2, MessageCircle, ChevronLeft } from 'lucide-react'
+import { X, Send, Bot, Loader2, MessageCircle, ChevronLeft, History, Plus, Pencil, Trash2, Search, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAiAssistant } from '@/store/aiAssistant'
 import { useAuth } from '@/store/auth'
@@ -11,10 +11,13 @@ import { useLocation } from 'react-router-dom'
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-function senderName(msg) {
-  const s = msg.sender
-  if (!s) return '?'
-  return [s.name, s.surname].filter(Boolean).join(' ') || '?'
+function fmtDate(dateStr, today, yesterday) {
+  const d = new Date(dateStr)
+  const now = new Date()
+  if (d.toDateString() === now.toDateString()) return today
+  const y = new Date(now); y.setDate(y.getDate() - 1)
+  if (d.toDateString() === y.toDateString()) return yesterday
+  return d.toLocaleDateString()
 }
 
 // ── Message bubble ────────────────────────────────────────────────────────────
@@ -92,10 +95,17 @@ function AiTab() {
   const { t, i18n } = useTranslation()
   const { messages, addMessage, updateLastAssistant, clearMessages } = useAiAssistant()
 
-  const [input, setInput]         = useState('')
-  const [streaming, setStreaming] = useState(false)
+  const [input, setInput]             = useState('')
+  const [streaming, setStreaming]     = useState(false)
   const [suggestions, setSuggestions] = useState([])
-  const [token, setToken]         = useState(null)
+  const [token, setToken]             = useState(null)
+
+  // Conversation persistence
+  const [conversations, setConversations] = useState([])
+  const [currentConvId, setCurrentConvId] = useState(null)
+  const [showHistory, setShowHistory]     = useState(false)
+  const [historyLoading, setHistoryLoading] = useState(false)
+
   const bottomRef = useRef(null)
   const abortRef  = useRef(null)
   const lang = i18n.language ?? 'en'
@@ -103,14 +113,54 @@ function AiTab() {
   useEffect(() => {
     AdminApi.aiRecommendations.getAll().then(({ data }) => setSuggestions(data.data ?? [])).catch(() => {})
     setToken(localStorage.getItem('accessToken'))
+    loadConversations()
   }, [])
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, streaming])
 
-  function titleFor(rec) {
-    if (lang === 'tk') return rec.title_tk || rec.title_en
-    if (lang === 'ru') return rec.title_ru || rec.title_en
-    return rec.title_en
+  function loadConversations() {
+    AdminApi.aiConversations.getAll()
+      .then(({ data }) => setConversations(data.data ?? []))
+      .catch(() => {})
+  }
+
+  async function openConversation(conv) {
+    setHistoryLoading(true)
+    try {
+      const { data } = await AdminApi.aiConversations.getOne(conv.id)
+      clearMessages()
+      const msgs = data.model?.messages ?? []
+      msgs.forEach((m) => addMessage(m))
+      setCurrentConvId(conv.id)
+      setShowHistory(false)
+    } catch { /* ignore */ } finally {
+      setHistoryLoading(false)
+    }
+  }
+
+  async function deleteConversation(e, id) {
+    e.stopPropagation()
+    await AdminApi.aiConversations.delete(id).catch(() => {})
+    setConversations((prev) => prev.filter((c) => c.id !== id))
+    if (currentConvId === id) { clearMessages(); setCurrentConvId(null) }
+  }
+
+  function startNewChat() {
+    clearMessages()
+    setCurrentConvId(null)
+    setShowHistory(false)
+  }
+
+  async function saveConversation(finalMessages, title) {
+    try {
+      if (currentConvId) {
+        await AdminApi.aiConversations.update(currentConvId, { messages: finalMessages })
+      } else {
+        const { data } = await AdminApi.aiConversations.create({ title, messages: finalMessages })
+        setCurrentConvId(data.model.id)
+        loadConversations()
+      }
+    } catch { /* non-critical */ }
   }
 
   async function send(text) {
@@ -122,6 +172,7 @@ function AiTab() {
     setStreaming(true)
     const history = [...messages, userMsg].map((m) => ({ role: m.role, content: m.content }))
 
+    let accumulated = ''
     try {
       const controller = new AbortController()
       abortRef.current = controller
@@ -151,32 +202,117 @@ function AiTab() {
           if (!line.startsWith('data: ')) continue
           const payload = line.slice(6).trim()
           if (payload === '[DONE]') break
-          try { const { text } = JSON.parse(payload); if (text) updateLastAssistant(text) } catch { /* skip */ }
+          try {
+            const { text } = JSON.parse(payload)
+            if (text) { updateLastAssistant(text); accumulated += text }
+          } catch { /* skip */ }
         }
       }
     } catch (e) {
       if (e.name !== 'AbortError') addMessage({ role: 'assistant', content: t('aiAssistant.error') })
+      return
     } finally {
       setStreaming(false)
       abortRef.current = null
     }
+
+    // Persist after successful streaming
+    if (accumulated) {
+      const finalMessages = [
+        ...history,
+        { role: 'assistant', content: accumulated },
+      ]
+      const title = trimmed.slice(0, 60)
+      await saveConversation(finalMessages, title)
+    }
   }
 
-  const showSuggestions = messages.length === 0 && suggestions.length > 0
+  const showSuggestions = messages.length === 0 && suggestions.length > 0 && !showHistory
 
-  return (
-    <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Header actions */}
-      {messages.length > 0 && (
-        <div className="px-4 pt-2 pb-1 shrink-0">
+  // ── History view ──────────────────────────────────────────────────────────
+  if (showHistory) {
+    return (
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b dark:border-white/[0.06] border-black/[0.06]">
           <button
-            onClick={clearMessages}
-            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+            onClick={() => setShowHistory(false)}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
           >
-            <RefreshCw className="h-3 w-3" /> {t('aiAssistant.clear')}
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <p className="text-[13px] font-semibold dark:text-white text-slate-800 flex-1">{t('aiAssistant.history')}</p>
+          <button
+            onClick={startNewChat}
+            className="flex items-center gap-1 text-[12px] text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            <Plus className="h-3.5 w-3.5" />{t('aiAssistant.newChat')}
           </button>
         </div>
-      )}
+
+        {historyLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+          </div>
+        ) : conversations.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-[12px] text-slate-400">{t('aiAssistant.noHistory')}</p>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto">
+            {conversations.map((conv) => (
+              <button
+                key={conv.id}
+                onClick={() => openConversation(conv)}
+                className={cn(
+                  'w-full flex items-start justify-between gap-2 px-4 py-3 text-left transition-colors',
+                  'hover:bg-slate-50 dark:hover:bg-white/[0.04]',
+                  'border-b dark:border-white/[0.05] border-black/[0.04]',
+                  currentConvId === conv.id && 'bg-blue-50 dark:bg-blue-900/20',
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-medium dark:text-white text-slate-800 truncate">{conv.title}</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    {fmtDate(conv.updatedAt, t('aiAssistant.today'), t('aiAssistant.yesterday'))}
+                  </p>
+                </div>
+                <button
+                  onClick={(e) => deleteConversation(e, conv.id)}
+                  className="shrink-0 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/30 text-slate-300 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── Chat view ─────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col flex-1 overflow-hidden">
+      {/* Toolbar */}
+      <div className="px-3 pt-2 pb-1 shrink-0 flex items-center gap-2">
+        {messages.length > 0 && (
+          <button
+            onClick={startNewChat}
+            className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+          >
+            <Plus className="h-3 w-3" /> {t('aiAssistant.newChat')}
+          </button>
+        )}
+        <button
+          onClick={() => setShowHistory(true)}
+          className="ml-auto flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+        >
+          <History className="h-3 w-3" /> {t('aiAssistant.history')}
+          {conversations.length > 0 && (
+            <span className="ml-0.5 text-[10px] bg-slate-200 dark:bg-white/10 rounded px-1">{conversations.length}</span>
+          )}
+        </button>
+      </div>
 
       {/* Messages / Suggestions */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -197,11 +333,9 @@ function AiTab() {
                 )}
               >
                 {rec.emoji && <span className="text-lg leading-none shrink-0 mt-0.5">{rec.emoji}</span>}
-                <div>
-                  <p className="font-medium text-slate-800 dark:text-white text-[13px] leading-snug">
-                    {lang === 'tk' ? rec.title_tk || rec.title_en : lang === 'ru' ? rec.title_ru || rec.title_en : rec.title_en}
-                  </p>
-                </div>
+                <p className="font-medium text-slate-800 dark:text-white text-[13px] leading-snug">
+                  {lang === 'tk' ? rec.title_tk || rec.title_en : lang === 'ru' ? rec.title_ru || rec.title_en : rec.title_en}
+                </p>
               </button>
             ))}
           </div>
@@ -280,7 +414,6 @@ function SellerSupportTab({ socketRef }) {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Status bar */}
       <div className="px-4 py-2 shrink-0 border-b dark:border-white/[0.06] border-black/[0.06]">
         <p className="text-[11px] text-slate-400">{t('support.helpDescription')}</p>
       </div>
@@ -311,21 +444,55 @@ function SellerSupportTab({ socketRef }) {
 function AdminSupportTab({ socketRef }) {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const { appendSupportMessage } = useAiAssistant()
 
-  const [rooms, setRooms]             = useState([])
+  const [rooms, setRooms]               = useState([])
   const [selectedRoom, setSelectedRoom] = useState(null)
-  const [messages, setMessages]       = useState([])
-  const [input, setInput]             = useState('')
-  const [loading, setLoading]         = useState(true)
-  const [sending, setSending]         = useState(false)
-  const bottomRef = useRef(null)
+  const [messages, setMessages]         = useState([])
+  const [input, setInput]               = useState('')
+  const [loading, setLoading]           = useState(true)
+  const [sending, setSending]           = useState(false)
+  const [search, setSearch]             = useState('')
+  const [composing, setComposing]       = useState(false)   // new chat picker
+  const [userSearch, setUserSearch]     = useState('')
+  const [userResults, setUserResults]   = useState([])
+  const [userLoading, setUserLoading]   = useState(false)
+  const [startingRoom, setStartingRoom] = useState(false)
 
-  function loadRooms() {
-    AdminApi.support.getRooms().then(({ data }) => setRooms(data.data ?? [])).catch(() => {}).finally(() => setLoading(false))
+  const bottomRef   = useRef(null)
+  const searchTimer = useRef(null)
+  const userTimer   = useRef(null)
+
+  function loadRooms(q) {
+    AdminApi.support.getRooms(q ? { search: q } : undefined)
+      .then(({ data }) => setRooms(data.data ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => { loadRooms() }, [])
+
+  // Debounce room search
+  useEffect(() => {
+    clearTimeout(searchTimer.current)
+    setLoading(true)
+    searchTimer.current = setTimeout(() => loadRooms(search), 350)
+    return () => clearTimeout(searchTimer.current)
+  }, [search])
+
+  // Debounce user search in compose mode
+  useEffect(() => {
+    if (!composing) return
+    clearTimeout(userTimer.current)
+    if (!userSearch.trim()) { setUserResults([]); return }
+    setUserLoading(true)
+    userTimer.current = setTimeout(async () => {
+      try {
+        const { data } = await AdminApi.users.getAll({ text: userSearch, limit: 10, page: 1 })
+        setUserResults(data.data ?? [])
+      } catch { setUserResults([]) } finally { setUserLoading(false) }
+    }, 350)
+    return () => clearTimeout(userTimer.current)
+  }, [userSearch, composing])
 
   useEffect(() => {
     const socket = socketRef?.current
@@ -349,6 +516,16 @@ function AdminSupportTab({ socketRef }) {
       .catch(() => {})
   }
 
+  async function startRoomWithUser(userId) {
+    setStartingRoom(true)
+    try {
+      const { data } = await AdminApi.support.startRoom(userId)
+      setComposing(false)
+      setUserSearch('')
+      openRoom(data.data)
+    } catch { /* ignore */ } finally { setStartingRoom(false) }
+  }
+
   async function send() {
     const text = input.trim()
     if (!text || sending || !selectedRoom) return
@@ -360,20 +537,104 @@ function AdminSupportTab({ socketRef }) {
     } catch { /* ignore */ } finally { setSending(false) }
   }
 
-  if (loading) return (
+  if (loading && !rooms.length) return (
     <div className="flex-1 flex items-center justify-center">
       <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
     </div>
   )
 
-  // Room list
+  // ── Compose: user picker overlay ──────────────────────────────────────────
+  if (composing) return (
+    <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b dark:border-white/[0.06] border-black/[0.06]">
+        <button
+          onClick={() => { setComposing(false); setUserSearch('') }}
+          className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+        <p className="text-[13px] font-semibold dark:text-white text-slate-800">{t('support.selectUser')}</p>
+      </div>
+
+      <div className="shrink-0 px-3 py-2 border-b dark:border-white/[0.06] border-black/[0.06]">
+        <div className="flex items-center gap-2 rounded-lg border dark:border-white/[0.08] border-slate-200 px-3 py-1.5 dark:bg-white/[0.04] bg-slate-50">
+          <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+          <input
+            autoFocus
+            value={userSearch}
+            onChange={(e) => setUserSearch(e.target.value)}
+            placeholder={t('support.searchUsers')}
+            className="flex-1 bg-transparent text-sm outline-none dark:text-white text-slate-900 dark:placeholder-slate-500 placeholder-slate-400"
+          />
+          {userLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400 shrink-0" />}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {userResults.length === 0 && userSearch.trim() && !userLoading && (
+          <p className="text-center text-[12px] text-slate-400 mt-6">{t('support.noUsers')}</p>
+        )}
+        {userResults.length === 0 && !userSearch.trim() && (
+          <p className="text-center text-[12px] text-slate-400 mt-6">{t('support.searchUsers')}</p>
+        )}
+        {userResults.map((u) => (
+          <button
+            key={u.id}
+            onClick={() => startRoomWithUser(u.id)}
+            disabled={startingRoom}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors border-b dark:border-white/[0.05] border-black/[0.04] text-left"
+          >
+            <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-[11px] font-bold shrink-0">
+              {(u.name?.[0] ?? u.phone_number?.[0] ?? '?').toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-medium dark:text-white text-slate-800 truncate">
+                {[u.name, u.surname].filter(Boolean).join(' ') || u.phone_number || '—'}
+              </p>
+              {u.phone_number && (
+                <p className="text-[11px] text-slate-400 truncate">{u.phone_number}</p>
+              )}
+            </div>
+            {startingRoom && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400 shrink-0" />}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
+  // ── Room list ─────────────────────────────────────────────────────────────
   if (!selectedRoom) return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      <div className="px-4 py-2 shrink-0 border-b dark:border-white/[0.06] border-black/[0.06]">
-        <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold">{t('support.sellerInbox')}</p>
+      {/* Header with search and compose */}
+      <div className="shrink-0 border-b dark:border-white/[0.06] border-black/[0.06]">
+        <div className="flex items-center gap-2 px-3 py-2">
+          <p className="text-[11px] text-slate-400 uppercase tracking-widest font-semibold flex-1">
+            {t('support.sellerInbox')}
+          </p>
+          <button
+            onClick={() => setComposing(true)}
+            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            title={t('support.newConversation')}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </button>
+        </div>
+        <div className="px-3 pb-2">
+          <div className="flex items-center gap-2 rounded-lg border dark:border-white/[0.08] border-slate-200 px-3 py-1.5 dark:bg-white/[0.04] bg-slate-50">
+            <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('support.searchChats')}
+              className="flex-1 bg-transparent text-sm outline-none dark:text-white text-slate-900 dark:placeholder-slate-500 placeholder-slate-400"
+            />
+            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400 shrink-0" />}
+          </div>
+        </div>
       </div>
+
       <div className="flex-1 overflow-y-auto">
-        {rooms.length === 0 && (
+        {rooms.length === 0 && !loading && (
           <p className="text-center text-[12px] text-slate-400 mt-8">{t('support.noRooms')}</p>
         )}
         {rooms.map((room) => {
@@ -392,6 +653,9 @@ function AdminSupportTab({ socketRef }) {
                 <p className="text-[13px] font-medium dark:text-white text-slate-800 truncate">
                   {seller ? `${seller.name ?? ''} ${seller.surname ?? ''}`.trim() : t('support.unknownSeller')}
                 </p>
+                {seller?.phone_number && (
+                  <p className="text-[11px] text-slate-400 truncate">{seller.phone_number}</p>
+                )}
                 {lastMsg && (
                   <p className="text-[11px] text-slate-400 truncate mt-0.5">{lastMsg.text}</p>
                 )}
@@ -403,21 +667,24 @@ function AdminSupportTab({ socketRef }) {
     </div>
   )
 
-  // Selected room messages
+  // ── Selected room messages ────────────────────────────────────────────────
   const seller = selectedRoom.participants?.[0]?.user
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
       <div className="px-3 py-2 shrink-0 border-b dark:border-white/[0.06] border-black/[0.06] flex items-center gap-2">
         <button
-          onClick={() => { setSelectedRoom(null); loadRooms() }}
+          onClick={() => { setSelectedRoom(null); loadRooms(search) }}
           className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <div>
-          <p className="text-[13px] font-medium dark:text-white text-slate-800">
+        <div className="min-w-0">
+          <p className="text-[13px] font-medium dark:text-white text-slate-800 truncate">
             {seller ? `${seller.name ?? ''} ${seller.surname ?? ''}`.trim() : t('support.unknownSeller')}
           </p>
+          {seller?.phone_number && (
+            <p className="text-[11px] text-slate-400">{seller.phone_number}</p>
+          )}
         </div>
       </div>
 
@@ -445,7 +712,7 @@ export function AiAssistant() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { open, close, activeTab, setActiveTab } = useAiAssistant()
-  const { socketRef } = useNotifications() // reuse the existing persistent socket
+  const { socketRef } = useNotifications()
 
   const inAdmin  = pathname.startsWith('/admin')
   const inSeller = pathname.startsWith('/seller')
@@ -457,7 +724,6 @@ export function AiAssistant() {
 
   return (
     <>
-      {/* Mobile backdrop */}
       {open && <div className="fixed inset-0 z-40 bg-black/30 lg:hidden" onClick={close} />}
 
       <aside className={cn(

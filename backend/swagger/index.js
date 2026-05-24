@@ -19,6 +19,8 @@ const sellerPaths      = require("./paths/seller");
 const buyerPaths       = require("./paths/buyer");
 const aiRecPaths       = require("./paths/ai-recommendations");
 const pushNotifPaths   = require("./paths/push-notifications");
+const aiChatPaths      = require("./paths/ai-chat");
+const supportPaths     = require("./paths/support");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -74,6 +76,8 @@ const swaggerSpec = {
         { name: "Buyer — AI",         description: "AI agent suggestion cards — public" },
         // Admin — AI
         { name: "AI Recommendations", description: "Admin CRUD for AI agent suggestion cards" },
+        { name: "AI Chat",            description: "Streaming AI chat (SSE) and persistent conversation history — admin and buyer" },
+        { name: "Admin Support",      description: "Admin-side support inbox — list/search rooms, start new conversations, send replies" },
         { name: "Push Notifications", description: "FCM push notification campaigns — admin (no quota) and seller (plan-quota enforced)" },
     ],
     paths: {
@@ -101,6 +105,10 @@ const swaggerSpec = {
         ...buyerPaths,
         // Admin — AI Recommendations
         ...aiRecPaths,
+        // AI Chat (admin + buyer) and conversation history
+        ...aiChatPaths,
+        // Admin Support inbox
+        ...supportPaths,
         // Push Notifications (admin + seller)
         ...pushNotifPaths,
     },

@@ -27,11 +27,16 @@ const deliversModuleRouter = require("../../__modules__/delivers")
 const subscriptionsModuleRouter = require("../../__modules__/subscriptions")
 const aiModuleRouter = require("../../__modules__/ai")
 const authorizationMiddleware = require("../../middlewares/authorization-middleware")
+const loggerMiddleware        = require("../../middlewares/logger-middleware")
+const auditMiddleware         = require("../../middlewares/audit-middleware")
+const auditModuleRouter       = require("../../__modules__/audit")
 //#endregion
 
 //#region Routes
 adminRouter.use('/configurations', configRouter)
 adminRouter.use(authorizationMiddleware)
+adminRouter.use(loggerMiddleware)
+adminRouter.use(auditMiddleware)
 
 adminRouter.use(userModuleRouter)
 adminRouter.use(shopModuleRouter)
@@ -59,6 +64,7 @@ adminRouter.use(subscriptionsModuleRouter)
 adminRouter.use(aiModuleRouter)
 adminRouter.use('/push-notifications', require('./push-notifications'))
 adminRouter.use('/support', require('./support'))
+adminRouter.use(auditModuleRouter)
 //#endregion
 
 module.exports = adminRouter;

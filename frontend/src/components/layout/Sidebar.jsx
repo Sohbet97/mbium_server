@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -40,6 +40,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/plans', label: t('nav.plans'), icon: CreditCard },
     { to: '/admin/locations', label: t('nav.locations'), icon: MapPin },
     { to: '/admin/roles', label: t('nav.roles'), icon: Shield },
+    { to: '/admin/audit-logs', label: t('nav.auditLogs'), icon: ScrollText },
     { to: '/admin/settings', label: t('nav.settings'), icon: Settings },
   ]
 

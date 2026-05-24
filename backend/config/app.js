@@ -12,7 +12,6 @@ dotenv.config({ path: process.env.ENV_FILE || ".env" });
 const errorMiddleware = require("../middlewares/error-middleware");
 const extMiddleware = require("../middlewares/external-middleware");
 const cookieParser = require("../middlewares/cookie-parser-middleware");
-const loggerMiddleware = require("../middlewares/logger-middleware");
 const configMiddleware = require("../middlewares/config-middleware");
 
 const swaggerUi = require("swagger-ui-express");
@@ -72,8 +71,9 @@ app.use('*', configMiddleware());
 //Parse cookie string to object
 app.use("*", cookieParser);
 
-cron.schedule("0 0 * * *", async () => {
-  // Register daily jobs here
+cron.schedule("0 0 * * *", () => {
+  const SystemDumpService = require("../services/system-dumps");
+  SystemDumpService.create().catch((e) => console.error("[cron] daily dump failed:", e.message));
 });
 
 
@@ -116,6 +116,5 @@ app.use("/admin",  adminRouter);
 app.use("/seller", sellerRouter);
 app.use("/buyer",  buyerRouter);
 app.use(errorMiddleware);
-app.use("*", loggerMiddleware);
 
 module.exports = { app };

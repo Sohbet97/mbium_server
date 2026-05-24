@@ -147,6 +147,13 @@ export class AdminApi {
     remove:           (id)          => http.delete(a(`${PATHS.SHOP_SUBSCRIPTIONS}/${id}`)),
   }
   static aiRecommendations = crud(PATHS.AI_RECOMMENDATIONS)
+  static aiConversations = {
+    getAll:  ()         => http.get(a('/ai/conversations')),
+    getOne:  (id)       => http.get(a(`/ai/conversations/${id}`)),
+    create:  (data)     => http.post(a('/ai/conversations'), data),
+    update:  (id, data) => http.put(a(`/ai/conversations/${id}`), data),
+    delete:  (id)       => http.delete(a(`/ai/conversations/${id}`)),
+  }
   static banners = {
     getAll:  (params) => http.get(a(PATHS.BANNERS), { params }),
     getOne:  (id)     => http.get(a(`${PATHS.BANNERS}/${id}`)),
@@ -193,9 +200,13 @@ export class AdminApi {
     send:   (data)   => http.post(a(PATHS.PUSH_NOTIFICATIONS), data),
   }
   static support = {
-    getRooms:    ()           => http.get(a('/support/rooms')),
-    getMessages: (roomId)     => http.get(a(`/support/rooms/${roomId}/messages`)),
+    getRooms:    (params)       => http.get(a('/support/rooms'), { params }),
+    getMessages: (roomId)       => http.get(a(`/support/rooms/${roomId}/messages`)),
     sendMessage: (roomId, data) => http.post(a(`/support/rooms/${roomId}/messages`), data),
+    startRoom:   (userId)       => http.post(a('/support/rooms/start'), { user_id: userId }),
+  }
+  static auditLogs = {
+    getAll: (params) => http.get(a(PATHS.AUDIT_LOGS), { params }),
   }
 }
 

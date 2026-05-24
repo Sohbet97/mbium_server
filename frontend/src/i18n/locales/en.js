@@ -28,6 +28,7 @@ export default {
     myShop: 'My Shop', payouts: 'Payouts', subscription: 'Subscription',
     adminPanel: 'Admin panel', sellerPanel: 'Seller panel', shopTypeRequests: 'Type Requests',
     pushNotifications: 'Push Notifications', pushNotificationsAdmin: 'Push Notifications',
+    auditLogs: 'Audit Logs',
   },
 
   login: {
@@ -196,6 +197,8 @@ export default {
     minOrderAmount: 'Minimum Order Amount (TMT)', maxUses: 'Max Uses (empty = unlimited)',
     usedCount: 'Used', startsAt: 'Valid From', endsAt: 'Valid Until',
     shop: 'Applies to Shop (empty = all shops)', isActive: 'Active',
+    platformWide: 'Platform-wide (all shops)',
+    shopHint: 'Leave empty to apply to all shops on the platform',
     colCode: 'Code', colType: 'Type', colValue: 'Value',
     colUsage: 'Usage', colValid: 'Valid Until', colStatus: 'Status',
     confirmDelete: 'Delete this discount code?',
@@ -331,6 +334,12 @@ export default {
     hint: 'Enter to send · Shift+Enter for new line',
     clear: 'New conversation',
     error: 'Something went wrong. Please try again.',
+    history: 'History',
+    newChat: 'New chat',
+    noHistory: 'No saved conversations yet.',
+    deleteConv: 'Delete',
+    today: 'Today',
+    yesterday: 'Yesterday',
   },
 
   support: {
@@ -342,6 +351,12 @@ export default {
     sellerInbox: 'Seller conversations',
     noRooms: 'No support conversations yet.',
     unknownSeller: 'Unknown seller',
+    searchChats: 'Search by name…',
+    newConversation: 'New conversation',
+    selectUser: 'Select a user',
+    searchUsers: 'Search users…',
+    noUsers: 'No users found',
+    startChat: 'Start chat',
   },
 
   aiRecommendations: {
@@ -594,6 +609,21 @@ export default {
     sessionsTitle: 'Active sessions', sessionsDesc: 'Devices currently signed in to your account',
     sessionLogout: 'Logout', noSessions: 'No active sessions',
     unknownDevice: 'Unknown device',
+  },
+
+  auditLogs: {
+    title:             'Audit Logs',
+    searchPlaceholder: 'Search descriptions…',
+    allEntities:       'All entities',
+    allActions:        'All actions',
+    dateFrom:          'From date',
+    dateTo:            'To date',
+    colDateTime:       'Date / Time',
+    colEntity:         'Entity',
+    colAction:         'Action',
+    colActor:          'Actor',
+    colIp:             'IP Address',
+    colDescription:    'Description',
   },
 
   adminPn: {

@@ -35,7 +35,7 @@ class SystemDumpService {
     static async create() {
         if (!fs.existsSync(PATH)) fs.mkdirSync(PATH, { recursive: true });
 
-        const filename = `${CONSTANTS.HOSPITAL_CODE}_dump_${Date.now()}.sql`;
+        const filename = `${CONSTANTS.DUMP_PREFIX}_dump_${Date.now()}.sql.gz.enc`;
         const dumpFilePath = path.join(PATH, filename);
         const dumpCommand = `PGPASSWORD='${process.env.DB_PASSWORD}' pg_dump -U ${process.env.DB_USERNAME} -h ${process.env.DB_HOST} -p ${process.env.DB_PORT} ${process.env.DB_NAME} | gzip | openssl enc -aes-256-cbc -salt -pbkdf2 -iter 10000 -pass pass:${process.env.DUMP_ENCRYPT_PASSWORD} -out ${dumpFilePath}`;
 

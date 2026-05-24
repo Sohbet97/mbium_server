@@ -47,6 +47,7 @@ import SellerMediaPage from '@/pages/seller/SellerMediaPage'
 import SellerBannersPage from '@/pages/seller/SellerBannersPage'
 import SellerSubscriptionPage from '@/pages/seller/SellerSubscriptionPage'
 import AdminPushNotificationsPage from '@/pages/admin/AdminPushNotificationsPage'
+import AdminAuditPage from '@/pages/admin/AdminAuditPage'
 import SellerPushNotificationsPage from '@/pages/seller/SellerPushNotificationsPage'
 import SellerAccountPage from '@/pages/admin/AccountPage'
 
@@ -89,6 +90,7 @@ const router = createBrowserRouter([
           { path: 'shop-type-requests', element: <ShopTypeRequestsPage />, handle: { titleKey: 'nav.shopTypeRequests' } },
           { path: 'ai-recommendations',  element: <AiRecommendationsPage />,      handle: { titleKey: 'aiRecommendations.title' } },
           { path: 'push-notifications',  element: <AdminPushNotificationsPage />,  handle: { titleKey: 'adminPn.pageTitle' } },
+          { path: 'audit-logs',          element: <AdminAuditPage />,               handle: { titleKey: 'auditLogs.title' } },
         ],
       },
       // ── Seller panel ──────────────────────────────────────────────────────

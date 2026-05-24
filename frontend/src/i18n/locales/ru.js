@@ -27,6 +27,7 @@ export default {
     myShop: 'Мой магазин', payouts: 'Выплаты', subscription: 'Подписка',
     adminPanel: 'Панель администратора', sellerPanel: 'Панель продавца', shopTypeRequests: 'Запросы типа',
     pushNotifications: 'Push-уведомления',
+    auditLogs: 'Журнал аудита',
   },
 
   login: {
@@ -209,6 +210,8 @@ export default {
     minOrderAmount: 'Минимальная сумма заказа (TMT)', maxUses: 'Макс. использований (пусто = без лимита)',
     usedCount: 'Использовано', startsAt: 'Действует с', endsAt: 'Действует до',
     shop: 'Для магазина (пусто = все магазины)', isActive: 'Активен',
+    platformWide: 'Вся платформа (все магазины)',
+    shopHint: 'Оставьте пустым, чтобы применить ко всем магазинам',
     colCode: 'Код', colType: 'Тип', colValue: 'Значение',
     colUsage: 'Использование', colValid: 'Действует до', colStatus: 'Статус',
     confirmDelete: 'Удалить этот промокод?',
@@ -330,6 +333,12 @@ export default {
     hint: 'Enter — отправить · Shift+Enter — новая строка',
     clear: 'Новый разговор',
     error: 'Что-то пошло не так. Попробуйте ещё раз.',
+    history: 'История',
+    newChat: 'Новый чат',
+    noHistory: 'Сохранённых разговоров пока нет.',
+    deleteConv: 'Удалить',
+    today: 'Сегодня',
+    yesterday: 'Вчера',
   },
 
   support: {
@@ -341,6 +350,12 @@ export default {
     sellerInbox: 'Переписки с продавцами',
     noRooms: 'Обращений пока нет.',
     unknownSeller: 'Неизвестный продавец',
+    searchChats: 'Поиск по имени…',
+    newConversation: 'Новая переписка',
+    selectUser: 'Выберите пользователя',
+    searchUsers: 'Поиск пользователей…',
+    noUsers: 'Пользователи не найдены',
+    startChat: 'Начать чат',
   },
 
   aiRecommendations: {
@@ -593,6 +608,21 @@ export default {
     sessionsTitle: 'Активные сессии', sessionsDesc: 'Устройства, вошедшие в ваш аккаунт',
     sessionLogout: 'Выйти', noSessions: 'Нет активных сессий',
     unknownDevice: 'Неизвестное устройство',
+  },
+
+  auditLogs: {
+    title:             'Журнал аудита',
+    searchPlaceholder: 'Поиск по описанию…',
+    allEntities:       'Все объекты',
+    allActions:        'Все действия',
+    dateFrom:          'С даты',
+    dateTo:            'По дату',
+    colDateTime:       'Дата / Время',
+    colEntity:         'Объект',
+    colAction:         'Действие',
+    colActor:          'Исполнитель',
+    colIp:             'IP-адрес',
+    colDescription:    'Описание',
   },
 
   adminPn: {

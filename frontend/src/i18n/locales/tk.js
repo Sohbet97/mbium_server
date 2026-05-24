@@ -27,6 +27,7 @@ export default {
     myShop: 'Dükanym', payouts: 'Tölegler', subscription: 'Abunalyk',
     adminPanel: 'Admin paneli', sellerPanel: 'Satyjy paneli', shopTypeRequests: 'Görnüş arzalary',
     pushNotifications: 'Push bildirişler',
+    auditLogs: 'Audit žurnaly',
   },
 
   login: {
@@ -209,6 +210,8 @@ export default {
     minOrderAmount: 'Iň az sargyt möçberi (TMT)', maxUses: 'Maks. ulanylma (boş = çäksiz)',
     usedCount: 'Ulanylan', startsAt: 'Başlanýar', endsAt: 'Gutarýar',
     shop: 'Dükan (boş = ähli dükanlar)', isActive: 'Işjeň',
+    platformWide: 'Ähli platforma (ähli dükanlar)',
+    shopHint: 'Ähli dükanlara ulanmak üçin boş goýuň',
     colCode: 'Kod', colType: 'Görnüş', colValue: 'Bahasy',
     colUsage: 'Ulanylyş', colValid: 'Gutarýar', colStatus: 'Ýagdaýy',
     confirmDelete: 'Bu kupon kodyny pozmak?',
@@ -330,6 +333,12 @@ export default {
     hint: 'Enter — ibermek · Shift+Enter — täze setir',
     clear: 'Täze söhbet',
     error: 'Ýalňyşlyk ýüze çykdy. Gaýtadan synanyşyň.',
+    history: 'Taryh',
+    newChat: 'Täze söhbet',
+    noHistory: 'Entek saklanan söhbet ýok.',
+    deleteConv: 'Poz',
+    today: 'Şu gün',
+    yesterday: 'Düýn',
   },
 
   support: {
@@ -341,6 +350,12 @@ export default {
     sellerInbox: 'Satyjy söhbetleri',
     noRooms: 'Entek ýüz tutma ýok.',
     unknownSeller: 'Näbelli satyjy',
+    searchChats: 'Ada görä gözle…',
+    newConversation: 'Täze söhbet',
+    selectUser: 'Ulanyjy saýla',
+    searchUsers: 'Ulanyjy gözle…',
+    noUsers: 'Ulanyjy tapylmady',
+    startChat: 'Söhbet başla',
   },
 
   aiRecommendations: {
@@ -593,6 +608,21 @@ export default {
     sessionsTitle: 'Işjeň sessiýalar', sessionsDesc: 'Häzir hasaba girilen enjamlar',
     sessionLogout: 'Çyk', noSessions: 'Işjeň sessiýa ýok',
     unknownDevice: 'Näbelli enjam',
+  },
+
+  auditLogs: {
+    title:             'Audit žurnaly',
+    searchPlaceholder: 'Düşündirişde gözleg…',
+    allEntities:       'Ähli obýektler',
+    allActions:        'Ähli hereketler',
+    dateFrom:          'Başlangyç sene',
+    dateTo:            'Soňky sene',
+    colDateTime:       'Sene / Wagt',
+    colEntity:         'Obýekt',
+    colAction:         'Hereket',
+    colActor:          'Ýerine ýetiriji',
+    colIp:             'IP-salgy',
+    colDescription:    'Düşündiriş',
   },
 
   adminPn: {

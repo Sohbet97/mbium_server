@@ -38,9 +38,12 @@ const PERM_GROUPS = [
   { label: 'Shops',         perms: [81, 82, 83, 84] },
   { label: 'AI',            perms: [85, 86, 87, 88] },
   { label: 'Push Notif',    perms: [89, 90, 91, 92] },
+  // null = no permission for that action (Read/Create/Edit/Delete column stays empty)
+  { label: 'HTTP Logs',    perms: [93, null, null, 94] },
+  { label: 'Audit Logs',   perms: [310, null, null, null] },
 ]
 
-const ALL_PERMS = PERM_GROUPS.flatMap((g) => g.perms)
+const ALL_PERMS = PERM_GROUPS.flatMap((g) => g.perms).filter(Boolean)
 
 function togglePerm(set, perm) {
   return set.includes(perm) ? set.filter((p) => p !== perm) : [...set, perm]
@@ -53,11 +56,12 @@ function PermissionsMatrix({ value, onChange }) {
 
   function toggle(perm) { onChange(togglePerm(value, perm)) }
   function toggleGroup(perms) {
-    const allSelected = perms.every((p) => selected.has(p))
+    const real = perms.filter(Boolean)
+    const allSelected = real.every((p) => selected.has(p))
     if (allSelected) {
-      onChange(value.filter((p) => !perms.includes(p)))
+      onChange(value.filter((p) => !real.includes(p)))
     } else {
-      const toAdd = perms.filter((p) => !selected.has(p))
+      const toAdd = real.filter((p) => !selected.has(p))
       onChange([...value, ...toAdd])
     }
   }
@@ -78,18 +82,23 @@ function PermissionsMatrix({ value, onChange }) {
         </thead>
         <tbody className="divide-y divide-slate-100">
           {PERM_GROUPS.map((group) => {
-            const allGroupSelected = group.perms.every((p) => selected.has(p))
+            const real = group.perms.filter(Boolean)
+            const allGroupSelected = real.length > 0 && real.every((p) => selected.has(p))
             return (
               <tr key={group.label} className="hover:bg-slate-50">
                 <td className="px-3 py-2 font-medium text-slate-700">{group.label}</td>
                 {group.perms.map((perm, idx) => (
-                  <td key={perm} className="text-center px-2 py-2">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(perm)}
-                      onChange={() => toggle(perm)}
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer"
-                    />
+                  <td key={perm ?? `empty-${idx}`} className="text-center px-2 py-2">
+                    {perm != null ? (
+                      <input
+                        type="checkbox"
+                        checked={selected.has(perm)}
+                        onChange={() => toggle(perm)}
+                        className="h-4 w-4 rounded border-slate-300 text-blue-600 accent-blue-600 cursor-pointer"
+                      />
+                    ) : (
+                      <span className="block h-4 w-4 mx-auto rounded border border-dashed border-slate-200" />
+                    )}
                   </td>
                 ))}
                 <td className="text-center px-2 py-2">
@@ -269,9 +278,10 @@ function RoleCard({ role, onEdit, onDelete }) {
         {/* Permission summary pills */}
         {permCount > 0 && (
           <div className="mt-3 flex flex-wrap gap-1">
-            {PERM_GROUPS.filter((g) => g.perms.some((p) => role.permissions?.includes(p))).map((g) => {
-              const has = g.perms.filter((p) => role.permissions?.includes(p)).length
-              const total = g.perms.length
+            {PERM_GROUPS.filter((g) => g.perms.some((p) => p != null && role.permissions?.includes(p))).map((g) => {
+              const real = g.perms.filter(Boolean)
+              const has = real.filter((p) => role.permissions?.includes(p)).length
+              const total = real.length
               return (
                 <span
                   key={g.label}
