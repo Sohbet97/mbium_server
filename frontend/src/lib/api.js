@@ -10,6 +10,8 @@ const http = axios.create({ baseURL: BASE, withCredentials: true })
 http.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken')
   if (token) config.headers.Authorization = `Bearer ${token}`
+  const shopId = localStorage.getItem('activeShopId')
+  if (shopId) config.headers['X-Shop-Id'] = shopId
   return config
 })
 
@@ -186,6 +188,10 @@ export class AdminApi {
     approve: (id)     => http.post(a(`/shop-type-requests/${id}/approve`)),
     reject:  (id, data) => http.post(a(`/shop-type-requests/${id}/reject`), data),
   }
+  static pushNotifications = {
+    getAll: (params) => http.get(a(PATHS.PUSH_NOTIFICATIONS), { params }),
+    send:   (data)   => http.post(a(PATHS.PUSH_NOTIFICATIONS), data),
+  }
   static support = {
     getRooms:    ()           => http.get(a('/support/rooms')),
     getMessages: (roomId)     => http.get(a(`/support/rooms/${roomId}/messages`)),
@@ -254,8 +260,13 @@ export class SellerApi {
   }
   static plans = {
     getAll:          () => http.get(s('/plans')),
-    getSubscription: () => http.get(s('/subscription')),
-    getHistory:      () => http.get(s('/subscription/history')),
+    getSubscription: () => http.get(s('/plans/subscription')),
+    getHistory:      () => http.get(s('/plans/subscription/history')),
+  }
+  static pushNotifications = {
+    getAll:          (params) => http.get(s(PATHS.PUSH_NOTIFICATIONS), { params }),
+    send:            (data)   => http.post(s(PATHS.PUSH_NOTIFICATIONS), data),
+    searchCustomers: (text)   => http.get(s(`${PATHS.PUSH_NOTIFICATIONS}/customers`), { params: { text } }),
   }
   static media = {
     list:   (params)              => http.get(s('/media'), { params }),

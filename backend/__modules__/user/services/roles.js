@@ -57,7 +57,6 @@ class RoleService {
     static async update(id, body) {
         const role = await db.Role.findOne({ where: { id } });
         if (!role) throw ApiError.NotFound();
-        if (role.is_system) throw ApiError.NotAllowed('System roles cannot be modified');
 
         role.name        = body.name        ?? role.name;
         role.permissions = body.permissions ?? role.permissions;

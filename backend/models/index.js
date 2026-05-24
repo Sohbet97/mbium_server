@@ -72,6 +72,7 @@ Object.values(db).forEach((model) => {
 // db.UserOtpSession.sync({ alter: true });
 // db.Config.sync({ alter: true });
 // db.Media.sync({ alter: true });
+// db.PushNotificationCampaign.model.sync({ alter: true });
 
 // Object.keys(db)?.map(async (modelKey) => {
 //   try {

@@ -18,6 +18,7 @@ const locationsPaths   = require("./paths/locations");
 const sellerPaths      = require("./paths/seller");
 const buyerPaths       = require("./paths/buyer");
 const aiRecPaths       = require("./paths/ai-recommendations");
+const pushNotifPaths   = require("./paths/push-notifications");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -73,6 +74,7 @@ const swaggerSpec = {
         { name: "Buyer — AI",         description: "AI agent suggestion cards — public" },
         // Admin — AI
         { name: "AI Recommendations", description: "Admin CRUD for AI agent suggestion cards" },
+        { name: "Push Notifications", description: "FCM push notification campaigns — admin (no quota) and seller (plan-quota enforced)" },
     ],
     paths: {
         // Auth
@@ -99,6 +101,8 @@ const swaggerSpec = {
         ...buyerPaths,
         // Admin — AI Recommendations
         ...aiRecPaths,
+        // Push Notifications (admin + seller)
+        ...pushNotifPaths,
     },
 };
 

@@ -33,7 +33,7 @@ class UserController {
 
   static async getMe(req, res, next) {
     try {
-      const [user, shop] = await Promise.all([
+      const [user, shops] = await Promise.all([
         db.User.findOne({
           where: { id: req.user.id },
           attributes: { exclude: ['password'] },
@@ -45,11 +45,12 @@ class UserController {
             },
           ],
         }),
-        ShopService.getByOwner(req.user.id),
+        ShopService.getAllByOwner(req.user.id),
       ]);
       if (!user) throw ApiError.NotFound();
       const { password: _pw, ...userJson } = user.toJSON();
-      return res.status(200).json({ model: { ...userJson, shop: shop || null } });
+      const shop = shops.find((s) => s.is_active) ?? shops[0] ?? null;
+      return res.status(200).json({ model: { ...userJson, shop, shops } });
     } catch (e) {
       next(e);
     }
@@ -97,6 +98,21 @@ class UserController {
         const updated = [...tokens, token].slice(-5);
         await db.User.update({ device_tokens: updated }, { where: { id: user.id } });
       }
+      return res.sendStatus(200);
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  static async removeDeviceToken(req, res, next) {
+    try {
+      const { token } = req.body;
+      if (!token || typeof token !== 'string') throw ApiError.BadRequest('token required');
+      const user = await db.User.findOne({ where: { id: req.user.id } });
+      if (!user) throw ApiError.NotFound();
+      const tokens = Array.isArray(user.device_tokens) ? user.device_tokens : [];
+      const updated = tokens.filter(t => t !== token);
+      await db.User.update({ device_tokens: updated }, { where: { id: user.id } });
       return res.sendStatus(200);
     } catch (e) {
       next(e);

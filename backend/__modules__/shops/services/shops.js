@@ -15,6 +15,7 @@ class ShopService {
       paranoid,
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number"], required: false },
       ],
     });
   }
@@ -48,6 +49,17 @@ class ShopService {
         { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
       ],
+    });
+  }
+
+  static async getAllByOwner(userId) {
+    if (!userId) return [];
+    return db.Shop.findAll({
+      where: { owner_id: userId },
+      include: [
+        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+      ],
+      order: [["is_active", "DESC"], ["createdAt", "ASC"]],
     });
   }
 
@@ -89,6 +101,7 @@ class ShopService {
     if (!id) return;
     await db.Shop.update(
       {
+        ...(req.body?.owner_id  !== undefined && { owner_id:  FUNCTIONS.getNumber(req.body.owner_id)  || null }),
         ...(req.body?.type_id   !== undefined && { type_id:   FUNCTIONS.getNumber(req.body.type_id)   || null }),
         ...(req.body?.city_id   !== undefined && { city_id:   FUNCTIONS.getNumber(req.body.city_id)   || null }),
         ...(req.body?.region_id !== undefined && { region_id: FUNCTIONS.getNumber(req.body.region_id) || null }),

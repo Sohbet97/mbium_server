@@ -3,10 +3,13 @@ import { AuthApi } from '@/lib/api'
 
 const AuthContext = createContext(null)
 
-// Fetch full profile (includes shop) and return it
 async function fetchFullProfile() {
   const { data } = await AuthApi.me()
-  return data.model ?? null
+  const model = data.model ?? null
+  if (model?.shop && !localStorage.getItem('activeShopId')) {
+    localStorage.setItem('activeShopId', model.shop.id)
+  }
+  return model
 }
 
 export function AuthProvider({ children }) {
@@ -61,14 +64,26 @@ export function AuthProvider({ children }) {
     setUser((u) => ({ ...u, ...fields }))
   }
 
+  function setActiveShop(shopId) {
+    if (shopId) {
+      localStorage.setItem('activeShopId', shopId)
+    } else {
+      localStorage.removeItem('activeShopId')
+    }
+    const shops = user?.shops ?? (user?.shop ? [user.shop] : [])
+    const selected = shops.find((s) => s.id === shopId) ?? user?.shop ?? null
+    setUser((u) => ({ ...u, shop: selected }))
+  }
+
   async function logout() {
     await AuthApi.logout().catch(() => {})
     localStorage.removeItem('accessToken')
+    localStorage.removeItem('activeShopId')
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, verifyOtp, loginWithGoogle, logout, setUser, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, verifyOtp, loginWithGoogle, logout, setUser, updateUser, setActiveShop }}>
       {children}
     </AuthContext.Provider>
   )

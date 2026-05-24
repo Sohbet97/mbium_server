@@ -46,6 +46,8 @@ import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
 import SellerMediaPage from '@/pages/seller/SellerMediaPage'
 import SellerBannersPage from '@/pages/seller/SellerBannersPage'
 import SellerSubscriptionPage from '@/pages/seller/SellerSubscriptionPage'
+import AdminPushNotificationsPage from '@/pages/admin/AdminPushNotificationsPage'
+import SellerPushNotificationsPage from '@/pages/seller/SellerPushNotificationsPage'
 import SellerAccountPage from '@/pages/admin/AccountPage'
 
 const router = createBrowserRouter([
@@ -85,7 +87,8 @@ const router = createBrowserRouter([
           { path: 'plans', element: <PlansPage />, handle: { titleKey: 'plans.title' } },
           { path: 'shop-applications', element: <ShopApplicationsPage />, handle: { titleKey: 'shopApplications.title' } },
           { path: 'shop-type-requests', element: <ShopTypeRequestsPage />, handle: { titleKey: 'nav.shopTypeRequests' } },
-          { path: 'ai-recommendations', element: <AiRecommendationsPage />, handle: { titleKey: 'aiRecommendations.title' } },
+          { path: 'ai-recommendations',  element: <AiRecommendationsPage />,      handle: { titleKey: 'aiRecommendations.title' } },
+          { path: 'push-notifications',  element: <AdminPushNotificationsPage />,  handle: { titleKey: 'adminPn.pageTitle' } },
         ],
       },
       // ── Seller panel ──────────────────────────────────────────────────────
@@ -103,8 +106,9 @@ const router = createBrowserRouter([
           { path: 'payouts',    element: <SellerPayoutsPage /> },
           { path: 'media',        element: <SellerMediaPage /> },
           { path: 'banners',      element: <SellerBannersPage /> },
-          { path: 'subscription', element: <SellerSubscriptionPage /> },
-          { path: 'account',      element: <SellerAccountPage /> },
+          { path: 'subscription',       element: <SellerSubscriptionPage /> },
+          { path: 'push-notifications', element: <SellerPushNotificationsPage /> },
+          { path: 'account',            element: <SellerAccountPage /> },
         ],
       },
     ],

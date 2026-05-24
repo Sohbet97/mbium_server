@@ -109,6 +109,11 @@ class Permissions {
     static AI_POST   = 86
     static AI_PUT    = 87
     static AI_DELETE = 88
+
+    static PUSH_NOTIF_GET    = 89
+    static PUSH_NOTIF_POST   = 90
+    static PUSH_NOTIF_PUT    = 91
+    static PUSH_NOTIF_DELETE = 92
 }
 
 module.exports = Permissions

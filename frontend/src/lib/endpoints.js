@@ -36,4 +36,6 @@ export const PATHS = {
   AI_RECOMMENDATIONS: '/ai-recommendations',
   // Shop type change requests
   SHOP_TYPE_REQUESTS: '/shop-type-requests',
+  // Push notifications
+  PUSH_NOTIFICATIONS: '/push-notifications',
 }

@@ -57,6 +57,7 @@ adminRouter.use(mediaModuleRouter)
 adminRouter.use(deliversModuleRouter)
 adminRouter.use(subscriptionsModuleRouter)
 adminRouter.use(aiModuleRouter)
+adminRouter.use('/push-notifications', require('./push-notifications'))
 adminRouter.use('/support', require('./support'))
 //#endregion
 

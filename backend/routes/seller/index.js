@@ -15,7 +15,8 @@ router.use('/payouts',    require('./payouts'));
 router.use('/discounts',  require('./discounts'));
 router.use('/media',      require('./media'));
 router.use('/banners',    require('./banners'));
-router.use('/plans',      require('./plans'));
-router.use('/support',    require('./support'));
+router.use('/plans',               require('./plans'));
+router.use('/push-notifications',  require('./push-notifications'));
+router.use('/support',             require('./support'));
 
 module.exports = router;

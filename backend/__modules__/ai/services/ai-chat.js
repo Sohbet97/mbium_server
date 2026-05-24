@@ -1,6 +1,6 @@
-const Anthropic = require('@anthropic-ai/sdk')
+const { GoogleGenerativeAI } = require('@google/generative-ai')
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
 const SYSTEM_PROMPT = `You are an AI assistant embedded in the mbium admin panel — a B2C/B2B marketplace platform for Turkmenistan. You help platform administrators and sellers with:
 - Product listing advice and optimisation
@@ -28,19 +28,26 @@ class AiChatService {
         res.setHeader('Content-Type', 'text/event-stream')
         res.setHeader('Cache-Control', 'no-cache')
         res.setHeader('Connection', 'keep-alive')
-        res.setHeader('X-Accel-Buffering', 'no') // disable nginx buffering
+        res.setHeader('X-Accel-Buffering', 'no')
 
-        const stream = await client.messages.stream({
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: 1024,
-            system: SYSTEM_PROMPT,
-            messages,
+        const model = genAI.getGenerativeModel({
+            model: 'gemini-2.5-flash',
+            systemInstruction: SYSTEM_PROMPT,
         })
 
-        for await (const event of stream) {
-            if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-                res.write(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
-            }
+        // Gemini uses 'model' role instead of 'assistant'
+        const history = messages.slice(0, -1).map((m) => ({
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: m.content }],
+        }))
+        const lastMessage = messages[messages.length - 1].content
+
+        const chat = model.startChat({ history })
+        const result = await chat.sendMessageStream(lastMessage)
+
+        for await (const chunk of result.stream) {
+            const text = chunk.text()
+            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`)
         }
 
         res.write('data: [DONE]\n\n')

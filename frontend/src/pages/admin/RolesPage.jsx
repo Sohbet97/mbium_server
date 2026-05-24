@@ -36,6 +36,8 @@ const PERM_GROUPS = [
   { label: 'Plans',         perms: [73, 74, 75, 76] },
   { label: 'Subscriptions', perms: [77, 78, 79, 80] },
   { label: 'Shops',         perms: [81, 82, 83, 84] },
+  { label: 'AI',            perms: [85, 86, 87, 88] },
+  { label: 'Push Notif',    perms: [89, 90, 91, 92] },
 ]
 
 const ALL_PERMS = PERM_GROUPS.flatMap((g) => g.perms)
@@ -244,15 +246,15 @@ function RoleCard({ role, onEdit, onDelete }) {
               <p className="text-xs text-slate-400">{permCount} permissions</p>
             </div>
           </div>
-          {!isSystem && (
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                onClick={() => onEdit(role)}
-                className="p-1.5 rounded hover:bg-slate-100 text-slate-500 transition-colors"
-                title="Edit"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => onEdit(role)}
+              className="p-1.5 rounded hover:bg-slate-100 text-slate-500 transition-colors"
+              title="Edit"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+            {!isSystem && (
               <button
                 onClick={() => onDelete(role)}
                 className="p-1.5 rounded hover:bg-red-50 text-red-500 transition-colors"
@@ -260,8 +262,8 @@ function RoleCard({ role, onEdit, onDelete }) {
               >
                 <Trash2 className="h-4 w-4" />
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Permission summary pills */}
