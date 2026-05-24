@@ -114,6 +114,7 @@ module.exports = (sequelize) => {
         Model.hasMany(db.UserNote, { foreignKey: "createdBy", as: "notes" });
         Model.hasMany(db.UserOtpSession, { foreignKey: "user_id", sourceKey: "id", as: "otp_sessions" });
         Model.hasMany(db.UserPositionAssignment, { foreignKey: "user_id", as: "position_assignments" });
+        if (db.Shop) Model.hasMany(db.Shop, { foreignKey: "owner_id", as: "_shops" });
     };
 
     return Model;

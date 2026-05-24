@@ -30,6 +30,7 @@ class UserService {
           as: "_role",
           attributes: ["name", "permissions", "start_page"],
         },
+        ...(db.Shop ? [{ model: db.Shop, as: "_shops", attributes: ["id", "name", "is_active"], required: false, separate: true }] : []),
       ],
     });
   }

@@ -1,6 +1,8 @@
 {
     "dependencies": {
+        "@anthropic-ai/sdk": "^0.97.1",
         "@elastic/elasticsearch": "^8.13.0",
+        "@google/generative-ai": "^0.24.1",
         "amqplib": "^0.10.4",
         "axios": "^1.4.0",
         "bcryptjs": "^2.4.3",
@@ -12,6 +14,7 @@
         "excel4node": "^1.8.2",
         "express": "^4.18.2",
         "express-session": "^1.18.0",
+        "firebase-admin": "^13.10.0",
         "google-auth-library": "^10.6.2",
         "helmet": "^7.0.0",
         "hl7-standard": "^1.0.4",

@@ -1,61 +1,53 @@
-const path = require('path')
-const fs = require('fs/promises')
+const path = require('path')   // kept for path.extname
+const { v4: uuidv4 } = require('uuid')
 const { Op } = require('sequelize')
 const db = require('../../../models')
-const { resolveType, MEDIA_BASE, ensureMediaDirs } = require('../../../utils/upload')
+const { resolveType } = require('../../../utils/upload')
+const { uploadBuffer, deleteFile, urlToPath } = require('../../../utils/firebase')
 
 let sharp
 try { sharp = require('sharp') } catch { sharp = null }
 
-// ── Thumbnail generation ──────────────────────────────────────────────────────
-async function generateThumb(filePath, filename) {
-    if (!sharp) return null
-    try {
-        const thumbName = `thumb_${path.basename(filename, path.extname(filename))}.webp`
-        const thumbPath = path.join(MEDIA_BASE, 'thumbs', thumbName)
-        await sharp(filePath)
-            .resize(480, 480, { fit: 'inside', withoutEnlargement: true })
-            .webp({ quality: 75 })
-            .toFile(thumbPath)
-        return `/media/thumbs/${thumbName}`
-    } catch (e) {
-        console.error('[media] thumb error:', e.message)
-        return null
-    }
-}
-
-async function getImageDimensions(filePath) {
-    if (!sharp) return {}
-    try {
-        const meta = await sharp(filePath).metadata()
-        return { width: meta.width || null, height: meta.height || null }
-    } catch { return {} }
-}
-
 // ── Core CRUD ─────────────────────────────────────────────────────────────────
 async function processUpload(file, userId, mediaTypeOverride) {
-    ensureMediaDirs()
     const rawType = resolveType(file.mimetype, file.originalname)
-    const type = mediaTypeOverride === '360' && rawType === 'image' ? '360' : rawType
+    if (!rawType) throw new Error(`Unsupported file type: ${file.mimetype}`)
 
-    const sub = type === 'video' ? 'videos' : type === '3d' ? '3d' : type === '360' ? '360' : 'images'
-    const url = `/media/${sub}/${file.filename}`
+    const type = mediaTypeOverride === '360' && rawType === 'image' ? '360' : rawType
+    const sub  = type === 'video' ? 'videos' : type === '3d' ? '3d' : type === '360' ? '360' : 'images'
+
+    const ext      = path.extname(file.originalname).toLowerCase()
+    const filename = `${uuidv4()}${ext}`
+    const destPath = `media/${sub}/${filename}`
+
+    const url = await uploadBuffer(file.buffer, destPath, file.mimetype)
 
     let thumbnail_url = null
     let width = null, height = null
 
-    if (type === 'image' || type === '360') {
-        const dims = await getImageDimensions(file.path)
-        width = dims.width
-        height = dims.height
-        thumbnail_url = await generateThumb(file.path, file.filename)
+    if ((type === 'image' || type === '360') && sharp) {
+        try {
+            const meta = await sharp(file.buffer).metadata()
+            width  = meta.width  || null
+            height = meta.height || null
+
+            const thumbBuffer = await sharp(file.buffer)
+                .resize(480, 480, { fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 75 })
+                .toBuffer()
+
+            const thumbPath = `media/thumbs/thumb_${uuidv4()}.webp`
+            thumbnail_url = await uploadBuffer(thumbBuffer, thumbPath, 'image/webp')
+        } catch (e) {
+            console.error('[media] thumb error:', e.message)
+        }
     }
 
     const media = await db.Media.create({
-        filename: file.filename,
+        filename,
         original_name: file.originalname,
-        mime_type: file.mimetype,
-        size: file.size,
+        mime_type:     file.mimetype,
+        size:          file.size,
         type,
         url,
         thumbnail_url,
@@ -95,13 +87,8 @@ async function remove(id) {
     const m = await db.Media.findByPk(id, { paranoid: false })
     if (!m) throw new Error('Not found')
 
-    // Delete physical files
-    const toDelete = [
-        path.join(process.cwd(), m.url),
-        m.thumbnail_url ? path.join(process.cwd(), m.thumbnail_url) : null,
-    ].filter(Boolean)
-
-    await Promise.allSettled(toDelete.map((p) => fs.unlink(p)))
+    const toDelete = [m.url, m.thumbnail_url].filter(Boolean)
+    await Promise.allSettled(toDelete.map((url) => deleteFile(urlToPath(url))))
     await m.destroy({ force: true })
 }
 

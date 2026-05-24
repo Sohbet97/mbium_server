@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -19,10 +19,13 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/users', label: t('nav.users'), icon: Users },
     { to: '/admin/shops', label: t('nav.shops'), icon: Store },
     { to: '/admin/shop-applications', label: t('nav.shopApplications', 'Dükan arzalary'), icon: ClipboardList },
+    { to: '/admin/shop-type-requests', label: t('nav.shopTypeRequests'), icon: Tag },
     { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart },
     { to: '/admin/reviews', label: t('nav.reviews'), icon: Star },
     { to: '/admin/discounts', label: t('nav.discounts'), icon: Percent },
     { to: '/admin/banners', label: t('nav.banners'), icon: LayoutTemplate },
+    { to: '/admin/ai-recommendations', label: t('nav.aiRecommendations'),   icon: Bot },
+    { to: '/admin/push-notifications', label: t('nav.pushNotifications'),   icon: Bell },
   ]
   
   const catalogNav = [
@@ -37,6 +40,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/plans', label: t('nav.plans'), icon: CreditCard },
     { to: '/admin/locations', label: t('nav.locations'), icon: MapPin },
     { to: '/admin/roles', label: t('nav.roles'), icon: Shield },
+    { to: '/admin/audit-logs', label: t('nav.auditLogs'), icon: ScrollText },
     { to: '/admin/settings', label: t('nav.settings'), icon: Settings },
   ]
 
@@ -147,6 +151,19 @@ export function Sidebar({ collapsed, onToggle }) {
               {user?.phone_number}
             </p>
           </div>
+        )}
+        {user?.shop?.is_active && (
+          <NavLink
+            to="/seller"
+            title={collapsed ? t('nav.sellerPanel') : undefined}
+            className={cn(
+              itemBase,
+              'text-blue-600 dark:text-blue-400 dark:hover:bg-white/[0.08] hover:bg-black/[0.06]'
+            )}
+          >
+            <ShoppingBag className="h-[18px] w-[18px] shrink-0 opacity-70" />
+            {!collapsed && <span>{t('nav.sellerPanel')}</span>}
+          </NavLink>
         )}
         <button
           onClick={logout}

@@ -6,6 +6,18 @@ const DISCOUNT_TYPES = {
     FREE_SHIPPING: "FREE_SHIPPING",
 };
 
+const DISCOUNT_CATEGORIES = {
+    ORDER: "ORDER",
+    PRODUCT: "PRODUCT",
+    FREE_SHIPPING: "FREE_SHIPPING",
+    BUY_X_GET_Y: "BUY_X_GET_Y",
+};
+
+const DISCOUNT_METHODS = {
+    CODE: "CODE",
+    AUTOMATIC: "AUTOMATIC",
+};
+
 module.exports = (sequelize) => {
     const Model = sequelize.define("discounts", {
         id: {
@@ -19,10 +31,24 @@ module.exports = (sequelize) => {
             references: { model: "shops", key: "id" },
             onDelete: "CASCADE",
         },
+        category: {
+            type: DataTypes.STRING(30),
+            allowNull: false,
+            defaultValue: DISCOUNT_CATEGORIES.ORDER,
+        },
+        method: {
+            type: DataTypes.STRING(20),
+            allowNull: false,
+            defaultValue: DISCOUNT_METHODS.CODE,
+        },
         code: {
             type: DataTypes.STRING(64),
-            allowNull: false,
+            allowNull: true,
             unique: true,
+        },
+        name: {
+            type: DataTypes.STRING(200),
+            allowNull: true,
         },
         type: {
             type: DataTypes.STRING(30),
@@ -34,8 +60,30 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: 0,
         },
+        applies_to_type: {
+            type: DataTypes.STRING(20),
+            allowNull: false,
+            defaultValue: 'ALL', // ALL | CATEGORIES | PRODUCTS
+        },
+        applies_to_ids: {
+            type: DataTypes.JSONB,
+            allowNull: false,
+            defaultValue: [],
+        },
         min_order_amount: {
             type: DataTypes.DECIMAL(12, 2),
+            allowNull: true,
+        },
+        min_quantity: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+        buy_quantity: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+        get_quantity: {
+            type: DataTypes.INTEGER,
             allowNull: true,
         },
         max_uses: {

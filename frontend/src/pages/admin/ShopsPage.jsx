@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Plus, Search, RefreshCw, MoreHorizontal, Star, Store } from 'lucide-react'
@@ -22,6 +22,98 @@ import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 import { absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
+
+// ── Reassign Owner Modal ──────────────────────────────────────────────────────
+function ReassignOwnerModal({ open, shop, onClose, onSaved }) {
+  const { t } = useTranslation()
+  const [search, setSearch] = useState('')
+  const [users, setUsers] = useState([])
+  const [selected, setSelected] = useState(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!open) { setSearch(''); setUsers([]); setSelected(null) }
+  }, [open])
+
+  const fetchUsers = useCallback(async (text) => {
+    if (!text.trim()) { setUsers([]); return }
+    try {
+      const { data } = await AdminApi.users.getAll({ text, limit: 10 })
+      setUsers(data.data ?? [])
+    } catch { setUsers([]) }
+  }, [])
+
+  useEffect(() => {
+    const id = setTimeout(() => fetchUsers(search), 300)
+    return () => clearTimeout(id)
+  }, [search, fetchUsers])
+
+  async function handleSave() {
+    if (!selected) return
+    setSaving(true)
+    try {
+      await AdminApi.shops.update(shop.id, { owner_id: selected.id })
+      onSaved()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('shops.reassignOwner')}</DialogTitle>
+        </DialogHeader>
+        <DialogBody className="space-y-3">
+          <p className="text-sm text-slate-500">
+            {t('shops.currentOwner')}: <span className="font-medium text-slate-800 dark:text-white">
+              {shop?.owner ? `${shop.owner.name} ${shop.owner.surname}` : '—'}
+            </span>
+          </p>
+          <Input
+            placeholder={t('users.searchPlaceholder')}
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setSelected(null) }}
+            autoFocus
+          />
+          {users.length > 0 && (
+            <div className="border rounded-lg divide-y overflow-hidden">
+              {users.map((u) => (
+                <button
+                  key={u.id}
+                  type="button"
+                  onClick={() => { setSelected(u); setUsers([]) }}
+                  className="w-full text-left px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/[0.06] transition-colors"
+                >
+                  <p className="text-sm font-medium text-slate-800 dark:text-white">{u.name} {u.surname}</p>
+                  <p className="text-xs text-slate-400">{u.phone_number ? `+993 ${u.phone_number}` : u.email || ''}</p>
+                </button>
+              ))}
+            </div>
+          )}
+          {selected && (
+            <div className="flex items-center justify-between rounded-lg border px-3 py-2 bg-blue-50 dark:bg-blue-900/20">
+              <div>
+                <p className="text-sm font-medium text-slate-800 dark:text-white">{selected.name} {selected.surname}</p>
+                <p className="text-xs text-slate-400">{selected.phone_number ? `+993 ${selected.phone_number}` : ''}</p>
+              </div>
+              <button type="button" onClick={() => setSelected(null)} className="text-xs text-slate-400 hover:text-red-500">✕</button>
+            </div>
+          )}
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={handleSave} disabled={saving || !selected}>
+            {saving ? '…' : t('shops.reassign')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 // ── Shop Modal (create / edit) ────────────────────────────────────────────────
 // Parent passes a `key` prop to remount on open/shop change — no useEffect needed.
@@ -148,6 +240,7 @@ export default function ShopsPage() {
   const [showDeleted, setShowDeleted] = useState(false)
   const [refreshTick, setRefreshTick] = useState(0)
   const [modal, setModal] = useState({ open: false, shop: null })
+  const [reassignModal, setReassignModal] = useState({ open: false, shop: null })
   const limit = 20
 
   // Fetch shops — all setState in async callbacks to satisfy linter
@@ -275,6 +368,7 @@ export default function ShopsPage() {
               <thead>
                 <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide dark:bg-black dark:text-white">
                   <th className="px-4 py-3">{t('shops.colShop')}</th>
+                  <th className="px-4 py-3">{t('shops.colOwner')}</th>
                   <th className="px-4 py-3">{t('shops.colType')}</th>
                   <th className="px-4 py-3">{t('shops.colStatus')}</th>
                   <th className="px-4 py-3">{t('shops.colRating')}</th>
@@ -284,13 +378,13 @@ export default function ShopsPage() {
               <tbody>
                 {loading && shops.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400">
+                    <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400">
                       {t('common.loading')}
                     </td>
                   </tr>
                 ) : shops.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-4 py-16 text-center">
+                    <td colSpan={6} className="px-4 py-16 text-center">
                       <Store className="h-10 w-10 text-slate-200 mx-auto mb-2" />
                       <p className="text-sm text-slate-400">{t('common.noResults')}</p>
                     </td>
@@ -316,6 +410,14 @@ export default function ShopsPage() {
                           <p className="text-xs text-slate-400 dark:text-white/[0.8]">{shop.phone || shop.email || '—'}</p>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {shop.owner ? (
+                        <div>
+                          <p className="text-sm text-slate-800 dark:text-white">{shop.owner.name} {shop.owner.surname}</p>
+                          <p className="text-xs text-slate-400 font-mono">{shop.owner.phone_number ? `+993 ${shop.owner.phone_number}` : ''}</p>
+                        </div>
+                      ) : <span className="text-slate-400">—</span>}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600 dark:text-white/[0.8]">{shop.type?.name ?? '—'}</td>
                     <td className="px-4 py-3">
@@ -357,6 +459,9 @@ export default function ShopsPage() {
                             <>
                               <DropdownMenuItem onClick={() => setModal({ open: true, shop })}>
                                 {t('common.edit')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setReassignModal({ open: true, shop })}>
+                                {t('shops.reassignOwner')}
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
@@ -411,6 +516,13 @@ export default function ShopsPage() {
           )}
         </CardContent>
       </Card>
+
+      <ReassignOwnerModal
+        open={reassignModal.open}
+        shop={reassignModal.shop}
+        onClose={() => setReassignModal({ open: false, shop: null })}
+        onSaved={() => { toast.success(t('toast.updated')); setReassignModal({ open: false, shop: null }); refresh() }}
+      />
 
       {/* Key remounts the modal on open/shop change so form state is fresh */}
       <ShopModal

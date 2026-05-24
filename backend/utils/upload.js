@@ -25,21 +25,9 @@ function resolveType(mimetype, originalname) {
     return null
 }
 
-const mediaStorage = multer.diskStorage({
-    destination(req, file, cb) {
-        ensureMediaDirs()
-        const type = resolveType(file.mimetype, file.originalname)
-        const is360 = req.query.media_type === '360' && type === 'image'
-        const sub   = is360 ? '360' : type === 'video' ? 'videos' : type === '3d' ? '3d' : 'images'
-        cb(null, path.join(MEDIA_BASE, sub))
-    },
-    filename(_req, file, cb) {
-        cb(null, `${uuidv4()}${path.extname(file.originalname).toLowerCase()}`)
-    },
-})
-
+// Media files go to Firebase Storage — use memory so the buffer is available
 exports.mediaUpload = multer({
-    storage: mediaStorage,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 500 * 1024 * 1024 },
     fileFilter(req, file, cb) {
         if (!resolveType(file.mimetype, file.originalname))

@@ -7,22 +7,68 @@ const PayoutService = require("../../payouts/services/payouts");
 const STATUS_CLOSED = 5;
 
 class OrderService {
-    static async get(filter = {}, limit, skip = 0, paranoid = true) {
+    // Build where clause + optional customer include-where for search/date filters
+    static _queryOpts(baseFilter = {}, { search, dateFrom, dateTo } = {}) {
+        const where = { ...baseFilter };
+        let customerWhere;
+
+        if (dateFrom || dateTo) {
+            where.createdAt = {};
+            if (dateFrom) where.createdAt[Op.gte] = new Date(dateFrom);
+            if (dateTo) {
+                const d = new Date(dateTo);
+                d.setHours(23, 59, 59, 999);
+                where.createdAt[Op.lte] = d;
+            }
+        }
+
+        if (search) {
+            const s = String(search).trim();
+            if (s && !isNaN(s)) {
+                where.id = Number(s);
+            } else if (s) {
+                const term = `%${s}%`;
+                customerWhere = {
+                    [Op.or]: [
+                        { name:         { [Op.iLike]: term } },
+                        { surname:      { [Op.iLike]: term } },
+                        { phone_number: { [Op.like]:  term } },
+                    ],
+                };
+            }
+        }
+
+        return { where, customerWhere };
+    }
+
+    static async get(filter = {}, limit, skip = 0, paranoid = true, opts = {}) {
+        const { where, customerWhere } = this._queryOpts(filter, opts);
         return db.Order.findAll({
-            where: filter,
+            where,
             offset: skip,
             order: [["createdAt", "DESC"]],
             limit,
             paranoid,
             include: [
                 { model: db.Shop, as: "shop", attributes: ["id", "name"] },
-                { model: db.User, as: "customer", attributes: ["id", "name", "surname", "phone_number"] },
+                {
+                    model: db.User, as: "customer",
+                    attributes: ["id", "name", "surname", "phone_number"],
+                    ...(customerWhere ? { where: customerWhere, required: true } : {}),
+                },
             ],
         });
     }
 
-    static async getCount(filter = {}, paranoid = true) {
-        return db.Order.count({ where: filter, paranoid });
+    static async getCount(filter = {}, paranoid = true, opts = {}) {
+        const { where, customerWhere } = this._queryOpts(filter, opts);
+        return db.Order.count({
+            where,
+            paranoid,
+            ...(customerWhere ? {
+                include: [{ model: db.User, as: "customer", where: customerWhere, required: true }],
+            } : {}),
+        });
     }
 
     static async getById(id, paranoid = true) {
@@ -154,6 +200,34 @@ class OrderService {
     static async updateShipment(shipmentId, data) {
         await db.Shipment.update(data, { where: { id: shipmentId } });
         return db.Shipment.findOne({ where: { id: shipmentId } });
+    }
+
+    static async deleteShipment(shipmentId) {
+        return db.Shipment.destroy({ where: { id: shipmentId } });
+    }
+
+    static async updateItem(orderId, itemId, quantity) {
+        const item = await db.OrderItem.findOne({ where: { id: itemId, order_id: orderId } });
+        if (!item) throw ApiError.NotFound('Haryt tapylmady');
+        const newItemTotal = parseFloat((parseFloat(item.unit_price) * quantity).toFixed(2));
+        await item.update({ quantity, total_price: newItemTotal });
+        await this._recalcOrderTotal(orderId);
+        return item;
+    }
+
+    static async deleteItem(orderId, itemId) {
+        const count = await db.OrderItem.count({ where: { order_id: orderId } });
+        if (count <= 1) throw ApiError.BadRequest('Iň az bir haryt bolmaly');
+        await db.OrderItem.destroy({ where: { id: itemId, order_id: orderId } });
+        await this._recalcOrderTotal(orderId);
+    }
+
+    static async _recalcOrderTotal(orderId) {
+        const items = await db.OrderItem.findAll({ where: { order_id: orderId } });
+        const total = parseFloat(
+            items.reduce((sum, i) => sum + parseFloat(i.total_price), 0).toFixed(2)
+        );
+        await db.Order.update({ total_price: total }, { where: { id: orderId } });
     }
 }
 

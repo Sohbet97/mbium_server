@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const ApiError = require('../../exceptions/api-error');
 const ShopService = require('../../__modules__/shops/services/shops');
+const ShopTypeService = require('../../__modules__/shops/services/shop-types');
+const ShopTypeChangeRequestService = require('../../__modules__/shops/services/shop-type-change-requests');
 const { shopLogoUpload, kycUpload } = require('../../utils/upload');
 
 // GET /seller/shop
@@ -77,5 +79,46 @@ router.post(
         } catch (e) { next(e); }
     }
 );
+
+// GET /seller/shop/types — active shop types for the type-change picker
+router.get('/types', async (req, res, next) => {
+    try {
+        const types = await ShopTypeService.get({ is_active: true });
+        return res.status(200).json({ data: types });
+    } catch (e) { next(e); }
+});
+
+// GET /seller/shop/type-change-request — latest type change request for this shop
+router.get('/type-change-request', async (req, res, next) => {
+    try {
+        const model = await ShopTypeChangeRequestService.getLatestForShop(req.shop.id);
+        return res.status(200).json({ model: model ?? null });
+    } catch (e) { next(e); }
+});
+
+// POST /seller/shop/type-change-request — submit a new request
+router.post('/type-change-request', async (req, res, next) => {
+    try {
+        const { requested_type_id } = req.body;
+        if (!requested_type_id) throw ApiError.BadRequest('requested_type_id is required');
+
+        const existing = await ShopTypeChangeRequestService.getPendingForShop(req.shop.id);
+        if (existing) throw ApiError.BadRequest('Garaşylýan ýüzlenme bar');
+
+        const type = await ShopTypeService.getById(requested_type_id);
+        if (!type || !type.is_active) throw ApiError.BadRequest('Saýlanan görnüş elýeterli däl');
+
+        if (Number(requested_type_id) === Number(req.shop.type_id))
+            throw ApiError.BadRequest('Bu eýýäm häzirki görnüşiňiz');
+
+        const model = await ShopTypeChangeRequestService.create({
+            shop_id:           req.shop.id,
+            current_type_id:   req.shop.type_id,
+            requested_type_id: Number(requested_type_id),
+            requested_by:      req.user.id,
+        });
+        return res.status(201).json({ model });
+    } catch (e) { next(e); }
+});
 
 module.exports = router;

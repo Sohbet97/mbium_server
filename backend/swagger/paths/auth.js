@@ -251,4 +251,71 @@ module.exports = {
             responses: { 200: { description: "Avatar uploaded" } },
         },
     },
+
+    "/auth/me/device-token": {
+        patch: {
+            tags: [tag],
+            summary: "Register FCM device token",
+            description:
+                "Called by the mobile app after obtaining a Firebase Cloud Messaging token. " +
+                "Stores the token in the authenticated user's `device_tokens` array (max 5, FIFO). " +
+                "Duplicate tokens are ignored. Call this on every app launch or token refresh.",
+            security: [{ BearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            required: ["token"],
+                            properties: {
+                                token: {
+                                    type: "string",
+                                    description: "FCM registration token from FirebaseMessaging.getInstance().getToken()",
+                                    example: "fxyz123abc:APA91bHPRgkFLJu13KzdEmu...",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: { description: "Token registered (or already present — idempotent)" },
+                400: { description: "token field missing or not a string" },
+                401: { description: "Unauthorized — Bearer token required" },
+            },
+        },
+        delete: {
+            tags: [tag],
+            summary: "Remove FCM device token",
+            description:
+                "Called by the mobile app on logout or when the user disables push notifications. " +
+                "Removes the given token from the user's `device_tokens` array. " +
+                "If the token is not present the request still succeeds (idempotent).",
+            security: [{ BearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            required: ["token"],
+                            properties: {
+                                token: {
+                                    type: "string",
+                                    description: "FCM registration token to remove",
+                                    example: "fxyz123abc:APA91bHPRgkFLJu13KzdEmu...",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: { description: "Token removed (or was not present — idempotent)" },
+                400: { description: "token field missing or not a string" },
+                401: { description: "Unauthorized — Bearer token required" },
+            },
+        },
+    },
 };

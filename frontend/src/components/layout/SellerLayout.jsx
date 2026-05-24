@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Store,
-  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown,
+  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
 import { useTranslation } from 'react-i18next'
 import { TopBar } from './TopBar'
+import { AiAssistant } from './AiAssistant'
+import { useAiAssistant } from '@/store/aiAssistant'
 
 function SellerSidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth()
@@ -24,7 +26,8 @@ function SellerSidebar({ collapsed, onToggle }) {
     { to: '/seller/payouts',  label: t('nav.payouts'),      icon: Wallet },
     { to: '/seller/media',    label: t('nav.media'),        icon: Images },
     { to: '/seller/banners',  label: t('nav.banners'),      icon: LayoutTemplate },
-    { to: '/seller/subscription', label: t('nav.subscription'), icon: Crown },
+    { to: '/seller/subscription',       label: t('nav.subscription'),       icon: Crown },
+    { to: '/seller/push-notifications', label: t('nav.pushNotifications'),  icon: Bell },
   ]
 
   const itemBase = cn(
@@ -88,6 +91,16 @@ function SellerSidebar({ collapsed, onToggle }) {
             {user?.name} {user?.surname}
           </div>
         )}
+        {(user?.permissions?.length > 0 || user?._role?.permissions?.length > 0) && (
+          <NavLink
+            to="/admin"
+            className={cn(itemBase, inactive, 'text-blue-600 dark:text-blue-400')}
+            title={collapsed ? t('nav.adminPanel') : undefined}
+          >
+            <ShieldCheck className="h-[18px] w-[18px] shrink-0 opacity-70" />
+            {!collapsed && <span>{t('nav.adminPanel')}</span>}
+          </NavLink>
+        )}
         <button
           onClick={handleLogout}
           className={cn(itemBase, inactive, 'text-red-500 dark:text-red-400 hover:!text-red-600')}
@@ -103,16 +116,20 @@ function SellerSidebar({ collapsed, onToggle }) {
 
 export function SellerLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const { open: aiOpen } = useAiAssistant()
+  const { pathname } = useLocation()
+  const hideSidebar = pathname === '/seller/account'
 
   return (
     <div className="flex h-screen overflow-hidden dark:bg-[#0f0f12] bg-slate-50">
-      <SellerSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      {!hideSidebar && <SellerSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />}
+      <div className={`flex flex-col flex-1 overflow-hidden transition-[margin] duration-300 ${aiOpen ? 'mr-[380px]' : ''}`}>
         <TopBar title="Seller Panel" />
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
       </div>
+      <AiAssistant />
     </div>
   )
 }

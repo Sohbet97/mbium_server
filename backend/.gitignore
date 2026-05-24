@@ -1,3 +1,4 @@
 price-currents/
 node_modules/
 public/
+backend/config/firebase-adminsdk.json

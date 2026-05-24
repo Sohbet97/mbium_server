@@ -891,5 +891,42 @@ module.exports = {
                 is_active:   { type: "boolean", default: true },
             },
         },
+
+        // ── Push Notifications ────────────────────────────────────────────────────
+        PushNotificationCampaign: {
+            type: "object",
+            properties: {
+                id:              { type: "integer", example: 1 },
+                shop_id:         { type: "integer", nullable: true, description: "null for platform-wide admin blasts", example: 5 },
+                created_by:      { type: "string", format: "uuid" },
+                title:           { type: "string", example: "Big sale today!" },
+                body:            { type: "string", example: "Get up to 50% off — today only." },
+                image_url:       { type: "string", format: "uri", nullable: true },
+                data:            { type: "object", nullable: true, additionalProperties: { type: "string" } },
+                status:          { type: "integer", enum: [0, 1, 2], description: "0=pending, 1=sent, 2=failed" },
+                recipient_count: { type: "integer", example: 1200 },
+                success_count:   { type: "integer", example: 1185 },
+                fail_count:      { type: "integer", example: 15 },
+                sent_at:         { type: "string", format: "date-time", nullable: true },
+                created_at:      { type: "string", format: "date-time" },
+                shop: {
+                    nullable: true,
+                    type: "object",
+                    properties: {
+                        id:   { type: "integer" },
+                        name: { type: "string" },
+                    },
+                },
+                sender: {
+                    nullable: true,
+                    type: "object",
+                    properties: {
+                        id:      { type: "string", format: "uuid" },
+                        name:    { type: "string" },
+                        surname: { type: "string" },
+                    },
+                },
+            },
+        },
     },
 };

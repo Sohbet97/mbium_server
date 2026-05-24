@@ -15,6 +15,7 @@ class ShopService {
       paranoid,
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number"], required: false },
       ],
     });
   }
@@ -48,6 +49,17 @@ class ShopService {
         { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
       ],
+    });
+  }
+
+  static async getAllByOwner(userId) {
+    if (!userId) return [];
+    return db.Shop.findAll({
+      where: { owner_id: userId },
+      include: [
+        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+      ],
+      order: [["is_active", "DESC"], ["createdAt", "ASC"]],
     });
   }
 
@@ -89,7 +101,10 @@ class ShopService {
     if (!id) return;
     await db.Shop.update(
       {
-        type_id:        FUNCTIONS.getNumber(req.body?.type_id) || null,
+        ...(req.body?.owner_id  !== undefined && { owner_id:  FUNCTIONS.getNumber(req.body.owner_id)  || null }),
+        ...(req.body?.type_id   !== undefined && { type_id:   FUNCTIONS.getNumber(req.body.type_id)   || null }),
+        ...(req.body?.city_id   !== undefined && { city_id:   FUNCTIONS.getNumber(req.body.city_id)   || null }),
+        ...(req.body?.region_id !== undefined && { region_id: FUNCTIONS.getNumber(req.body.region_id) || null }),
         name:           req.body?.name,
         name_ru:        req.body?.name_ru,
         name_eng:       req.body?.name_eng,
@@ -103,8 +118,6 @@ class ShopService {
         coordinates:    req.body?.coordinates,
         phone:          req.body?.phone,
         email:          req.body?.email,
-        city_id:        FUNCTIONS.getNumber(req.body?.city_id) || null,
-        region_id:      FUNCTIONS.getNumber(req.body?.region_id) || null,
         is_active:      req.body?.is_active,
         order:          req.body?.order !== undefined ? (FUNCTIONS.getNumber(req.body.order) || null) : undefined,
         // KYC fields (only update if explicitly provided)
@@ -127,8 +140,14 @@ class ShopService {
     await db.Shop.destroy({ where: { id }, force });
   }
 
-  static async submitForReview(id) {
+  static async _log(shop_id, action, admin_id, note) {
+    if (!db.ShopVerificationLog) return;
+    await db.ShopVerificationLog.create({ shop_id, action, admin_id: admin_id || null, note: note || null }).catch(() => {});
+  }
+
+  static async submitForReview(id, userId) {
     await db.Shop.update({ verification_status: 1 }, { where: { id } });
+    await this._log(id, 'submitted', userId);
     return this.getById(id);
   }
 
@@ -150,6 +169,8 @@ class ShopService {
       { where: { id } }
     );
 
+    await this._log(id, 'approved', userId);
+
     // Ensure the owner has a ShopMember(OWNER) record for future team management
     if (shop?.owner_id && db.ShopMember) {
       await db.ShopMember.findOrCreate({
@@ -165,11 +186,21 @@ class ShopService {
     return updated;
   }
 
+  static async reopen(id, userId) {
+    await db.Shop.update(
+      { verification_status: 1, is_active: false, verified_by: null, verified_at: null, verification_note: null },
+      { where: { id } }
+    );
+    await this._log(id, 'reopened', userId);
+    return this.getById(id);
+  }
+
   static async reject(id, userId, note, io) {
     await db.Shop.update(
       { verification_status: 3, is_verified: false, verified_by: userId, verified_at: new Date(), verification_note: note || null },
       { where: { id } }
     );
+    await this._log(id, 'rejected', userId, note);
     const shop = await this.getById(id);
     if (shop) {
       NotificationService.createForShopRejected(shop, note, io).catch(() => {});

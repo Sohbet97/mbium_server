@@ -33,6 +33,7 @@ const ROLES = [
             77, 78, 79, 80,    // Subscriptions
             81, 82, 83, 84,    // Shops
             85, 86, 87, 88,    // AI Recommendations
+            89, 90, 91, 92,    // Push Notifications
         ],
         order: 1,
     },

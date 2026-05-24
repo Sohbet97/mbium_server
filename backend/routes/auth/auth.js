@@ -41,7 +41,8 @@ authRouter.post('/me/shop', authorizationMiddleware, KYC_FIELDS, ShopController.
 authRouter.get('/me/shop',  authorizationMiddleware, ShopController.getMyShop.bind(ShopController));
 
 // ── FCM device token ──────────────────────────────────────────────────────────
-authRouter.patch('/me/device-token', authorizationMiddleware, UserController.registerDeviceToken.bind(UserController));
+authRouter.patch('/me/device-token',  authorizationMiddleware, UserController.registerDeviceToken.bind(UserController));
+authRouter.delete('/me/device-token', authorizationMiddleware, UserController.removeDeviceToken.bind(UserController));
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 authRouter.post(

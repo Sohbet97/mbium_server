@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Search, Plus, MoreHorizontal, RefreshCw, Users } from 'lucide-react'
+import { Search, Plus, MoreHorizontal, RefreshCw, Users, Store } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -392,7 +392,16 @@ export default function UsersPage() {
                       <td className="px-4 py-3 text-sm text-slate-600 font-mono dark:text-white/[0.8]">
                         {u.phone_number ? `+993 ${u.phone_number}` : '—'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-white/[0.8]">{u._role?.name ?? '—'}</td>
+                      <td className="px-4 py-3 text-sm text-slate-600 dark:text-white/[0.8]">
+                        <div className="flex flex-col gap-1">
+                          <span>{u._role?.name ?? '—'}</span>
+                            {u._shops?.map((s) => (
+                            <span key={s.id} className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                              <Store className="h-3 w-3" />{s.name}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col gap-1">
                           <StatusBadge status={u.status} />

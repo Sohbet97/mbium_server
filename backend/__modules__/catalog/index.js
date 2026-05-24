@@ -1,4 +1,3 @@
-const authorizationMiddleware = require("../../middlewares/authorization-middleware");
 const routeGuard = require("../../middlewares/route-guard");
 const Permissions = require("../../utils/permissions");
 
@@ -9,16 +8,15 @@ const collectionRouter = require("./routes/collection");
 const catalogModuleRouter = require("express").Router();
 
 catalogModuleRouter.use(
-    authorizationMiddleware,
+    "/categories",
     routeGuard({
         GET: Permissions.CATEGORY_GET,
         POST: Permissions.CATEGORY_POST,
         PUT: Permissions.CATEGORY_PUT,
         DELETE: Permissions.CATEGORY_DELETE,
-    })
+    }),
+    categoryRouter
 );
-
-catalogModuleRouter.use("/categories", categoryRouter);
 catalogModuleRouter.use(
     "/products",
     routeGuard({

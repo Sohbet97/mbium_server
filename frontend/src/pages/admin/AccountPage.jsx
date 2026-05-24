@@ -17,7 +17,7 @@ const SHOPIFY_GREEN = '#008060'
 /** White card with border + shadow — matches Shopify card style */
 function SCard({ children, className = '' }) {
   return (
-    <div className={`bg-white rounded-lg border border-slate-200 shadow-sm ${className}`}>
+    <div className={`bg-white dark:bg-[#111114] rounded-lg border border-slate-200 dark:border-white/[0.06] shadow-sm ${className}`}>
       {children}
     </div>
   )
@@ -39,14 +39,14 @@ function SectionRow({ label, description, children, last = false }) {
     <>
       <div className="flex gap-8 py-8">
         <div className="w-56 shrink-0">
-          <p className="text-sm font-semibold text-slate-800">{label}</p>
+          <p className="text-sm font-semibold text-slate-800 dark:text-white">{label}</p>
           {description && (
-            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">{description}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">{description}</p>
           )}
         </div>
         <div className="flex-1 min-w-0">{children}</div>
       </div>
-      {!last && <hr className="border-slate-200" />}
+      {!last && <hr className="border-slate-200 dark:border-white/[0.06]" />}
     </>
   )
 }
@@ -68,7 +68,7 @@ function InlineEdit({ value, type = 'text', onSave, onCancel, maxLength, placeho
     <form onSubmit={handleSave} className="mt-1.5 space-y-2">
       <Input type={type} value={val} onChange={(e) => setVal(e.target.value)}
         maxLength={maxLength} placeholder={placeholder} autoFocus />
-      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+      {hint && <p className="text-xs text-slate-400 dark:text-slate-500">{hint}</p>}
       <div className="flex items-center gap-2">
         <Button type="submit" size="sm" disabled={saving} className="h-8 text-xs">
           {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : t('account.saveProfile')}
@@ -161,7 +161,7 @@ function GeneralSection({ profile, onProfileSaved }) {
       <SectionRow label={t('account.sectionData')}>
         <SCard>
           {/* Avatar row */}
-          <div className="px-5 py-4 flex items-center gap-4 border-b border-slate-100">
+          <div className="px-5 py-4 flex items-center gap-4 border-b border-slate-100 dark:border-white/[0.06]">
             <Avatar className="h-12 w-12">
               {profile?.thumbnail && <AvatarImage src={profile.thumbnail} alt={initials} />}
               <AvatarFallback className="text-white text-base font-semibold"
@@ -171,7 +171,7 @@ function GeneralSection({ profile, onProfileSaved }) {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-              className="cursor-pointer flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+              className="cursor-pointer flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
               {uploading
                 ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -183,18 +183,18 @@ function GeneralSection({ profile, onProfileSaved }) {
 
           {/* Name + Surname inputs */}
           <form onSubmit={handleSaveName}>
-            <div className="px-5 py-4 border-b border-slate-100 space-y-3">
+            <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06] space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">{t('account.name')}</Label>
+                  <Label className="text-xs text-slate-500 dark:text-slate-400">{t('account.name')}</Label>
                   <Input value={nameForm.name} onChange={(e) => setNameForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-slate-500">{t('users.surname')}</Label>
+                  <Label className="text-xs text-slate-500 dark:text-slate-400">{t('users.surname')}</Label>
                   <Input value={nameForm.surname} onChange={(e) => setNameForm(f => ({ ...f, surname: e.target.value }))} />
                 </div>
               </div>
-              <p className="text-xs text-slate-400">{t('account.nameHint')}</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500">{t('account.nameHint')}</p>
               <div className="flex justify-end">
                 <Button type="submit" size="sm" disabled={savingName} className="h-8 text-xs">
                   {savingName ? <Loader2 className="h-3 w-3 animate-spin" /> : t('account.saveProfile')}
@@ -204,8 +204,8 @@ function GeneralSection({ profile, onProfileSaved }) {
           </form>
 
           {/* Email */}
-          <div className={`px-5 py-4 border-b border-slate-100 ${editingEmail ? '' : ''}`}>
-            <p className="text-xs text-slate-500 mb-0.5">{t('users.email')}</p>
+          <div className="px-5 py-4 border-b border-slate-100 dark:border-white/[0.06]">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">{t('users.email')}</p>
             {editingEmail ? (
               <InlineEdit value={profile?.email} type="email" onSave={handleSaveEmail}
                 onCancel={() => setEditingEmail(false)} />
@@ -214,14 +214,14 @@ function GeneralSection({ profile, onProfileSaved }) {
                 <div className="flex items-center gap-2 min-w-0">
                   {profile?.email ? (
                     <>
-                      <span className="text-sm text-slate-800 truncate">{profile.email}</span>
+                      <span className="text-sm text-slate-800 dark:text-white truncate">{profile.email}</span>
                       <span className="flex items-center gap-1 text-xs text-emerald-600 shrink-0">
                         <CheckCircle2 className="h-3.5 w-3.5" />
                         {t('account.verified')}
                       </span>
                     </>
                   ) : (
-                    <span className="text-sm text-slate-400">{t('account.noEmail')}</span>
+                    <span className="text-sm text-slate-400 dark:text-slate-500">{t('account.noEmail')}</span>
                   )}
                 </div>
                 <button className="text-sm font-medium shrink-0" style={{ color: SHOPIFY_GREEN }}
@@ -234,8 +234,8 @@ function GeneralSection({ profile, onProfileSaved }) {
 
           {/* Phone */}
           <div className="px-5 py-4">
-            <p className="text-xs text-slate-500 mb-0.5">
-              {t('users.phone')} <span className="text-slate-400">({t('common.optional')})</span>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">
+              {t('users.phone')} <span className="text-slate-400 dark:text-slate-500">({t('common.optional')})</span>
             </p>
             {editingPhone ? (
               <InlineEdit value={profile?.phone_number} type="tel" maxLength={8}
@@ -243,7 +243,7 @@ function GeneralSection({ profile, onProfileSaved }) {
                 onSave={handleSavePhone} onCancel={() => setEditingPhone(false)} />
             ) : (
               <div className="flex items-center justify-between gap-3">
-                <span className={`text-sm ${profile?.phone_number ? 'text-slate-800' : 'text-slate-400'}`}>
+                <span className={`text-sm ${profile?.phone_number ? 'text-slate-800 dark:text-white' : 'text-slate-400 dark:text-slate-500'}`}>
                   {profile?.phone_number || t('account.noPhone')}
                 </span>
                 <button className="text-sm font-medium shrink-0" style={{ color: SHOPIFY_GREEN }}
@@ -259,10 +259,10 @@ function GeneralSection({ profile, onProfileSaved }) {
       {/* ── Login services ── */}
       <SectionRow label={t('account.loginServices')} description={t('account.loginServicesDesc')} last>
         <SCard>
-          <div className="px-5 py-4 flex items-center justify-between gap-4 border-b border-slate-100">
+          <div className="px-5 py-4 flex items-center justify-between gap-4 border-b border-slate-100 dark:border-white/[0.06]">
             <div className="flex items-center gap-3">
               <GoogleLogo />
-              <span className="text-sm text-slate-800">{t('account.googleCanLogin')}</span>
+              <span className="text-sm text-slate-800 dark:text-white">{t('account.googleCanLogin')}</span>
             </div>
             {profile?.google_id ? (
               <button className="text-sm font-medium text-slate-500 hover:text-red-600 transition-colors shrink-0"
@@ -270,12 +270,12 @@ function GeneralSection({ profile, onProfileSaved }) {
                 {disconnecting ? <Loader2 className="h-3.5 w-3.5 animate-spin inline" /> : t('account.googleDisconnect')}
               </button>
             ) : (
-              <span className="text-sm text-slate-400">{t('account.googleNotConnected')}</span>
+              <span className="text-sm text-slate-400 dark:text-slate-500">{t('account.googleNotConnected')}</span>
             )}
           </div>
           {profile?.google_id && profile?.email && (
             <div className="px-5 py-3">
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 {t('account.googleConnectedTo')}{' '}
                 <a href={`mailto:${profile.email}`} className="font-medium hover:underline inline-flex items-center gap-0.5"
                   style={{ color: SHOPIFY_GREEN }}>
@@ -347,20 +347,20 @@ function SecuritySection({ profile }) {
         <SCard>
           {isGoogleOnly ? (
             <div className="px-5 py-4 flex items-center justify-between gap-4">
-              <p className="text-sm text-slate-500">{t('account.noPassword')}</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('account.noPassword')}</p>
             </div>
           ) : (
             <form onSubmit={handleChangePassword} className="px-5 py-4 space-y-3">
               <div className="space-y-1">
-                <Label className="text-xs text-slate-500">{t('account.oldPassword')}</Label>
+                <Label className="text-xs text-slate-500 dark:text-slate-400">{t('account.oldPassword')}</Label>
                 <Input type="password" value={pwForm.old_password} onChange={setpw('old_password')} required />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-slate-500">{t('account.newPassword')}</Label>
+                <Label className="text-xs text-slate-500 dark:text-slate-400">{t('account.newPassword')}</Label>
                 <Input type="password" value={pwForm.password} onChange={setpw('password')} required minLength={8} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-slate-500">{t('account.confirmPassword')}</Label>
+                <Label className="text-xs text-slate-500 dark:text-slate-400">{t('account.confirmPassword')}</Label>
                 <Input type="password" value={pwForm.confirm} onChange={setpw('confirm')} required />
               </div>
               <div className="flex justify-end pt-1">
@@ -376,33 +376,33 @@ function SecuritySection({ profile }) {
       {/* ── Devices ── */}
       <SectionRow label={t('account.sessionsTitle')} description={t('account.sessionsDesc')} last>
         <SCard>
-          <div className="px-5 py-3 border-b border-slate-100">
-            <p className="text-sm font-semibold text-slate-800">{t('account.signedIn')}</p>
+          <div className="px-5 py-3 border-b border-slate-100 dark:border-white/[0.06]">
+            <p className="text-sm font-semibold text-slate-800 dark:text-white">{t('account.signedIn')}</p>
           </div>
           {sessionsLoading ? (
-            <div className="flex items-center gap-2 text-sm text-slate-400 px-5 py-4">
+            <div className="flex items-center gap-2 text-sm text-slate-400 dark:text-slate-500 px-5 py-4">
               <Loader2 className="h-4 w-4 animate-spin" /> {t('common.loading')}
             </div>
           ) : sessions.length === 0 ? (
-            <p className="text-sm text-slate-400 px-5 py-4">{t('account.noSessions')}</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 px-5 py-4">{t('account.noSessions')}</p>
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-slate-100 dark:divide-white/[0.06]">
               {sessions.map((s, i) => (
                 <li key={s.id} className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="flex items-start gap-3 min-w-0">
-                    <Monitor className="h-5 w-5 mt-0.5 text-slate-400 shrink-0" />
+                    <Monitor className="h-5 w-5 mt-0.5 text-slate-400 dark:text-slate-500 shrink-0" />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-medium text-slate-800 truncate">
+                        <p className="text-sm font-medium text-slate-800 dark:text-white truncate">
                           {s.device_info || t('account.unknownDevice')}
                         </p>
                         {i === 0 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
                             {t('account.thisDevice')}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-slate-400 mt-0.5">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                         {s.ip} · {fmt(s.last_used)}
                       </p>
                     </div>
@@ -457,7 +457,7 @@ export default function AccountPage() {
   return (
     <div className="flex gap-10 max-w-5xl">
       {/* ── Left sidebar ── */}
-      <aside className="w-48 shrink-0 border-r border-slate-200">
+      <aside className="w-48 shrink-0 border-r border-slate-200 dark:border-white/[0.06]">
         <nav className="flex flex-col">
           {NAV.map((key) => {
             const isActive = active === key
@@ -468,8 +468,8 @@ export default function AccountPage() {
                 className={[
                   'text-left text-sm py-2 pl-4 transition-colors border-l-[3px]',
                   isActive
-                    ? 'font-medium text-slate-900 bg-slate-100'
-                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300',
+                    ? 'font-medium text-slate-900 dark:text-white bg-slate-100 dark:bg-white/[0.08]'
+                    : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white hover:border-slate-300 dark:hover:border-white/20',
                 ].join(' ')}
                 style={isActive ? { borderLeftColor: SHOPIFY_GREEN } : {}}
               >
@@ -482,7 +482,7 @@ export default function AccountPage() {
 
       {/* ── Right content ── */}
       <div className="flex-1 min-w-0">
-        <h2 className="text-2xl font-semibold text-slate-900 mb-6">
+        <h2 className="text-2xl font-semibold text-slate-900 dark:text-white mb-6">
           {t(`account.tab${active.charAt(0).toUpperCase() + active.slice(1)}`)}
         </h2>
 

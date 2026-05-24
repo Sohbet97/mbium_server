@@ -8,6 +8,7 @@ class CONSTANTS {
   static ARCHIVING_DAYS = 30;
   static MAX_ROWS = 1000;
   static DUMP_RETENTION_DAYS  = 7;
+  static DUMP_PREFIX          = process.env.APP_NAME || 'embium';
 }
 
 module.exports = { CONSTANTS };
