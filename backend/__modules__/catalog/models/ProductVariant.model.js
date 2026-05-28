@@ -58,6 +58,9 @@ module.exports = (sequelize) => {
 
     Model.associate = (db) => {
         Model.belongsTo(db.Product, { foreignKey: "product_id", as: "product" });
+        if (db.InventoryLevel) {
+            Model.hasMany(db.InventoryLevel, { foreignKey: "variant_id", as: "inventoryLevels" });
+        }
     };
 
     return Model;

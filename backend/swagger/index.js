@@ -21,6 +21,8 @@ const aiRecPaths       = require("./paths/ai-recommendations");
 const pushNotifPaths   = require("./paths/push-notifications");
 const aiChatPaths      = require("./paths/ai-chat");
 const supportPaths     = require("./paths/support");
+const analyticsPaths   = require("./paths/analytics");
+const warehousePaths   = require("./paths/warehouse");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -79,6 +81,8 @@ const swaggerSpec = {
         { name: "AI Chat",            description: "Streaming AI chat (SSE) and persistent conversation history — admin and buyer" },
         { name: "Admin Support",      description: "Admin-side support inbox — list/search rooms, start new conversations, send replies" },
         { name: "Push Notifications", description: "FCM push notification campaigns — admin (no quota) and seller (plan-quota enforced)" },
+        { name: "Analytics",          description: "Admin and seller analytics — revenue, orders, users, shop performance" },
+        { name: "Warehouses",         description: "Multi-warehouse inventory management — warehouses, stock levels, and movement history (admin + seller)" },
     ],
     paths: {
         // Auth
@@ -111,6 +115,10 @@ const swaggerSpec = {
         ...supportPaths,
         // Push Notifications (admin + seller)
         ...pushNotifPaths,
+        // Analytics (admin + seller)
+        ...analyticsPaths,
+        // Warehouse management (admin + seller)
+        ...warehousePaths,
     },
 };
 

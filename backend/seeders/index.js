@@ -63,8 +63,14 @@ async function run() {
         console.log('\n[19/19] Test shop applications');
         await require('./17-shop-applications')(fullDb);
 
-        console.log('\n[20/20] AI recommendations');
+        console.log('\n[20/22] AI recommendations');
         await require('./18-ai-recommendations')(fullDb);
+
+        console.log('\n[21/22] Warehouses');
+        await require('./19-warehouses')(fullDb);
+
+        console.log('\n[22/22] Inventory levels');
+        await require('./20-inventory')(fullDb);
 
         console.log('\nAll seeds complete.');
     } catch (err) {

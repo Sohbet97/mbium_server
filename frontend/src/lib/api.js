@@ -208,6 +208,21 @@ export class AdminApi {
   static auditLogs = {
     getAll: (params) => http.get(a(PATHS.AUDIT_LOGS), { params }),
   }
+  static analytics = {
+    getOverview: (params) => http.get(a(`${PATHS.ANALYTICS}/overview`), { params }),
+    getShops:    (params) => http.get(a(`${PATHS.ANALYTICS}/shops`),    { params }),
+    getUsers:    (params) => http.get(a(`${PATHS.ANALYTICS}/users`),    { params }),
+    getOrders:   (params) => http.get(a(`${PATHS.ANALYTICS}/orders`),   { params }),
+  }
+  static warehouses = crud(PATHS.WAREHOUSES)
+  static inventory = {
+    getAll:  (params) => http.get(a(PATHS.INVENTORY), { params }),
+    upsert:  (data)   => http.put(a(PATHS.INVENTORY), data),
+    adjust:  (data)   => http.post(a(`${PATHS.INVENTORY}/adjust`), data),
+  }
+  static stockMovements = {
+    getAll: (params) => http.get(a(PATHS.STOCK_MOVEMENTS), { params }),
+  }
 }
 
 const s = (path) => `${SELLER}${path}`
@@ -295,6 +310,22 @@ export class SellerApi {
     getRoom:     ()     => http.get(s('/support/room')),
     getMessages: ()     => http.get(s('/support/messages')),
     sendMessage: (data) => http.post(s('/support/messages'), data),
+  }
+  static analytics = {
+    getOverview: (params) => http.get(s(`${PATHS.ANALYTICS}/overview`), { params }),
+    getProducts: (params) => http.get(s(`${PATHS.ANALYTICS}/products`), { params }),
+    getPayouts:  (params) => http.get(s(`${PATHS.ANALYTICS}/payouts`),  { params }),
+  }
+  static warehouses = {
+    getAll:          (params)     => http.get(s('/warehouses'), { params }),
+    getOne:          (id)         => http.get(s(`/warehouses/${id}`)),
+    create:          (data)       => http.post(s('/warehouses'), data),
+    update:          (id, data)   => http.put(s(`/warehouses/${id}`), data),
+    delete:          (id)         => http.delete(s(`/warehouses/${id}`)),
+    getInventory:    (id, params) => http.get(s(`/warehouses/${id}/inventory`), { params }),
+    upsertInventory: (id, data)   => http.put(s(`/warehouses/${id}/inventory`), data),
+    adjustInventory: (id, data)   => http.post(s(`/warehouses/${id}/inventory/adjust`), data),
+    getMovements:    (id, params) => http.get(s(`/warehouses/${id}/movements`), { params }),
   }
 }
 

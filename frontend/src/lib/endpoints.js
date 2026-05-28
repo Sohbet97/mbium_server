@@ -40,4 +40,10 @@ export const PATHS = {
   PUSH_NOTIFICATIONS: '/push-notifications',
   // Audit logs
   AUDIT_LOGS: '/audit-logs',
+  // Analytics
+  ANALYTICS: '/analytics',
+  // Warehouse management
+  WAREHOUSES:      '/warehouses',
+  INVENTORY:       '/inventory',
+  STOCK_MOVEMENTS: '/stock-movements',
 }

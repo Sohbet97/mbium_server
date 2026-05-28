@@ -928,5 +928,230 @@ module.exports = {
                 },
             },
         },
+        // ── Analytics ─────────────────────────────────────────────────────────────
+        AnalyticsOverview: {
+            type: "object",
+            properties: {
+                summary: {
+                    type: "object",
+                    properties: {
+                        total_revenue: { type: "number" },
+                        total_orders:  { type: "integer" },
+                        total_users:   { type: "integer" },
+                        total_shops:   { type: "integer" },
+                    },
+                },
+                revenue_series: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            period:  { type: "string", format: "date-time" },
+                            revenue: { type: "number" },
+                            orders:  { type: "integer" },
+                        },
+                    },
+                },
+            },
+        },
+        AnalyticsShops: {
+            type: "object",
+            properties: {
+                data: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            id:      { type: "integer" },
+                            name:    { type: "string" },
+                            revenue: { type: "number" },
+                            orders:  { type: "integer" },
+                        },
+                    },
+                },
+            },
+        },
+        AnalyticsUsers: {
+            type: "object",
+            properties: {
+                series: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            period:    { type: "string", format: "date-time" },
+                            new_users: { type: "integer" },
+                        },
+                    },
+                },
+            },
+        },
+        AnalyticsOrders: {
+            type: "object",
+            properties: {
+                by_status: {
+                    type: "array",
+                    items: {
+                        type: "object",
+                        properties: {
+                            status: { type: "integer" },
+                            count:  { type: "integer" },
+                        },
+                    },
+                },
+            },
+        },
+
+        // ── Warehouse management ───────────────────────────────────────────────
+        Warehouse: {
+            type: "object",
+            properties: {
+                id:            { type: "integer", example: 1 },
+                shop_id:       { type: "integer", example: 3 },
+                name:          { type: "string", example: "TeknoMart Merkezi Ammar" },
+                city:          { type: "string", nullable: true, example: "Aşgabat" },
+                address:       { type: "string", nullable: true, example: "Magtymguly şaýoly 89" },
+                contact_phone: { type: "string", nullable: true, example: "61123456" },
+                is_active:     { type: "boolean", example: true },
+                is_default:    { type: "boolean", description: "Stock is auto-deducted from this warehouse on order PROCESSING", example: true },
+                createdAt:     { type: "string", format: "date-time" },
+                updatedAt:     { type: "string", format: "date-time" },
+                shop: {
+                    nullable: true,
+                    type: "object",
+                    properties: {
+                        id:   { type: "integer" },
+                        name: { type: "string" },
+                    },
+                },
+            },
+        },
+        WarehouseList: {
+            type: "object",
+            properties: {
+                data:  { type: "array", items: { $ref: "#/components/schemas/Warehouse" } },
+                count: { type: "integer", example: 5 },
+            },
+        },
+        WarehouseCreate: {
+            type: "object",
+            required: ["shop_id", "name"],
+            properties: {
+                shop_id:       { type: "integer", example: 3 },
+                name:          { type: "string", example: "Merkezi Ammar" },
+                city:          { type: "string", nullable: true, example: "Aşgabat" },
+                address:       { type: "string", nullable: true },
+                contact_phone: { type: "string", nullable: true },
+                is_active:     { type: "boolean", default: true },
+                is_default:    { type: "boolean", default: false },
+            },
+        },
+        WarehouseUpdate: {
+            type: "object",
+            properties: {
+                name:          { type: "string" },
+                city:          { type: "string", nullable: true },
+                address:       { type: "string", nullable: true },
+                contact_phone: { type: "string", nullable: true },
+                is_active:     { type: "boolean" },
+                is_default:    { type: "boolean" },
+            },
+        },
+        InventoryLevel: {
+            type: "object",
+            properties: {
+                id:           { type: "integer" },
+                warehouse_id: { type: "integer" },
+                product_id:   { type: "integer" },
+                variant_id:   { type: "integer", nullable: true },
+                quantity:     { type: "integer", description: "Current stock at this warehouse", example: 42 },
+                reserved:     { type: "integer", description: "Reserved for pending orders", example: 0 },
+                updatedAt:    { type: "string", format: "date-time" },
+                product: {
+                    nullable: true,
+                    type: "object",
+                    properties: {
+                        id:   { type: "integer" },
+                        name: { type: "string" },
+                    },
+                },
+                variant: {
+                    nullable: true,
+                    type: "object",
+                    properties: {
+                        id:   { type: "integer" },
+                        name: { type: "string" },
+                    },
+                },
+            },
+        },
+        InventoryLevelList: {
+            type: "object",
+            properties: {
+                data:  { type: "array", items: { $ref: "#/components/schemas/InventoryLevel" } },
+                count: { type: "integer" },
+            },
+        },
+        InventoryUpsert: {
+            type: "object",
+            required: ["warehouse_id", "product_id", "quantity"],
+            properties: {
+                warehouse_id: { type: "integer" },
+                product_id:   { type: "integer" },
+                variant_id:   { type: "integer", nullable: true },
+                quantity:     { type: "integer", minimum: 0, example: 100 },
+            },
+        },
+        StockAdjust: {
+            type: "object",
+            required: ["warehouse_id", "product_id", "quantity", "type"],
+            properties: {
+                warehouse_id: { type: "integer" },
+                product_id:   { type: "integer" },
+                variant_id:   { type: "integer", nullable: true },
+                quantity:     { type: "integer", minimum: 1, example: 10 },
+                type:         { type: "string", enum: ["INBOUND", "OUTBOUND", "ADJUSTMENT", "RETURN"], example: "INBOUND" },
+                note:         { type: "string", nullable: true, example: "Supplier delivery #INV-2024-001" },
+            },
+        },
+        StockMovement: {
+            type: "object",
+            properties: {
+                id:              { type: "integer" },
+                warehouse_id:    { type: "integer" },
+                product_id:      { type: "integer" },
+                variant_id:      { type: "integer", nullable: true },
+                order_id:        { type: "integer", nullable: true },
+                type:            { type: "string", enum: ["INBOUND", "OUTBOUND", "ADJUSTMENT", "RETURN"] },
+                quantity:        { type: "integer", description: "Always positive; direction indicated by type" },
+                quantity_before: { type: "integer", description: "Snapshot before movement" },
+                quantity_after:  { type: "integer", description: "Snapshot after movement" },
+                note:            { type: "string", nullable: true },
+                created_by:      { type: "string", format: "uuid", nullable: true },
+                createdAt:       { type: "string", format: "date-time" },
+                product: {
+                    nullable: true,
+                    type: "object",
+                    properties: { id: { type: "integer" }, name: { type: "string" } },
+                },
+                variant: {
+                    nullable: true,
+                    type: "object",
+                    properties: { id: { type: "integer" }, name: { type: "string" } },
+                },
+                warehouse: {
+                    nullable: true,
+                    type: "object",
+                    properties: { id: { type: "integer" }, name: { type: "string" } },
+                },
+            },
+        },
+        StockMovementList: {
+            type: "object",
+            properties: {
+                data:  { type: "array", items: { $ref: "#/components/schemas/StockMovement" } },
+                count: { type: "integer" },
+            },
+        },
     },
 };

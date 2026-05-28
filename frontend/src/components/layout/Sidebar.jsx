@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -26,6 +26,8 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/banners', label: t('nav.banners'), icon: LayoutTemplate },
     { to: '/admin/ai-recommendations', label: t('nav.aiRecommendations'),   icon: Bot },
     { to: '/admin/push-notifications', label: t('nav.pushNotifications'),   icon: Bell },
+    { to: '/admin/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2 },
+    { to: '/admin/warehouses',         label: t('nav.warehouses', 'Warehouses'), icon: Building2 },
   ]
   
   const catalogNav = [

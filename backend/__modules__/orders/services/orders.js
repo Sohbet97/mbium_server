@@ -5,6 +5,7 @@ const ApiError = require("../../../exceptions/api-error");
 const PayoutService = require("../../payouts/services/payouts");
 
 const STATUS_CLOSED = 5;
+const STATUS_PROCESSING = 2;
 
 class OrderService {
     // Build where clause + optional customer include-where for search/date filters
@@ -142,8 +143,84 @@ class OrderService {
     static async updateStatus(orderId, status, note, changedBy) {
         await db.Order.update({ status }, { where: { id: orderId } });
         await db.OrderStatusHistory.create({ order_id: orderId, status, note, changed_by: changedBy });
+        if (status === STATUS_PROCESSING) {
+            await this._deductInventory(orderId, changedBy);
+        }
         if (status === STATUS_CLOSED) {
             await this._applyCommission(orderId);
+        }
+    }
+
+    static async _deductInventory(orderId, changedBy) {
+        const order = await db.Order.findOne({
+            where: { id: orderId },
+            include: [{
+                model: db.OrderItem,
+                as: "items",
+                include: [
+                    { model: db.Product, as: "product", attributes: ["id", "name", "track_inventory", "sell_when_out_of_stock", "stock"] },
+                    { model: db.ProductVariant, as: "variant", required: false, attributes: ["id", "stock"] },
+                ],
+            }],
+        });
+        if (!order) return;
+
+        const warehouse = await db.Warehouse.findOne({
+            where: { shop_id: order.shop_id, is_default: true, is_active: true },
+        });
+        if (!warehouse) return;
+
+        const t = await db.sequelize.transaction();
+        try {
+            for (const item of order.items) {
+                const product = item.product;
+                if (!product || !product.track_inventory) continue;
+
+                const productId = item.product_id;
+                const variantId = item.variant_id ?? null;
+                const qty = item.quantity;
+
+                const levelWhere = { warehouse_id: warehouse.id, product_id: productId, variant_id: variantId };
+                const [level] = await db.InventoryLevel.findOrCreate({
+                    where: levelWhere,
+                    defaults: { ...levelWhere, quantity: 0, reserved: 0 },
+                    transaction: t,
+                });
+
+                const before = level.quantity;
+                if (before < qty && !product.sell_when_out_of_stock) {
+                    throw ApiError.BadRequest(
+                        `Ammar: "${product.name}" üçin ýeterlik stok ýok (bar: ${before}, gerek: ${qty})`
+                    );
+                }
+                const after = Math.max(0, before - qty);
+
+                await level.update({ quantity: after }, { transaction: t });
+
+                await db.StockMovement.create({
+                    warehouse_id: warehouse.id,
+                    product_id: productId,
+                    variant_id: variantId,
+                    order_id: orderId,
+                    type: "OUTBOUND",
+                    quantity: qty,
+                    quantity_before: before,
+                    quantity_after: after,
+                    note: `Order #${orderId} processing`,
+                    created_by: changedBy ?? null,
+                }, { transaction: t });
+
+                const deductBy = Math.min(qty, before);
+                if (variantId) {
+                    await db.ProductVariant.decrement("stock", { by: deductBy, where: { id: variantId }, transaction: t });
+                } else {
+                    await db.Product.decrement("stock", { by: deductBy, where: { id: productId }, transaction: t });
+                }
+            }
+            await t.commit();
+        } catch (err) {
+            await t.rollback();
+            throw err;
         }
     }
 

@@ -45,17 +45,27 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: true,
         },
+        warehouse_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "warehouses", key: "id" },
+            onDelete: "SET NULL",
+        },
     }, {
         timestamps: true,
         indexes: [
             { fields: ["order_id"] },
             { fields: ["status"] },
             { fields: ["tracking_number"] },
+            { fields: ["warehouse_id"] },
         ],
     });
 
     Model.associate = (db) => {
         Model.belongsTo(db.Order, { foreignKey: "order_id", as: "order" });
+        if (db.Warehouse) {
+            Model.belongsTo(db.Warehouse, { foreignKey: "warehouse_id", as: "warehouse" });
+        }
     };
 
     return Model;

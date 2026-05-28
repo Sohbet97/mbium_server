@@ -48,7 +48,11 @@ import SellerBannersPage from '@/pages/seller/SellerBannersPage'
 import SellerSubscriptionPage from '@/pages/seller/SellerSubscriptionPage'
 import AdminPushNotificationsPage from '@/pages/admin/AdminPushNotificationsPage'
 import AdminAuditPage from '@/pages/admin/AdminAuditPage'
+import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage'
+import WarehousesPage from '@/pages/admin/WarehousesPage'
 import SellerPushNotificationsPage from '@/pages/seller/SellerPushNotificationsPage'
+import SellerAnalyticsPage from '@/pages/seller/SellerAnalyticsPage'
+import SellerWarehousesPage from '@/pages/seller/SellerWarehousesPage'
 import SellerAccountPage from '@/pages/admin/AccountPage'
 
 const router = createBrowserRouter([
@@ -91,6 +95,8 @@ const router = createBrowserRouter([
           { path: 'ai-recommendations',  element: <AiRecommendationsPage />,      handle: { titleKey: 'aiRecommendations.title' } },
           { path: 'push-notifications',  element: <AdminPushNotificationsPage />,  handle: { titleKey: 'adminPn.pageTitle' } },
           { path: 'audit-logs',          element: <AdminAuditPage />,               handle: { titleKey: 'auditLogs.title' } },
+          { path: 'analytics',           element: <AdminAnalyticsPage />,           handle: { titleKey: 'analytics.title' } },
+          { path: 'warehouses',          element: <WarehousesPage />,               handle: { titleKey: 'warehouses.title' } },
         ],
       },
       // ── Seller panel ──────────────────────────────────────────────────────
@@ -111,6 +117,8 @@ const router = createBrowserRouter([
           { path: 'subscription',       element: <SellerSubscriptionPage /> },
           { path: 'push-notifications', element: <SellerPushNotificationsPage /> },
           { path: 'account',            element: <SellerAccountPage /> },
+          { path: 'analytics',          element: <SellerAnalyticsPage /> },
+          { path: 'warehouses',         element: <SellerWarehousesPage /> },
         ],
       },
     ],

@@ -119,6 +119,13 @@ class Permissions {
     static LOG_DELETE = 94
 
     static AUDIT_GET  = 310
+
+    static ANALYTICS_GET = 311
+
+    static WAREHOUSE_GET    = 312
+    static WAREHOUSE_POST   = 313
+    static WAREHOUSE_PUT    = 314
+    static WAREHOUSE_DELETE = 315
 }
 
 module.exports = Permissions

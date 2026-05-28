@@ -178,6 +178,9 @@ module.exports = (sequelize) => {
         if (db.ShopVerificationLog) {
             Model.hasMany(db.ShopVerificationLog, { foreignKey: "shop_id", as: "verificationLogs" });
         }
+        if (db.Warehouse) {
+            Model.hasMany(db.Warehouse, { foreignKey: "shop_id", as: "warehouses" });
+        }
     };
 
     return Model;

@@ -150,6 +150,12 @@ module.exports = (sequelize) => {
             otherKey: "collection_id",
             as: "collections",
         });
+        if (db.InventoryLevel) {
+            Model.hasMany(db.InventoryLevel, { foreignKey: "product_id", as: "inventoryLevels" });
+        }
+        if (db.StockMovement) {
+            Model.hasMany(db.StockMovement, { foreignKey: "product_id", as: "stockMovements" });
+        }
     };
 
     return Model;
