@@ -6,9 +6,48 @@ const paginationParams = [
     { in: "query", name: "limit", schema: { type: "integer", default: 20 } },
 ];
 
+const productSortParam = {
+    in: "query",
+    name: "sort",
+    description: "Sort order for product listings",
+    schema: {
+        type: "string",
+        default: "newest",
+        enum: [
+            "newest",     // createdAt DESC (default)
+            "oldest",     // createdAt ASC
+            "price_asc",  // price ASC
+            "price_desc", // price DESC
+            "rating",     // rating DESC, review_count DESC
+            "popular",    // review_count DESC, rating DESC
+            "name_asc",   // name ASC
+            "name_desc",  // name DESC
+            "updated",    // updatedAt DESC
+        ],
+    },
+};
+
 // All /buyer/catalog/* and /buyer/ai/* are public (no auth).
 // /buyer/cart, /buyer/orders, /buyer/addresses, /buyer/reviews require auth.
 module.exports = {
+
+    // ── Shop Types ────────────────────────────────────────────────────────────────
+
+    "/buyer/shop-types": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "List active shop types (public)",
+            description: "Returns all shop types where `is_active` is true. No auth required.",
+            responses: {
+                200: {
+                    description: "Active shop types",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/ShopType" } },
+                    } } } },
+                },
+            },
+        },
+    },
 
     // ── Catalog — Categories ──────────────────────────────────────────────────────
 
@@ -128,9 +167,9 @@ module.exports = {
             parameters: [
                 idParam,
                 ...paginationParams,
-                { in: "query", name: "text",        schema: { type: "string" } },
+                { in: "query", name: "text",        schema: { type: "string" }, description: "Search by name" },
                 { in: "query", name: "category_id", schema: { type: "integer" } },
-                { in: "query", name: "sort",        schema: { type: "string", example: "-createdAt" } },
+                productSortParam,
             ],
             responses: {
                 200: {
@@ -152,12 +191,12 @@ module.exports = {
             summary: "Search / list active products",
             parameters: [
                 ...paginationParams,
-                { in: "query", name: "text",        schema: { type: "string" } },
+                { in: "query", name: "text",        schema: { type: "string" }, description: "Search by name (TK/RU)" },
                 { in: "query", name: "category_id", schema: { type: "integer" } },
                 { in: "query", name: "shop_id",     schema: { type: "integer" } },
-                { in: "query", name: "min_price",   schema: { type: "number" } },
-                { in: "query", name: "max_price",   schema: { type: "number" } },
-                { in: "query", name: "sort",        schema: { type: "string", example: "-createdAt" } },
+                { in: "query", name: "min_price",   schema: { type: "number" }, description: "Minimum price filter (inclusive)" },
+                { in: "query", name: "max_price",   schema: { type: "number" }, description: "Maximum price filter (inclusive)" },
+                productSortParam,
             ],
             responses: {
                 200: {
@@ -469,6 +508,116 @@ module.exports = {
                         data: { type: "array", items: { $ref: "#/components/schemas/AiRecommendation" } },
                     } } } },
                 },
+            },
+        },
+    },
+
+    // ── Coins ─────────────────────────────────────────────────────────────────────
+
+    "/buyer/coins/balance": {
+        get: {
+            tags: ["Buyer — Coins"],
+            summary: "Get own coin balance",
+            security,
+            responses: {
+                200: {
+                    description: "Coin wallet",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        balance:      { type: "integer", example: 350 },
+                        total_earned: { type: "integer", example: 500 },
+                        total_spent:  { type: "integer", example: 150 },
+                    } } } },
+                },
+                401: { description: "Unauthorized" },
+            },
+        },
+    },
+
+    "/buyer/coins/history": {
+        get: {
+            tags: ["Buyer — Coins"],
+            summary: "Get own coin transaction history",
+            security,
+            parameters: [
+                ...paginationParams,
+            ],
+            responses: {
+                200: {
+                    description: "Transaction log",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: {
+                            type: "array",
+                            items: { type: "object", properties: {
+                                id:           { type: "integer" },
+                                amount:       { type: "integer", description: "Positive = credit, negative = debit" },
+                                type:         { type: "string", enum: ["EARN", "SPEND", "WITHDRAW", "REFUND", "GRANT", "DEDUCT"] },
+                                source:       { type: "string", enum: ["ORDER", "REVIEW", "REFERRAL", "TASK", "AI", "GIFT", "MANUAL"] },
+                                reference_id: { type: "string", nullable: true },
+                                balance_after:{ type: "integer" },
+                                note:         { type: "string", nullable: true },
+                                createdAt:    { type: "string", format: "date-time" },
+                            } },
+                        },
+                        count: { type: "integer" },
+                    } } } },
+                },
+                401: { description: "Unauthorized" },
+            },
+        },
+    },
+
+    "/buyer/coins/topup": {
+        post: {
+            tags: ["Buyer — Coins"],
+            summary: "Submit a coin top-up request",
+            description: "Buyer submits payment receipt; admin reviews and approves. Coins are credited only on approval.",
+            security,
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["amount_tmt"], properties: {
+                    amount_tmt:  { type: "number", example: 10.00, description: "TMT amount paid (1 TMT = 100 coins)" },
+                    receipt_url: { type: "string",  nullable: true, description: "URL of the payment receipt" },
+                } } } },
+            },
+            responses: {
+                201: {
+                    description: "Top-up request created (status: PENDING)",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        id:              { type: "integer" },
+                        amount_tmt:      { type: "number" },
+                        coins_requested: { type: "integer" },
+                        status:          { type: "string", example: "PENDING" },
+                    } } } },
+                },
+                400: { description: "amount_tmt required or too small" },
+                401: { description: "Unauthorized" },
+            },
+        },
+        get: {
+            tags: ["Buyer — Coins"],
+            summary: "List own top-up requests",
+            security,
+            parameters: paginationParams,
+            responses: {
+                200: {
+                    description: "Top-up requests",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: {
+                            type: "array",
+                            items: { type: "object", properties: {
+                                id:              { type: "integer" },
+                                amount_tmt:      { type: "number" },
+                                coins_requested: { type: "integer" },
+                                status:          { type: "string", enum: ["PENDING", "APPROVED", "REJECTED"] },
+                                receipt_url:     { type: "string", nullable: true },
+                                note:            { type: "string", nullable: true },
+                                createdAt:       { type: "string", format: "date-time" },
+                            } },
+                        },
+                        count: { type: "integer" },
+                    } } } },
+                },
+                401: { description: "Unauthorized" },
             },
         },
     },

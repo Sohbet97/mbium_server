@@ -30,6 +30,10 @@ const EMPTY_FORM = {
   tags: '', handle: '',
   seo_title: '', seo_description: '',
   is_active: true,
+  is_published: true,
+  scheduled_at: '',
+  brand_id: '',
+  supplier_id: '',
 }
 
 function buildForm(product) {
@@ -57,6 +61,12 @@ function buildForm(product) {
     seo_title:              product.seo_title              ?? '',
     seo_description:        product.seo_description        ?? '',
     is_active:              product.is_active              ?? true,
+    is_published:           product.is_published           ?? true,
+    scheduled_at:           product.scheduled_at
+      ? new Date(product.scheduled_at).toISOString().slice(0, 16)
+      : '',
+    brand_id:               product.brand_id    ?? '',
+    supplier_id:            product.supplier_id ?? '',
   }
 }
 
@@ -85,6 +95,8 @@ export default function ProductFormPage() {
   const [product, setProduct] = useState(null)
   const [shops, setShops] = useState([])
   const [categories, setCategories] = useState([])
+  const [brands, setBrands] = useState([])
+  const [suppliers, setSuppliers] = useState([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [loading, setLoading] = useState(isEdit)
   const [saving, setSaving] = useState(false)
@@ -98,9 +110,13 @@ export default function ProductFormPage() {
     Promise.all([
       AdminApi.shops.getAll({ limit: 500 }),
       AdminApi.categories.getAll({ limit: 500 }),
-    ]).then(([s, c]) => {
+      AdminApi.brands.getAll({ limit: 500, is_active: true }),
+      AdminApi.suppliers.getAll({ limit: 500, is_active: true }),
+    ]).then(([s, c, br, su]) => {
       setShops(s.data?.data ?? [])
       setCategories(c.data?.data ?? [])
+      setBrands(br.data?.data ?? [])
+      setSuppliers(su.data?.data ?? [])
     }).catch(() => {})
   }, [])
 
@@ -146,6 +162,10 @@ export default function ProductFormPage() {
         seo_title:              form.seo_title        || null,
         seo_description:        form.seo_description  || null,
         is_active:              form.is_active,
+        is_published:           form.is_published,
+        scheduled_at:           form.scheduled_at || null,
+        brand_id:               form.brand_id    ? Number(form.brand_id)    : null,
+        supplier_id:            form.supplier_id ? Number(form.supplier_id) : null,
       }
       if (isEdit) {
         await AdminApi.products.update(id, payload)
@@ -425,18 +445,57 @@ export default function ProductFormPage() {
             </CardContent>
           </Card>
 
-          {/* Organization — shop only (category moved to left) */}
+          {/* Scheduling */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">{t('products.scheduling')}</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3">
+              <ToggleRow
+                label={t('products.isPublished')}
+                hint={t('products.isPublishedHint')}
+                checked={form.is_published}
+                onChange={(v) => set('is_published', v)}
+              />
+              <FormField label={t('products.scheduledAt')} hint={t('products.scheduledAtHint')}>
+                <input
+                  type="datetime-local"
+                  value={form.scheduled_at}
+                  onChange={(e) => set('scheduled_at', e.target.value)}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </FormField>
+            </CardContent>
+          </Card>
+
+          {/* Organization — shop, brand, supplier */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">{t('products.organization')}</CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 space-y-3">
               <FormField label={t('products.shop')} required>
                 <Select value={form.shop_id} onChange={(e) => set('shop_id', e.target.value)}>
                   <option value="">{t('products.selectShop')}</option>
                   {shops.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                 </Select>
               </FormField>
+              {brands.length > 0 && (
+                <FormField label={t('products.brand')}>
+                  <Select value={form.brand_id} onChange={(e) => set('brand_id', e.target.value)}>
+                    <option value="">{t('products.noBrand')}</option>
+                    {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </Select>
+                </FormField>
+              )}
+              {suppliers.length > 0 && (
+                <FormField label={t('products.supplier')}>
+                  <Select value={form.supplier_id} onChange={(e) => set('supplier_id', e.target.value)}>
+                    <option value="">{t('products.noSupplier')}</option>
+                    {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </Select>
+                </FormField>
+              )}
             </CardContent>
           </Card>
 

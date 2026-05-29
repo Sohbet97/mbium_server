@@ -126,6 +126,31 @@ class Permissions {
     static WAREHOUSE_POST   = 313
     static WAREHOUSE_PUT    = 314
     static WAREHOUSE_DELETE = 315
+
+    static COIN_GET    = 316
+    static COIN_POST   = 317
+    static COIN_PUT    = 318
+    static COIN_DELETE = 319
+
+    static BRAND_GET    = 320
+    static BRAND_POST   = 321
+    static BRAND_PUT    = 322
+    static BRAND_DELETE = 323
+
+    static SUPPLIER_GET    = 324
+    static SUPPLIER_POST   = 325
+    static SUPPLIER_PUT    = 326
+    static SUPPLIER_DELETE = 327
+
+    static COMMENT_GET    = 328
+    static COMMENT_POST   = 329
+    static COMMENT_PUT    = 330
+    static COMMENT_DELETE = 331
+
+    static KYC_GET    = 332
+    static KYC_POST   = 333
+    static KYC_PUT    = 334
+    static KYC_DELETE = 335
 }
 
 module.exports = Permissions

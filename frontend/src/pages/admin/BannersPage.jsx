@@ -13,11 +13,11 @@ const absUrl = (url) => (!url || url.startsWith('http') ? url : `${BASE}${url}`)
 
 const EMPTY = {
   title: '', subtitle: '', button_text: '', button_url: '',
-  link_url: '', banner_type_id: '', is_active: true,
-  starts_at: '', ends_at: '', media_id: '', image_url: '',
+  link_url: '', banner_type_id: '', shop_id: '', sort_order: 0,
+  is_active: true, starts_at: '', ends_at: '', media_id: '', image_url: '',
 }
 
-function BannerFormModal({ banner, types, onClose, onSaved }) {
+function BannerFormModal({ banner, types, shops, onClose, onSaved }) {
   const { t } = useTranslation()
   const [form, setForm] = useState(banner ? {
     title:          banner.title          ?? '',
@@ -31,6 +31,8 @@ function BannerFormModal({ banner, types, onClose, onSaved }) {
     ends_at:        banner.ends_at   ? banner.ends_at.slice(0, 16)   : '',
     media_id:       banner.media_id  ?? '',
     image_url:      banner.image_url ?? '',
+    shop_id:        banner.shop_id   ?? '',
+    sort_order:     banner.sort_order ?? 0,
   } : { ...EMPTY })
   const [media, setMedia] = useState(banner?.media ?? null)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -53,9 +55,11 @@ function BannerFormModal({ banner, types, onClose, onSaved }) {
       const payload = {
         ...form,
         banner_type_id: form.banner_type_id || null,
+        shop_id:        form.shop_id        || null,
         media_id:       form.media_id       || null,
         starts_at:      form.starts_at      || null,
         ends_at:        form.ends_at        || null,
+        sort_order:     Number(form.sort_order) || 0,
       }
       if (banner) {
         await AdminApi.banners.update(banner.id, payload)
@@ -120,6 +124,23 @@ function BannerFormModal({ banner, types, onClose, onSaved }) {
                 <option key={tp.id} value={tp.id}>{tp.name_eng || tp.name}</option>
               ))}
             </select>
+          </div>
+
+          {/* Shop (store-specific) */}
+          <div>
+            <label className="block text-xs font-medium dark:text-slate-400 text-slate-500 mb-1.5">{t('banners.shop')}</label>
+            <select value={form.shop_id} onChange={(e) => set('shop_id', e.target.value)}
+              className="w-full h-9 px-3 rounded-lg text-sm border dark:bg-[#242430] dark:border-white/[0.08] dark:text-white bg-white border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40">
+              <option value="">{t('banners.globalBanner')}</option>
+              {shops.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+
+          {/* Sort order */}
+          <div>
+            <label className="block text-xs font-medium dark:text-slate-400 text-slate-500 mb-1.5">{t('banners.sortOrder')}</label>
+            <input type="number" min={0} value={form.sort_order} onChange={(e) => set('sort_order', parseInt(e.target.value) || 0)}
+              className="w-full h-9 px-3 rounded-lg text-sm border dark:bg-[#242430] dark:border-white/[0.08] dark:text-white bg-white border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40" />
           </div>
 
           {/* Title */}
@@ -210,6 +231,7 @@ export default function BannersPage() {
   const { t } = useTranslation()
   const [banners, setBanners] = useState([])
   const [types, setTypes] = useState([])
+  const [shops, setShops] = useState([])
   const [typeFilter, setTypeFilter] = useState('')
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState(null) // null | 'create' | banner-object
@@ -235,7 +257,14 @@ export default function BannersPage() {
     } catch {}
   }
 
-  useEffect(() => { loadTypes() }, [])
+  async function loadShops() {
+    try {
+      const { data } = await AdminApi.shops.getAll({ limit: 200, is_active: true })
+      setShops(data.data ?? [])
+    } catch {}
+  }
+
+  useEffect(() => { loadTypes(); loadShops() }, [])
   useEffect(() => { load() }, [typeFilter, types.length])
 
   async function handleToggle(banner) {
@@ -400,6 +429,7 @@ export default function BannersPage() {
         <BannerFormModal
           banner={modal === 'create' ? null : modal}
           types={types}
+          shops={shops}
           onClose={() => setModal(null)}
           onSaved={() => { setModal(null); load() }}
         />

@@ -223,6 +223,79 @@ export class AdminApi {
   static stockMovements = {
     getAll: (params) => http.get(a(PATHS.STOCK_MOVEMENTS), { params }),
   }
+  static coins = {
+    getBalances:       (params)   => http.get(a(`${PATHS.COINS}/balances`), { params }),
+    getBalance:        (userId)   => http.get(a(`${PATHS.COINS}/balances/${userId}`)),
+    grant:             (data)     => http.post(a(`${PATHS.COINS}/grant`), data),
+    deduct:            (data)     => http.post(a(`${PATHS.COINS}/deduct`), data),
+    getConditions:     (params)   => http.get(a(`${PATHS.COINS}/conditions`), { params }),
+    createCondition:   (data)     => http.post(a(`${PATHS.COINS}/conditions`), data),
+    updateCondition:   (id, data) => http.put(a(`${PATHS.COINS}/conditions/${id}`), data),
+    deleteCondition:   (id)       => http.delete(a(`${PATHS.COINS}/conditions/${id}`)),
+    getTopups:         (params)   => http.get(a(`${PATHS.COINS}/topups`), { params }),
+    updateTopupStatus: (id, data) => http.patch(a(`${PATHS.COINS}/topups/${id}/status`), data),
+  }
+  static favorites = {
+    getAll: (params) => http.get(a(`${PATHS.FAVORITES}`), { params }),
+  }
+  static catalog = {
+    getTags:      (params)     => http.get(a(`${PATHS.PRODUCT_TAGS}`), { params }),
+    createTag:    (data)       => http.post(a(`${PATHS.PRODUCT_TAGS}`), data),
+    updateTag:    (id, data)   => http.put(a(`${PATHS.PRODUCT_TAGS}/${id}`), data),
+    deleteTag:    (id)         => http.delete(a(`${PATHS.PRODUCT_TAGS}/${id}`)),
+    attachTag:    (productId, tagId)  => http.post(a(`${PATHS.PRODUCT_TAGS}/${productId}/attach`), { tag_id: tagId }),
+    detachTag:    (productId, tagId)  => http.delete(a(`${PATHS.PRODUCT_TAGS}/${productId}/detach/${tagId}`)),
+  }
+  static brands = {
+    getAll:  (params)     => http.get(a(`${PATHS.BRANDS}`), { params }),
+    getTree: ()           => http.get(a(`${PATHS.BRANDS}/tree`)),
+    getOne:  (id)         => http.get(a(`${PATHS.BRANDS}/${id}`)),
+    create:  (data)       => http.post(a(`${PATHS.BRANDS}`), data),
+    update:  (id, data)   => http.put(a(`${PATHS.BRANDS}/${id}`), data),
+    delete:  (id)         => http.delete(a(`${PATHS.BRANDS}/${id}`)),
+  }
+  static suppliers = {
+    getAll:  (params)     => http.get(a(`${PATHS.SUPPLIERS}`), { params }),
+    getOne:  (id)         => http.get(a(`${PATHS.SUPPLIERS}/${id}`)),
+    create:  (data)       => http.post(a(`${PATHS.SUPPLIERS}`), data),
+    update:  (id, data)   => http.put(a(`${PATHS.SUPPLIERS}/${id}`), data),
+    delete:  (id)         => http.delete(a(`${PATHS.SUPPLIERS}/${id}`)),
+  }
+  static comments = {
+    getAll:    (params)      => http.get(a(PATHS.COMMENTS), { params }),
+    setStatus: (id, status)  => http.patch(a(`${PATHS.COMMENTS}/${id}/status`), { status }),
+    delete:    (id)          => http.delete(a(`${PATHS.COMMENTS}/${id}`)),
+  }
+  static kyc = {
+    getAll:    (params)         => http.get(a(PATHS.KYC), { params }),
+    getByShop: (shopId)         => http.get(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}`)),
+    create:    (shopId, data)   => http.post(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}`), data),
+    upload:    (shopId, fd)     => http.post(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}/upload`), fd, { headers: { 'Content-Type': 'multipart/form-data' } }),
+    setStatus: (shopId, docId, status) => http.patch(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}/${docId}/status`), { status }),
+    delete:    (shopId, docId)  => http.delete(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}/${docId}`)),
+  }
+}
+
+// ─── BuyerApi ──────────────────────────────────────────────────────────────────
+
+const b = (path) => `/buyer${path}`
+
+export class BuyerApi {
+  static favorites = {
+    getAll:  (params)     => http.get(b(`${PATHS.FAVORITES}`), { params }),
+    add:     (productId)  => http.post(b(`${PATHS.FAVORITES}/${productId}`)),
+    remove:  (productId)  => http.delete(b(`${PATHS.FAVORITES}/${productId}`)),
+  }
+  static comments = {
+    getByProduct: (productId, params) => http.get(b(`/catalog/products/${productId}/comments`), { params }),
+    create:       (productId, data)   => http.post(b(`/catalog/products/${productId}/comments`), data),
+  }
+  static coins = {
+    getBalance: ()       => http.get(b(`${PATHS.COINS}/balance`)),
+    getHistory: (params) => http.get(b(`${PATHS.COINS}/history`), { params }),
+    submitTopup:(data)   => http.post(b(`${PATHS.COINS}/topup`), data),
+    getTopups:  (params) => http.get(b(`${PATHS.COINS}/topup`), { params }),
+  }
 }
 
 const s = (path) => `${SELLER}${path}`

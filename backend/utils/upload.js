@@ -25,7 +25,7 @@ function resolveType(mimetype, originalname) {
     return null
 }
 
-// Media files go to Firebase Storage — use memory so the buffer is available
+// Media files are written to local disk via uploadBuffer — keep memoryStorage so sharp can access the buffer
 exports.mediaUpload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 500 * 1024 * 1024 },

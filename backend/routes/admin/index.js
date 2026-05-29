@@ -32,6 +32,11 @@ const auditMiddleware         = require("../../middlewares/audit-middleware")
 const auditModuleRouter       = require("../../__modules__/audit")
 const analyticsModuleRouter   = require("../../__modules__/analytics")
 const warehouseModuleRouter   = require("../../__modules__/warehouse")
+const coinsModuleRouter       = require("../../__modules__/coins")
+const favoritesModuleRouter   = require("../../__modules__/favorites")
+const brandsModuleRouter      = require("../../__modules__/brands")
+const suppliersModuleRouter   = require("../../__modules__/suppliers")
+const commentsModuleRouter    = require("../../__modules__/comments")
 //#endregion
 
 //#region Routes
@@ -69,6 +74,11 @@ adminRouter.use('/support', require('./support'))
 adminRouter.use(auditModuleRouter)
 adminRouter.use(analyticsModuleRouter)
 adminRouter.use(warehouseModuleRouter)
+adminRouter.use(coinsModuleRouter)
+adminRouter.use(favoritesModuleRouter)
+adminRouter.use(brandsModuleRouter)
+adminRouter.use(suppliersModuleRouter)
+adminRouter.use(commentsModuleRouter)
 //#endregion
 
 module.exports = adminRouter;

@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -28,12 +28,19 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/push-notifications', label: t('nav.pushNotifications'),   icon: Bell },
     { to: '/admin/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2 },
     { to: '/admin/warehouses',         label: t('nav.warehouses', 'Warehouses'), icon: Building2 },
+    { to: '/admin/coins',              label: t('nav.coins', 'Coins'), icon: Coins },
+    { to: '/admin/favorites',          label: t('nav.favorites', 'Favorites'), icon: Heart },
+    { to: '/admin/comments',           label: t('nav.comments', 'Comments'),   icon: MessageSquare },
+    { to: '/admin/kyc',                label: t('nav.kyc', 'KYC Docs'),        icon: FileCheck },
   ]
   
   const catalogNav = [
     { to: '/admin/catalog/categories', label: t('nav.categories'), icon: Tag },
     { to: '/admin/catalog/products', label: t('nav.products'), icon: Package },
     { to: '/admin/catalog/collections', label: t('nav.collections'), icon: Layers },
+    { to: '/admin/catalog/tags',        label: t('productTags.title', 'Tags'),        icon: Tag },
+    { to: '/admin/catalog/brands',     label: t('nav.brands', 'Brands'),             icon: Award },
+    { to: '/admin/catalog/suppliers',  label: t('nav.suppliers', 'Suppliers'),        icon: Factory },
     { to: '/admin/media', label: t('nav.media'), icon: Images },
   ]
   

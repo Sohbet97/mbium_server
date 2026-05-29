@@ -1,7 +1,8 @@
 const admin = require('firebase-admin')
 const path  = require('path')
+const fs    = require('fs')
 
-let _bucket = null
+const MEDIA_BASE = path.resolve(process.cwd(), 'storage', 'media')
 
 function _initApp() {
     if (admin.apps.length) return
@@ -11,16 +12,8 @@ function _initApp() {
             : path.resolve(__dirname, '../config/firebase-adminsdk.json')
     )
     admin.initializeApp({
-        credential:    admin.credential.cert(serviceAccount),
-        storageBucket: process.env.FIREBASE_STORAGE_BUCKET ?? serviceAccount.project_id + '.appspot.com',
+        credential: admin.credential.cert(serviceAccount),
     })
-}
-
-function getBucket() {
-    if (_bucket) return _bucket
-    _initApp()
-    _bucket = admin.storage().bucket()
-    return _bucket
 }
 
 function getMessaging() {
@@ -29,46 +22,41 @@ function getMessaging() {
 }
 
 /**
- * Upload a Buffer to Firebase Storage and return its public URL.
- * @param {Buffer}  buffer
- * @param {string}  destPath   e.g. "media/images/uuid.jpg"
- * @param {string}  contentType  MIME type
- * @returns {Promise<string>}  Public HTTPS URL
+ * Write a Buffer to local disk under storage/media/ and return the public URL.
+ * destPath is relative to the media root, e.g. "media/images/uuid.jpg".
  */
-async function uploadBuffer(buffer, destPath, contentType) {
-    const bucket = getBucket()
-    const file   = bucket.file(destPath)
-
-    await file.save(buffer, {
-        metadata:  { contentType },
-        resumable: false,
-    })
-
-    await file.makePublic()
-
-    return `https://storage.googleapis.com/${bucket.name}/${destPath}`
+async function uploadBuffer(buffer, destPath, _contentType) {
+    // destPath: "media/images/uuid.jpg" → write to storage/media/images/uuid.jpg
+    const relativePath = destPath.replace(/^media\//, '')
+    const filePath = path.join(MEDIA_BASE, relativePath)
+    await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
+    await fs.promises.writeFile(filePath, buffer)
+    const base = (process.env.APP_URL || `http://localhost:${process.env.PORT || 4000}`).replace(/\/$/, '')
+    return `${base}/media/${relativePath}`
 }
 
 /**
- * Delete a file from Firebase Storage by its storage path.
- * Silently ignores 404 (already deleted).
+ * Delete a file from local storage by its destPath (e.g. "media/images/uuid.jpg").
+ * Silently ignores missing files.
  */
 async function deleteFile(destPath) {
     if (!destPath) return
+    const relativePath = destPath.replace(/^media\//, '')
+    const filePath = path.join(MEDIA_BASE, relativePath)
     try {
-        await getBucket().file(destPath).delete()
+        await fs.promises.unlink(filePath)
     } catch (e) {
-        if (e.code !== 404) console.error('[firebase-storage] delete error:', e.message)
+        if (e.code !== 'ENOENT') console.error('[local-storage] delete error:', e.message)
     }
 }
 
 /**
- * Extract the Firebase Storage path from a public URL.
- * "https://storage.googleapis.com/BUCKET/media/images/x.jpg" → "media/images/x.jpg"
+ * Extract the storage destPath from a local media URL.
+ * "http://localhost:4000/media/images/x.jpg" → "media/images/x.jpg"
  */
 function urlToPath(publicUrl) {
-    const bucket = getBucket()
-    return publicUrl.replace(`https://storage.googleapis.com/${bucket.name}/`, '')
+    const match = publicUrl.match(/\/media\/(.+)$/)
+    return match ? `media/${match[1]}` : publicUrl
 }
 
 /**

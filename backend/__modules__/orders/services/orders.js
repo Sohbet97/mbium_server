@@ -3,6 +3,8 @@ const db = require("../../../models");
 const { FUNCTIONS } = require("../../../utils/functions");
 const ApiError = require("../../../exceptions/api-error");
 const PayoutService = require("../../payouts/services/payouts");
+const CoinService   = require("../../coins/services/CoinService");
+const PushService   = require("../../../services/push");
 
 const STATUS_CLOSED = 5;
 const STATUS_PROCESSING = 2;
@@ -137,6 +139,7 @@ class OrderService {
         );
 
         await db.OrderStatusHistory.create({ order_id: order.id, status: 0, changed_by: userId });
+        PushService.onOrderCreated(order).catch(() => {});
         return order;
     }
 
@@ -146,8 +149,15 @@ class OrderService {
         if (status === STATUS_PROCESSING) {
             await this._deductInventory(orderId, changedBy);
         }
-        if (status === STATUS_CLOSED) {
-            await this._applyCommission(orderId);
+
+        // Fetch order once for both coin award and push notification
+        const order = await db.Order.findOne({ where: { id: orderId }, attributes: ["id", "user_id", "shop_id", "total_price"] });
+        if (order) {
+            if (status === STATUS_CLOSED) {
+                await this._applyCommission(orderId);
+                await CoinService.awardForOrder(order);
+            }
+            PushService.onOrderStatusChanged(orderId, order.user_id, order.shop_id, status).catch(() => {});
         }
     }
 

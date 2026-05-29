@@ -181,6 +181,9 @@ module.exports = (sequelize) => {
         if (db.Warehouse) {
             Model.hasMany(db.Warehouse, { foreignKey: "shop_id", as: "warehouses" });
         }
+        if (db.KycDocument) {
+            Model.hasMany(db.KycDocument, { foreignKey: "shop_id", as: "kycDocuments" });
+        }
     };
 
     return Model;

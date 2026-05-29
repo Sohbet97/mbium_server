@@ -46,4 +46,18 @@ export const PATHS = {
   WAREHOUSES:      '/warehouses',
   INVENTORY:       '/inventory',
   STOCK_MOVEMENTS: '/stock-movements',
+  // Coins
+  COINS: '/coins',
+  // Favorites
+  FAVORITES: '/favorites',
+  // Product tags
+  PRODUCT_TAGS: '/catalog/tags',
+  // Brands
+  BRANDS: '/brands',
+  // Suppliers
+  SUPPLIERS: '/suppliers',
+  // Comments
+  COMMENTS: '/comments',
+  // KYC documents
+  KYC: '/kyc',
 }

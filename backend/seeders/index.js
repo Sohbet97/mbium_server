@@ -72,6 +72,9 @@ async function run() {
         console.log('\n[22/22] Inventory levels');
         await require('./20-inventory')(fullDb);
 
+        console.log('\n[23/23] Coin conditions');
+        await require('./21-coin-conditions')(fullDb);
+
         console.log('\nAll seeds complete.');
     } catch (err) {
         console.error('\nSeeding failed:', err.message);

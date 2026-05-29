@@ -9,6 +9,7 @@ const UserShortDTO = require("../../../dtos/user_short");
 const { FUNCTIONS } = require("../../../utils/functions");
 const { Op } = require("sequelize");
 const USER_CONSTANTS = require("../utils/constants");
+const CoinService    = require("../../coins/services/CoinService");
 
 const MAX_SESSIONS = 3;
 const OTP_TTL_MINUTES = 5;
@@ -174,7 +175,7 @@ class UserService {
 
   /** Self-registration: always starts as STATUS_NOT_ACTIVATED. */
   static async register({ name, surname, phone_number, email, password, birth_date }) {
-    return db.User.create({
+    const user = await db.User.create({
       name,
       surname,
       phone_number,
@@ -183,6 +184,8 @@ class UserService {
       status: USER_CONSTANTS.STATUS_NOT_ACTIVATED,
       password: await FUNCTIONS.getHashedPassword(password),
     });
+    await CoinService.ensureWallet(user.id).catch(() => {});
+    return user;
   }
 
   static async deleteById(id, force = false) {

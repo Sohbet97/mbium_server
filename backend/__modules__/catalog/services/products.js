@@ -72,7 +72,11 @@ class ProductService {
             track_inventory:        req.body?.track_inventory ?? true,
             sell_when_out_of_stock: req.body?.sell_when_out_of_stock ?? false,
             status:                 req.body?.status ?? 1,
+            brand_id:               req.body?.brand_id    ?? null,
+            supplier_id:            req.body?.supplier_id ?? null,
             is_active:              req.body?.is_active ?? true,
+            is_published:           req.body?.is_published ?? true,
+            scheduled_at:           req.body?.scheduled_at ?? null,
             createdBy:              req.user?.id,
         });
     }
@@ -100,8 +104,12 @@ class ProductService {
                 is_physical:            req.body?.is_physical,
                 track_inventory:        req.body?.track_inventory,
                 sell_when_out_of_stock: req.body?.sell_when_out_of_stock,
+                brand_id:               req.body?.brand_id,
+                supplier_id:            req.body?.supplier_id,
                 status:                 req.body?.status,
                 is_active:              req.body?.is_active,
+                is_published:           req.body?.is_published,
+                scheduled_at:           req.body?.scheduled_at,
             },
             { where: { id } }
         );
