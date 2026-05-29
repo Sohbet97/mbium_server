@@ -48,8 +48,19 @@ import SellerBannersPage from '@/pages/seller/SellerBannersPage'
 import SellerSubscriptionPage from '@/pages/seller/SellerSubscriptionPage'
 import AdminPushNotificationsPage from '@/pages/admin/AdminPushNotificationsPage'
 import AdminAuditPage from '@/pages/admin/AdminAuditPage'
+import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage'
+import WarehousesPage from '@/pages/admin/WarehousesPage'
 import SellerPushNotificationsPage from '@/pages/seller/SellerPushNotificationsPage'
+import SellerAnalyticsPage from '@/pages/seller/SellerAnalyticsPage'
+import SellerWarehousesPage from '@/pages/seller/SellerWarehousesPage'
 import SellerAccountPage from '@/pages/admin/AccountPage'
+import AdminCoinsPage from '@/pages/admin/AdminCoinsPage'
+import AdminFavoritesPage from '@/pages/admin/AdminFavoritesPage'
+import ProductTagsPage from '@/pages/admin/ProductTagsPage'
+import BrandsPage from '@/pages/admin/BrandsPage'
+import SuppliersPage from '@/pages/admin/SuppliersPage'
+import AdminCommentsPage from '@/pages/admin/AdminCommentsPage'
+import AdminKycPage from '@/pages/admin/AdminKycPage'
 
 const router = createBrowserRouter([
   { path: '/login',   element: <LoginPage /> },
@@ -91,6 +102,15 @@ const router = createBrowserRouter([
           { path: 'ai-recommendations',  element: <AiRecommendationsPage />,      handle: { titleKey: 'aiRecommendations.title' } },
           { path: 'push-notifications',  element: <AdminPushNotificationsPage />,  handle: { titleKey: 'adminPn.pageTitle' } },
           { path: 'audit-logs',          element: <AdminAuditPage />,               handle: { titleKey: 'auditLogs.title' } },
+          { path: 'analytics',           element: <AdminAnalyticsPage />,           handle: { titleKey: 'analytics.title' } },
+          { path: 'warehouses',          element: <WarehousesPage />,               handle: { titleKey: 'warehouses.title' } },
+          { path: 'coins',              element: <AdminCoinsPage />,               handle: { titleKey: 'coins.title' } },
+          { path: 'favorites',          element: <AdminFavoritesPage />,           handle: { titleKey: 'favorites.title' } },
+          { path: 'catalog/tags',       element: <ProductTagsPage />,              handle: { titleKey: 'productTags.title' } },
+          { path: 'catalog/brands',    element: <BrandsPage />,                   handle: { titleKey: 'brands.title' } },
+          { path: 'catalog/suppliers', element: <SuppliersPage />,                handle: { titleKey: 'suppliers.title' } },
+          { path: 'comments',         element: <AdminCommentsPage />,            handle: { titleKey: 'comments.title' } },
+          { path: 'kyc',             element: <AdminKycPage />,                 handle: { titleKey: 'kyc.title' } },
         ],
       },
       // ── Seller panel ──────────────────────────────────────────────────────
@@ -111,6 +131,8 @@ const router = createBrowserRouter([
           { path: 'subscription',       element: <SellerSubscriptionPage /> },
           { path: 'push-notifications', element: <SellerPushNotificationsPage /> },
           { path: 'account',            element: <SellerAccountPage /> },
+          { path: 'analytics',          element: <SellerAnalyticsPage /> },
+          { path: 'warehouses',         element: <SellerWarehousesPage /> },
         ],
       },
     ],

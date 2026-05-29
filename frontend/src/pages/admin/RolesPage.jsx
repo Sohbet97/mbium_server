@@ -41,6 +41,13 @@ const PERM_GROUPS = [
   // null = no permission for that action (Read/Create/Edit/Delete column stays empty)
   { label: 'HTTP Logs',    perms: [93, null, null, 94] },
   { label: 'Audit Logs',   perms: [310, null, null, null] },
+  { label: 'Analytics',    perms: [311, null, null, null] },
+  { label: 'Warehouses',   perms: [312, 313, 314, 315] },
+  { label: 'Coins',        perms: [316, 317, 318, 319] },
+  { label: 'Brands',       perms: [320, 321, 322, 323] },
+  { label: 'Suppliers',    perms: [324, 325, 326, 327] },
+  { label: 'Comments',     perms: [328, 329, 330, 331] },
+  { label: 'KYC',          perms: [332, 333, 334, 335] },
 ]
 
 const ALL_PERMS = PERM_GROUPS.flatMap((g) => g.perms).filter(Boolean)

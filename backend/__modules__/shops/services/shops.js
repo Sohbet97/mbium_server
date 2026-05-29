@@ -4,6 +4,7 @@ const { FUNCTIONS } = require("../../../utils/functions");
 const { CONSTANTS } = require("../../../config/constants");
 const SHOP_CONSTANTS = require("../utils/constants");
 const NotificationService = require("../../../services/notifications");
+const PushService         = require("../../../services/push");
 
 class ShopService {
   static async get(filter = {}, limit = undefined, order = SHOP_CONSTANTS.DEFAULT_SORT, offset = 0, paranoid = true) {
@@ -182,6 +183,7 @@ class ShopService {
     const updated = await this.getById(id);
     if (updated) {
       NotificationService.createForShopApproved(updated, io).catch(() => {});
+      PushService.onShopVerified(updated).catch(() => {});
     }
     return updated;
   }
@@ -204,6 +206,7 @@ class ShopService {
     const shop = await this.getById(id);
     if (shop) {
       NotificationService.createForShopRejected(shop, note, io).catch(() => {});
+      PushService.onShopRejected(shop, note).catch(() => {});
     }
     return shop;
   }

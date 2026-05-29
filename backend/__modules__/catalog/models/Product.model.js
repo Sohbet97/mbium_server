@@ -121,6 +121,26 @@ module.exports = (sequelize) => {
             type: DataTypes.BOOLEAN,
             defaultValue: true
         },
+        brand_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "brands", key: "id" },
+        },
+        supplier_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "suppliers", key: "id" },
+        },
+        is_published: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
+        scheduled_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            defaultValue: null,
+        },
         createdBy: {
             type: DataTypes.UUID,
             allowNull: true,
@@ -150,6 +170,29 @@ module.exports = (sequelize) => {
             otherKey: "collection_id",
             as: "collections",
         });
+        if (db.InventoryLevel) {
+            Model.hasMany(db.InventoryLevel, { foreignKey: "product_id", as: "inventoryLevels" });
+        }
+        if (db.StockMovement) {
+            Model.hasMany(db.StockMovement, { foreignKey: "product_id", as: "stockMovements" });
+        }
+        if (db.ProductTag && db.ProductTagMap) {
+            Model.belongsToMany(db.ProductTag, {
+                through: "product_tag_map",
+                foreignKey: "product_id",
+                otherKey: "tag_id",
+                as: "structuredTags",
+            });
+        }
+        if (db.Favorite) {
+            Model.hasMany(db.Favorite, { foreignKey: "product_id", as: "favorites" });
+        }
+        if (db.Brand) {
+            Model.belongsTo(db.Brand, { foreignKey: "brand_id", as: "brand" });
+        }
+        if (db.Supplier) {
+            Model.belongsTo(db.Supplier, { foreignKey: "supplier_id", as: "supplier" });
+        }
     };
 
     return Model;

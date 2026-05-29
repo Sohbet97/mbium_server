@@ -40,4 +40,24 @@ export const PATHS = {
   PUSH_NOTIFICATIONS: '/push-notifications',
   // Audit logs
   AUDIT_LOGS: '/audit-logs',
+  // Analytics
+  ANALYTICS: '/analytics',
+  // Warehouse management
+  WAREHOUSES:      '/warehouses',
+  INVENTORY:       '/inventory',
+  STOCK_MOVEMENTS: '/stock-movements',
+  // Coins
+  COINS: '/coins',
+  // Favorites
+  FAVORITES: '/favorites',
+  // Product tags
+  PRODUCT_TAGS: '/catalog/tags',
+  // Brands
+  BRANDS: '/brands',
+  // Suppliers
+  SUPPLIERS: '/suppliers',
+  // Comments
+  COMMENTS: '/comments',
+  // KYC documents
+  KYC: '/kyc',
 }

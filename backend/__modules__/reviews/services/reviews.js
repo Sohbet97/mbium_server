@@ -1,6 +1,8 @@
 const { Op } = require("sequelize");
 const db = require("../../../models");
-const ApiError = require("../../../exceptions/api-error");
+const ApiError    = require("../../../exceptions/api-error");
+const CoinService = require("../../coins/services/CoinService");
+const PushService = require("../../../services/push");
 
 class ReviewService {
     static async get(filter = {}, limit, skip = 0, paranoid = true) {
@@ -40,6 +42,21 @@ class ReviewService {
         if (existing) throw ApiError.BadRequest("Bu haryt üçin siz eýýäm baha berdiňiz");
 
         const review = await db.Review.create({ user_id: userId, product_id, order_id, rating, comment, status: 1 });
+        await CoinService.awardForReview(userId, review.id, product_id);
+
+        // Notify the shop owner of the new review
+        if (order_id) {
+            db.Order.findByPk(order_id, { attributes: ['shop_id'] }).then((o) => {
+                if (o?.shop_id) {
+                    PushService.notifyShopOwner(
+                        o.shop_id,
+                        'Täze baha geldi ⭐',
+                        `${rating}/5 — "${comment?.slice(0, 60) ?? ''}"`,
+                        { type: 'REVIEW_NEW', review_id: String(review.id) },
+                    ).catch(() => {})
+                }
+            }).catch(() => {})
+        }
 
         // Update product rating aggregate
         const stats = await db.Review.findOne({

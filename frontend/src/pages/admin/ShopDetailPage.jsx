@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Store, ShieldCheck, ShieldX, Search,
   Pencil, Save, X, RefreshCw, Package, ShoppingCart,
-  Clock, DollarSign, CreditCard, Check,
+  Clock, DollarSign, CreditCard, Check, Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -1190,6 +1190,166 @@ function SubscriptionTab({ shopId }) {
   )
 }
 
+// ─── KYC Tab ──────────────────────────────────────────────────────────────────
+
+const DOC_TYPES = ['PASSPORT', 'TAX_ID', 'BUSINESS_REG', 'BANK_STATEMENT', 'OTHER']
+const DOC_STATUS_COLORS = {
+  pending:  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+  approved: 'bg-green-100  text-green-700  dark:bg-green-900/30  dark:text-green-400',
+  rejected: 'bg-red-100    text-red-700    dark:bg-red-900/30    dark:text-red-400',
+}
+
+function KycTab({ shopId }) {
+  const { t } = useTranslation()
+  const [docs, setDocs]       = useState([])
+  const [loading, setLoading] = useState(true)
+  const [adding, setAdding]   = useState(false)
+  const [form, setForm]       = useState({ type: 'PASSPORT', file_url: '', note: '' })
+  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving]   = useState(false)
+
+  function load() {
+    setLoading(true)
+    AdminApi.kyc.getByShop(shopId)
+      .then(({ data }) => setDocs(data ?? []))
+      .catch(() => toast.error(t('toast.error')))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [shopId])
+
+  async function handleUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const { data } = await AdminApi.kyc.upload(shopId, fd)
+      setForm((f) => ({ ...f, file_url: data.file_url }))
+      toast.success(t('kyc.uploaded'))
+    } catch { toast.error(t('toast.error')) }
+    finally { setUploading(false) }
+  }
+
+  async function handleAdd() {
+    if (!form.file_url.trim()) { toast.error(t('kyc.fileRequired')); return }
+    setSaving(true)
+    try {
+      await AdminApi.kyc.create(shopId, form)
+      toast.success(t('toast.created'))
+      setAdding(false)
+      setForm({ type: 'PASSPORT', file_url: '', note: '' })
+      load()
+    } catch { toast.error(t('toast.error')) }
+    finally { setSaving(false) }
+  }
+
+  async function handleStatus(docId, status) {
+    try {
+      await AdminApi.kyc.setStatus(shopId, docId, status)
+      toast.success(t('toast.updated'))
+      load()
+    } catch { toast.error(t('toast.error')) }
+  }
+
+  async function handleDelete(docId) {
+    if (!window.confirm(t('common.confirmDelete'))) return
+    try {
+      await AdminApi.kyc.delete(shopId, docId)
+      toast.success(t('toast.deleted'))
+      load()
+    } catch { toast.error(t('toast.error')) }
+  }
+
+  const inp = 'w-full rounded-lg border px-3 py-2 text-sm dark:bg-[#111] dark:border-white/10 dark:text-white border-slate-200'
+
+  return (
+    <div className="space-y-4 pt-2">
+      <div className="flex justify-between items-center">
+        <p className="text-sm opacity-60">{t('kyc.tabDesc')}</p>
+        <button onClick={() => setAdding((v) => !v)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white">
+          {adding ? t('common.cancel') : `+ ${t('kyc.addDoc')}`}
+        </button>
+      </div>
+
+      {adding && (
+        <div className="rounded-xl border dark:border-white/[0.08] border-black/[0.08] p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium mb-1 opacity-60">{t('kyc.docType')}</label>
+              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} className={inp}>
+                {DOC_TYPES.map((d) => <option key={d} value={d}>{t(`kyc.types.${d}`, d)}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1 opacity-60">{t('kyc.fileUpload')}</label>
+              <input type="file" onChange={handleUpload} disabled={uploading}
+                className="block w-full text-sm text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer" />
+              {uploading && <p className="text-xs mt-1 opacity-50">{t('kyc.uploading')}</p>}
+              {form.file_url && <p className="text-xs mt-1 text-green-600 truncate">{form.file_url}</p>}
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1 opacity-60">{t('common.description')}</label>
+            <textarea rows={2} value={form.note} onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+              className={`${inp} resize-none`} />
+          </div>
+          <div className="flex justify-end">
+            <button onClick={handleAdd} disabled={saving || uploading}
+              className="px-4 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50">
+              {saving ? '…' : t('kyc.addDoc')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-center text-sm opacity-40 py-8">{t('common.loading')}</p>
+      ) : docs.length === 0 ? (
+        <p className="text-center text-sm opacity-40 py-8">{t('kyc.empty')}</p>
+      ) : (
+        <div className="space-y-2">
+          {docs.map((doc) => (
+            <div key={doc.id}
+              className="flex items-center gap-3 rounded-xl border dark:border-white/[0.06] border-black/[0.06] px-4 py-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-sm font-medium dark:text-white">{t(`kyc.types.${doc.type}`, doc.type)}</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${DOC_STATUS_COLORS[doc.status] ?? ''}`}>
+                    {t(`kyc.status.${doc.status}`)}
+                  </span>
+                </div>
+                {doc.note && <p className="text-xs opacity-50 mt-0.5 truncate">{doc.note}</p>}
+                <p className="text-xs opacity-40 mt-0.5">{new Date(doc.createdAt).toLocaleDateString()}</p>
+              </div>
+              <a href={doc.file_url} target="_blank" rel="noreferrer"
+                className="text-xs text-indigo-400 hover:underline shrink-0">{t('common.preview')}</a>
+              {doc.status !== 'approved' && (
+                <button onClick={() => handleStatus(doc.id, 'approved')}
+                  className="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 opacity-60 hover:opacity-100">
+                  <Check size={14} />
+                </button>
+              )}
+              {doc.status !== 'rejected' && (
+                <button onClick={() => handleStatus(doc.id, 'rejected')}
+                  className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 opacity-60 hover:opacity-100">
+                  <X size={14} />
+                </button>
+              )}
+              <button onClick={() => handleDelete(doc.id)}
+                className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 opacity-50 hover:opacity-100">
+                <Trash2 size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function ShopDetailPage() {
@@ -1281,6 +1441,7 @@ export default function ShopDetailPage() {
           <TabsTrigger value="orders">{t('shops.tabOrders')}</TabsTrigger>
           <TabsTrigger value="users">{t('shops.tabUsers')}</TabsTrigger>
           <TabsTrigger value="subscription">{t('subscriptions.title')}</TabsTrigger>
+          <TabsTrigger value="kyc">{t('kyc.tab')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="info">
@@ -1297,6 +1458,9 @@ export default function ShopDetailPage() {
         </TabsContent>
         <TabsContent value="subscription">
           <SubscriptionTab shopId={shop.id} />
+        </TabsContent>
+        <TabsContent value="kyc">
+          <KycTab shopId={shop.id} />
         </TabsContent>
       </Tabs>
     </div>

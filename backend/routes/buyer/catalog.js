@@ -6,6 +6,27 @@ const ProductService  = require('../../__modules__/catalog/services/products');
 const CategoryService = require('../../__modules__/catalog/services/categories');
 const CollectionService = require('../../__modules__/catalog/services/collections');
 const ShopService     = require('../../__modules__/shops/services/shops');
+const BrandService    = require('../../__modules__/brands/services/BrandService');
+const SupplierService = require('../../__modules__/suppliers/services/SupplierService');
+
+// ── Sort helper ───────────────────────────────────────────────────────────────
+// Maps buyer-facing sort keys to safe Sequelize order tuples.
+// Any unrecognised value falls back to newest-first.
+const BUYER_SORT_MAP = {
+    newest:     [['createdAt',    'DESC']],
+    oldest:     [['createdAt',    'ASC']],
+    price_asc:  [['price',        'ASC'],  ['createdAt', 'DESC']],
+    price_desc: [['price',        'DESC'], ['createdAt', 'DESC']],
+    rating:     [['rating',       'DESC'], ['review_count', 'DESC']],
+    popular:    [['review_count', 'DESC'], ['rating',       'DESC']],
+    name_asc:   [['name',         'ASC']],
+    name_desc:  [['name',         'DESC']],
+    updated:    [['updatedAt',    'DESC']],
+};
+
+function resolveBuyerSort(param) {
+    return BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
+}
 
 // ── Categories ────────────────────────────────────────────────────────────────
 
@@ -89,10 +110,16 @@ router.get('/shops/:id', async (req, res, next) => {
 });
 
 // GET /buyer/catalog/shops/:id/products
+// ?sort=newest|oldest|price_asc|price_desc|rating|popular|name_asc|name_desc|updated
 router.get('/shops/:id/products', async (req, res, next) => {
     try {
-        const { limit, sort, skip } = FUNCTIONS.getQueryParams(req);
-        const filter = { shop_id: req.params.id, is_active: true };
+        const { limit, skip } = FUNCTIONS.getQueryParams(req);
+        const sort = resolveBuyerSort(req.query.sort);
+        const now = new Date();
+        const filter = {
+            shop_id: req.params.id, is_active: true, is_published: true,
+            [Op.or]: [{ scheduled_at: null }, { scheduled_at: { [Op.lte]: now } }],
+        };
         if (req.query.category_id) filter.category_id = req.query.category_id;
         if (req.query.text) {
             filter[Op.or] = [
@@ -111,10 +138,16 @@ router.get('/shops/:id/products', async (req, res, next) => {
 // ── Products ──────────────────────────────────────────────────────────────────
 
 // GET /buyer/catalog/products
+// ?sort=newest|oldest|price_asc|price_desc|rating|popular|name_asc|name_desc|updated
 router.get('/products', async (req, res, next) => {
     try {
-        const { limit, sort, skip } = FUNCTIONS.getQueryParams(req);
-        const filter = { is_active: true };
+        const { limit, skip } = FUNCTIONS.getQueryParams(req);
+        const sort = resolveBuyerSort(req.query.sort);
+        const now = new Date();
+        const filter = {
+            is_active: true, is_published: true,
+            [Op.or]: [{ scheduled_at: null }, { scheduled_at: { [Op.lte]: now } }],
+        };
         if (req.query.category_id) filter.category_id = req.query.category_id;
         if (req.query.shop_id)     filter.shop_id     = req.query.shop_id;
         if (req.query.text) {
@@ -140,6 +173,33 @@ router.get('/products/:id', async (req, res, next) => {
         const model = await ProductService.getById(req.params.id);
         if (!model || !model.is_active) throw ApiError.NotFound('Haryt tapylmady');
         return res.status(200).json({ model });
+    } catch (e) { next(e); }
+});
+
+// ── Brands (public, read-only) ────────────────────────────────────────────────
+
+router.get('/brands', async (req, res, next) => {
+    try {
+        const data = await BrandService.getTree();
+        return res.status(200).json({ data });
+    } catch (e) { next(e); }
+});
+
+router.get('/brands/:id', async (req, res, next) => {
+    try {
+        const model = await BrandService.getById(req.params.id);
+        if (!model || !model.is_active) throw ApiError.NotFound('Marka tapylmady');
+        return res.status(200).json({ model });
+    } catch (e) { next(e); }
+});
+
+// ── Suppliers (public, read-only) ─────────────────────────────────────────────
+
+router.get('/suppliers', async (req, res, next) => {
+    try {
+        const { limit, skip } = FUNCTIONS.getQueryParams(req);
+        const result = await SupplierService.getAll({ is_active: true }, limit, skip);
+        return res.status(200).json({ data: result.rows, count: result.count });
     } catch (e) { next(e); }
 });
 
