@@ -856,6 +856,139 @@ module.exports = {
             },
         },
 
+        // ── Brand ─────────────────────────────────────────────────────────────────
+        Brand: {
+            type: "object",
+            properties: {
+                id:          { type: "integer" },
+                name:        { type: "string" },
+                name_ru:     { type: "string", nullable: true },
+                name_en:     { type: "string", nullable: true },
+                slug:        { type: "string" },
+                parent_id:   { type: "integer", nullable: true },
+                logo_url:    { type: "string", nullable: true },
+                description: { type: "string", nullable: true },
+                is_active:   { type: "boolean" },
+                sort_order:  { type: "integer" },
+                createdAt:   { type: "string", format: "date-time" },
+            },
+        },
+        BrandTree: {
+            allOf: [
+                { $ref: "#/components/schemas/Brand" },
+                { type: "object", properties: {
+                    children: { type: "array", items: { $ref: "#/components/schemas/BrandTree" }, description: "Recursive sub-brands" },
+                }},
+            ],
+        },
+        BrandRequest: {
+            type: "object",
+            required: ["name"],
+            properties: {
+                name:        { type: "string" },
+                name_ru:     { type: "string" },
+                name_en:     { type: "string" },
+                slug:        { type: "string", description: "Auto-generated from name if omitted" },
+                parent_id:   { type: "integer", nullable: true },
+                logo_url:    { type: "string" },
+                description: { type: "string" },
+                is_active:   { type: "boolean", default: true },
+                sort_order:  { type: "integer", default: 0 },
+            },
+        },
+
+        // ── Supplier ──────────────────────────────────────────────────────────────
+        Supplier: {
+            type: "object",
+            properties: {
+                id:           { type: "integer" },
+                name:         { type: "string" },
+                contact_name: { type: "string", nullable: true },
+                email:        { type: "string", format: "email", nullable: true },
+                phone:        { type: "string", nullable: true },
+                address:      { type: "string", nullable: true },
+                country_id:   { type: "integer", nullable: true },
+                website:      { type: "string", nullable: true },
+                is_active:    { type: "boolean" },
+                notes:        { type: "string", nullable: true },
+                createdAt:    { type: "string", format: "date-time" },
+            },
+        },
+        SupplierRequest: {
+            type: "object",
+            required: ["name"],
+            properties: {
+                name:         { type: "string" },
+                contact_name: { type: "string" },
+                email:        { type: "string", format: "email" },
+                phone:        { type: "string" },
+                address:      { type: "string" },
+                country_id:   { type: "integer", nullable: true },
+                website:      { type: "string" },
+                is_active:    { type: "boolean", default: true },
+                notes:        { type: "string" },
+            },
+        },
+
+        // ── Comment ───────────────────────────────────────────────────────────────
+        Comment: {
+            type: "object",
+            properties: {
+                id:         { type: "integer" },
+                product_id: { type: "integer" },
+                user_id:    { type: "string", format: "uuid" },
+                parent_id:  { type: "integer", nullable: true },
+                body:       { type: "string" },
+                status:     { type: "string", enum: ["pending", "approved", "rejected"] },
+                author: {
+                    type: "object",
+                    nullable: true,
+                    properties: {
+                        id:      { type: "string", format: "uuid" },
+                        name:    { type: "string" },
+                        surname: { type: "string" },
+                        thumbnail: { type: "string", nullable: true },
+                    },
+                },
+                replies:    { type: "array", items: { $ref: "#/components/schemas/Comment" }, description: "Nested replies (approved only, buyer route)" },
+                createdAt:  { type: "string", format: "date-time" },
+            },
+        },
+
+        // ── KYC Document ──────────────────────────────────────────────────────────
+        KycDocument: {
+            type: "object",
+            properties: {
+                id:          { type: "integer" },
+                shop_id:     { type: "integer" },
+                type:        { type: "string", enum: ["PASSPORT", "TAX_ID", "BUSINESS_REG", "BANK_STATEMENT", "OTHER"] },
+                file_url:    { type: "string", example: "/static/shop-docs/uuid-file.pdf" },
+                status:      { type: "string", enum: ["pending", "approved", "rejected"] },
+                note:        { type: "string", nullable: true, description: "Admin review note" },
+                reviewed_by: { type: "string", format: "uuid", nullable: true },
+                reviewed_at: { type: "string", format: "date-time", nullable: true },
+                reviewer: {
+                    type: "object",
+                    nullable: true,
+                    properties: {
+                        id:      { type: "string", format: "uuid" },
+                        name:    { type: "string" },
+                        surname: { type: "string" },
+                    },
+                },
+                createdAt:   { type: "string", format: "date-time" },
+            },
+        },
+        KycDocumentRequest: {
+            type: "object",
+            required: ["type", "file_url"],
+            properties: {
+                type:     { type: "string", enum: ["PASSPORT", "TAX_ID", "BUSINESS_REG", "BANK_STATEMENT", "OTHER"] },
+                file_url: { type: "string", description: "URL returned by the /upload endpoint" },
+                note:     { type: "string", nullable: true },
+            },
+        },
+
         // ── AI Recommendations ────────────────────────────────────────────────────
         AiRecommendation: {
             type: "object",

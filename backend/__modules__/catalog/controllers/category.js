@@ -1,4 +1,5 @@
-const { Op } = require("sequelize");
+const { Op, literal } = require("sequelize");
+const { buildTsQuery } = require("../../../services/search");
 const ApiError = require("../../../exceptions/api-error");
 const db = require("../../../models");
 const { FUNCTIONS } = require("../../../utils/functions");
@@ -82,11 +83,21 @@ class CategoryController {
     static getFilter({ text, status, parent_id, paranoid } = {}) {
         const filter = {};
         if (text) {
-            filter[Op.or] = [
-                { name: { [Op.iLike]: `%${text}%` } },
-                { name_ru: { [Op.iLike]: `%${text}%` } },
-                { name_eng: { [Op.iLike]: `%${text}%` } },
-            ];
+            const q = buildTsQuery(text)
+            if (q) {
+                filter[Op.and] = [literal(
+                    `to_tsvector('simple',
+                       COALESCE(name,'') || ' ' || COALESCE(name_ru,'') || ' ' ||
+                       COALESCE(name_eng,'')
+                     ) @@ to_tsquery('simple', '${q.replace(/'/g, "''")}')`
+                )]
+            } else {
+                filter[Op.or] = [
+                    { name:     { [Op.iLike]: `%${text}%` } },
+                    { name_ru:  { [Op.iLike]: `%${text}%` } },
+                    { name_eng: { [Op.iLike]: `%${text}%` } },
+                ]
+            }
         }
         if (status !== undefined) filter.status = status;
         if (parent_id !== undefined) filter.parent_id = parent_id === "null" ? null : parent_id;

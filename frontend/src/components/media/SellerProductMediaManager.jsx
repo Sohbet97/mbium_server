@@ -7,7 +7,9 @@ import { cn } from '@/lib/utils'
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 const absUrl = (url) => (!url || url.startsWith('http') ? url : `${BASE}${url}`)
 
-function SellerMediaPickerModal({ open, onClose, onSelect }) {
+const MAX_ITEMS = 20
+
+function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS }) {
   const [items, setItems]       = useState([])
   const [loading, setLoading]   = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -26,14 +28,20 @@ function SellerMediaPickerModal({ open, onClose, onSelect }) {
   async function handleUpload(e) {
     const files = Array.from(e.target.files ?? [])
     if (!files.length) return
+    const [valid, rejected] = files.reduce(
+      ([v, r], f) => f.type.startsWith('image/') ? [[...v, f], r] : [v, [...r, f.name]],
+      [[], []]
+    )
+    if (rejected.length) toast.error(`Ret edildi (diňe surat): ${rejected.join(', ')}`)
+    if (!valid.length) { if (fileRef.current) fileRef.current.value = ''; return }
     setUploading(true)
     try {
-      await Promise.all(files.map((f) => {
+      await Promise.all(valid.map((f) => {
         const fd = new FormData()
         fd.append('file', f)
         return SellerApi.media.upload(fd)
       }))
-      toast.success(`${files.length} faýl ýüklendi`)
+      toast.success(`${valid.length} faýl ýüklendi`)
       setLoading(true)
       const { data } = await SellerApi.media.list({ limit: 80, type: 'image' })
       setItems(data.data ?? [])
@@ -47,11 +55,11 @@ function SellerMediaPickerModal({ open, onClose, onSelect }) {
   }
 
   function toggle(item) {
-    setSelected((prev) =>
-      prev.find((s) => s.id === item.id)
-        ? prev.filter((s) => s.id !== item.id)
-        : [...prev, item]
-    )
+    setSelected((prev) => {
+      if (prev.find((s) => s.id === item.id)) return prev.filter((s) => s.id !== item.id)
+      if (prev.length >= remaining) return prev
+      return [...prev, item]
+    })
   }
 
   if (!open) return null
@@ -84,7 +92,7 @@ function SellerMediaPickerModal({ open, onClose, onSelect }) {
             Ýükle
           </button>
           <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={handleUpload} />
-          <span className="text-xs text-slate-400">{items.length} surat</span>
+          <span className="text-xs text-slate-400">{items.length} surat · iň köp {remaining} saýlap bilersiň</span>
         </div>
 
         {/* Grid */}
@@ -131,7 +139,10 @@ function SellerMediaPickerModal({ open, onClose, onSelect }) {
 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 border-t dark:border-white/[0.08] shrink-0">
-          <span className="text-xs text-slate-400">{selected.length} saýlandy</span>
+          <span className="text-xs text-slate-400">
+            {selected.length} / {remaining} saýlandy
+            {selected.length >= remaining && <span className="ml-1 text-amber-500">Limit doldy</span>}
+          </span>
           <div className="flex gap-2">
             <button
               onClick={onClose}
@@ -301,13 +312,16 @@ export function SellerProductMediaManager({ productId }) {
             )
           })}
 
-          <button
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            className="aspect-square rounded-lg border-2 border-dashed flex items-center justify-center dark:border-white/[0.12] border-slate-200 dark:hover:border-white/20 hover:border-slate-300 dark:text-slate-500 text-slate-400 transition-colors"
-          >
-            <ImagePlus className="h-6 w-6" />
-          </button>
+          {items.length < MAX_ITEMS && (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 dark:border-white/[0.12] border-slate-200 dark:hover:border-white/20 hover:border-slate-300 dark:text-slate-500 text-slate-400 transition-colors"
+            >
+              <ImagePlus className="h-6 w-6" />
+              <span className="text-[10px]">{items.length} / {MAX_ITEMS}</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -321,6 +335,7 @@ export function SellerProductMediaManager({ productId }) {
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={handleSelect}
+        remaining={Math.max(0, MAX_ITEMS - items.length)}
       />
     </div>
   )

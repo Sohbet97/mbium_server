@@ -1,7 +1,7 @@
 const { Op } = require('sequelize')
 const db = require('../../../models')
 
-const AUTHOR_ATTRS = ['id', 'name', 'surname', 'image']
+const AUTHOR_ATTRS = ['id', 'name', 'surname', 'thumbnail']
 
 class CommentService {
     static _include(withReplies = false) {

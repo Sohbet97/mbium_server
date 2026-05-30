@@ -51,7 +51,7 @@ export const PATHS = {
   // Favorites
   FAVORITES: '/favorites',
   // Product tags
-  PRODUCT_TAGS: '/catalog/tags',
+  PRODUCT_TAGS: '/tags',
   // Brands
   BRANDS: '/brands',
   // Suppliers

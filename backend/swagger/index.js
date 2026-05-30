@@ -23,6 +23,10 @@ const aiChatPaths      = require("./paths/ai-chat");
 const supportPaths     = require("./paths/support");
 const analyticsPaths   = require("./paths/analytics");
 const warehousePaths   = require("./paths/warehouse");
+const brandsPaths      = require("./paths/brands");
+const suppliersPaths   = require("./paths/suppliers");
+const commentsPaths    = require("./paths/comments");
+const kycPaths         = require("./paths/kyc");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -83,6 +87,11 @@ const swaggerSpec = {
         { name: "Push Notifications", description: "FCM push notification campaigns — admin (no quota) and seller (plan-quota enforced)" },
         { name: "Analytics",          description: "Admin and seller analytics — revenue, orders, users, shop performance" },
         { name: "Warehouses",         description: "Multi-warehouse inventory management — warehouses, stock levels, and movement history (admin + seller)" },
+        { name: "Brands",             description: "Brand catalogue with hierarchical parent/child tree and flat list" },
+        { name: "Suppliers",          description: "Product supplier management" },
+        { name: "Comments",           description: "Product comment moderation queue (admin)" },
+        { name: "Buyer — Comments",   description: "Public and authenticated buyer comment endpoints" },
+        { name: "KYC Documents",      description: "Shop KYC document submission, file upload, and admin review" },
     ],
     paths: {
         // Auth
@@ -119,6 +128,11 @@ const swaggerSpec = {
         ...analyticsPaths,
         // Warehouse management (admin + seller)
         ...warehousePaths,
+        // Brands, Suppliers, Comments, KYC
+        ...brandsPaths,
+        ...suppliersPaths,
+        ...commentsPaths,
+        ...kycPaths,
     },
 };
 

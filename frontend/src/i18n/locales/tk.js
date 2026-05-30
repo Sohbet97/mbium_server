@@ -29,7 +29,7 @@ export default {
     pushNotifications: 'Push bildirişler',
     auditLogs: 'Audit žurnaly',
     analytics: 'Analitika',
-    warehouses: 'Ammarllar',
+    warehouses: 'Ammarlar',
     coins: 'Teňňeler',
     favorites: 'Halanlar',
     brands: 'Markalar',
@@ -307,6 +307,7 @@ export default {
     primary: 'Baş', setPrimary: 'Baş hökmünde belle',
     removeFromProduct: 'Aýyr',
     noMedia: 'Media ýok. Surat, wideo ýa-da 3D model goşuň.',
+    maxItems: 'Iň köp {{max}} faýl',
   },
 
   banners: {
@@ -685,8 +686,8 @@ export default {
   },
 
   warehouses: {
-    title:          'Ammarllar',
-    myWarehouses:   'Meniň ammarllarym',
+    title:          'Ammarlar',
+    myWarehouses:   'Meniň ammarlarym',
     addWarehouse:   'Ammar goş',
     editWarehouse:  'Ammary üýtget',
     noWarehouses:   'Heniz ammar ýok',

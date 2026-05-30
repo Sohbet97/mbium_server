@@ -308,6 +308,7 @@ export default {
     primary: 'Primary', setPrimary: 'Set as primary',
     removeFromProduct: 'Remove',
     noMedia: 'No media attached. Add images, videos or 3D models.',
+    maxItems: 'Up to {{max}} files',
   },
 
   banners: {

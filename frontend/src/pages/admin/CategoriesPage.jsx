@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Plus, Search, RefreshCw, MoreHorizontal,
-  FolderTree, LayoutList, Network, ChevronRight,
+  FolderTree, LayoutList, Network, ChevronRight, ChevronDown,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -172,9 +172,10 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
 
 // ── Tree Row (recursive) ──────────────────────────────────────────────────────
 
-function CategoryTreeRow({ cat, depth = 0, onEdit, onDelete }) {
+function CategoryTreeRow({ cat, depth = 0, forceExpand, onEdit, onDelete }) {
   const { t } = useTranslation()
-  const [expanded, setExpanded] = useState(true)
+  const [localExpanded, setLocalExpanded] = useState(true)
+  const expanded = forceExpand != null ? forceExpand : localExpanded
   const hasChildren = cat._children?.length > 0
 
   return (
@@ -184,7 +185,7 @@ function CategoryTreeRow({ cat, depth = 0, onEdit, onDelete }) {
           <div className="flex items-center gap-1" style={{ paddingLeft: `${depth * 22}px` }}>
             {hasChildren ? (
               <button
-                onClick={() => setExpanded((v) => !v)}
+                onClick={() => setLocalExpanded((v) => !v)}
                 className="p-0.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex-shrink-0"
               >
                 <ChevronRight className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-90' : ''}`} />
@@ -240,6 +241,7 @@ function CategoryTreeRow({ cat, depth = 0, onEdit, onDelete }) {
           key={child.id}
           cat={child}
           depth={depth + 1}
+          forceExpand={forceExpand}
           onEdit={onEdit}
           onDelete={onDelete}
         />
@@ -261,6 +263,7 @@ export default function CategoriesPage() {
   const [viewMode,     setViewMode]     = useState('list') // 'list' | 'tree'
   const [refreshTick,  setRefreshTick]  = useState(0)
   const [modal,        setModal]        = useState({ open: false, category: null })
+  const [forceExpand,  setForceExpand]  = useState(null)
 
   // Tree fetches all at once; list paginates
   const listLimit = 50
@@ -297,6 +300,7 @@ export default function CategoriesPage() {
     setViewMode(mode)
     setPage(1)
     setLoading(true)
+    setForceExpand(null)
   }
 
   async function handleDelete(cat) {
@@ -350,6 +354,16 @@ export default function CategoriesPage() {
             </Button>
           </div>
 
+          {viewMode === 'tree' && (
+            <>
+              <Button variant="ghost" size="sm" className="gap-1 h-9 text-xs" onClick={() => setForceExpand(true)}>
+                <ChevronDown className="h-3.5 w-3.5" />{t('common.expandAll', 'Expand all')}
+              </Button>
+              <Button variant="ghost" size="sm" className="gap-1 h-9 text-xs" onClick={() => setForceExpand(false)}>
+                <ChevronRight className="h-3.5 w-3.5" />{t('common.collapseAll', 'Collapse all')}
+              </Button>
+            </>
+          )}
           <Button variant="ghost" size="icon" onClick={refresh} className="h-9 w-9" title={t('common.refresh')}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -408,6 +422,7 @@ export default function CategoriesPage() {
                       key={cat.id}
                       cat={cat}
                       depth={0}
+                      forceExpand={forceExpand}
                       onEdit={openEdit}
                       onDelete={handleDelete}
                     />

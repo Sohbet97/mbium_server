@@ -127,8 +127,9 @@ function BrandModal({ brand, brands, onClose, onSaved }) {
 
 // ── Tree row ──────────────────────────────────────────────────────────────────
 
-function BrandRow({ brand, depth, onEdit, onDelete }) {
-  const [open, setOpen] = useState(false)
+function BrandRow({ brand, depth = 0, forceOpen, onEdit, onDelete }) {
+  const [localOpen, setLocalOpen] = useState(false)
+  const open = forceOpen != null ? forceOpen : localOpen
   const hasChildren = brand.children?.length > 0
 
   return (
@@ -137,7 +138,7 @@ function BrandRow({ brand, depth, onEdit, onDelete }) {
         <td className="px-4 py-3">
           <div className="flex items-center gap-1" style={{ paddingLeft: depth * 20 }}>
             {hasChildren ? (
-              <button onClick={() => setOpen((o) => !o)} className="opacity-40 hover:opacity-80 p-0.5">
+              <button onClick={() => setLocalOpen((o) => !o)} className="opacity-40 hover:opacity-80 p-0.5">
                 {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
             ) : (
@@ -168,7 +169,7 @@ function BrandRow({ brand, depth, onEdit, onDelete }) {
         </td>
       </tr>
       {open && hasChildren && brand.children.map((child) => (
-        <BrandRow key={child.id} brand={child} depth={depth + 1} onEdit={onEdit} onDelete={onDelete} />
+        <BrandRow key={child.id} brand={child} depth={depth + 1} forceOpen={forceOpen} onEdit={onEdit} onDelete={onDelete} />
       ))}
     </>
   )
@@ -178,10 +179,11 @@ function BrandRow({ brand, depth, onEdit, onDelete }) {
 
 export default function BrandsPage() {
   const { t } = useTranslation()
-  const [tree, setTree]       = useState([])
-  const [flat, setFlat]       = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modal, setModal]     = useState(null)
+  const [tree, setTree]         = useState([])
+  const [flat, setFlat]         = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [modal, setModal]       = useState(null)
+  const [forceOpen, setForceOpen] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -207,15 +209,7 @@ export default function BrandsPage() {
     } catch { toast.error(t('toast.error')) }
   }
 
-  // Flatten tree for display
-  function flattenTree(nodes, depth = 0, result = []) {
-    nodes.forEach((n) => {
-      result.push({ ...n, _depth: depth })
-      if (n.children?.length) flattenTree(n.children, depth + 1, result)
-    })
-    return result
-  }
-  const rows = flattenTree(tree)
+  const hasNested = tree.some((b) => b.children?.length > 0)
 
   return (
     <div className="p-6 space-y-6">
@@ -229,15 +223,29 @@ export default function BrandsPage() {
             <p className="text-xs opacity-50">{t('brands.totalCount', { count: flat.length })}</p>
           </div>
         </div>
-        <button onClick={() => setModal('add')}
-          className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white">
-          <Plus size={14} />{t('brands.add')}
-        </button>
+        <div className="flex items-center gap-2">
+          {hasNested && (
+            <>
+              <button onClick={() => setForceOpen(true)}
+                className="flex items-center gap-1 px-3 py-2 text-xs rounded-lg dark:hover:bg-white/5 hover:bg-black/5 opacity-60 hover:opacity-100">
+                <ChevronDown size={13} />{t('common.expandAll', 'Expand all')}
+              </button>
+              <button onClick={() => setForceOpen(false)}
+                className="flex items-center gap-1 px-3 py-2 text-xs rounded-lg dark:hover:bg-white/5 hover:bg-black/5 opacity-60 hover:opacity-100">
+                <ChevronRight size={13} />{t('common.collapseAll', 'Collapse all')}
+              </button>
+            </>
+          )}
+          <button onClick={() => setModal('add')}
+            className="flex items-center gap-2 px-3 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Plus size={14} />{t('brands.add')}
+          </button>
+        </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="animate-spin opacity-40" /></div>
-      ) : rows.length === 0 ? (
+      ) : tree.length === 0 ? (
         <p className="text-center text-sm opacity-40 py-16">{t('brands.empty')}</p>
       ) : (
         <div className="rounded-xl border dark:border-white/[0.06] border-black/[0.06] overflow-hidden">
@@ -251,11 +259,12 @@ export default function BrandsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((brand) => (
+              {tree.map((brand) => (
                 <BrandRow
                   key={brand.id}
                   brand={brand}
-                  depth={brand._depth}
+                  depth={0}
+                  forceOpen={forceOpen}
                   onEdit={(b) => setModal(b)}
                   onDelete={handleDelete}
                 />
