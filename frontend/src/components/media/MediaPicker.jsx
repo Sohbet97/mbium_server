@@ -21,7 +21,18 @@ const ACCEPT = {
   '360':   'image/*',
 }
 
-export function MediaPicker({ open, onClose, onSelect, multiple = false, filterType = '' }) {
+function fileMatchesType(file, filterType) {
+  if (!filterType) return true
+  if (filterType === 'image' || filterType === '360') return file.type.startsWith('image/')
+  if (filterType === 'video') return ['video/mp4', 'video/quicktime', 'video/webm'].includes(file.type)
+  if (filterType === '3d') {
+    const ext = file.name.split('.').pop()?.toLowerCase()
+    return ['model/gltf-binary', 'model/gltf+json'].includes(file.type) || ['glb', 'gltf'].includes(ext)
+  }
+  return true
+}
+
+export function MediaPicker({ open, onClose, onSelect, multiple = false, filterType = '', maxItems = 0 }) {
   const [items,     setItems]     = useState([])
   const [loading,   setLoading]   = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -62,9 +73,11 @@ export function MediaPicker({ open, onClose, onSelect, multiple = false, filterT
 
   function toggleSelect(item) {
     if (multiple) {
-      setSelected((prev) =>
-        prev.find((s) => s.id === item.id) ? prev.filter((s) => s.id !== item.id) : [...prev, item]
-      )
+      setSelected((prev) => {
+        if (prev.find((s) => s.id === item.id)) return prev.filter((s) => s.id !== item.id)
+        if (maxItems > 0 && prev.length >= maxItems) return prev
+        return [...prev, item]
+      })
     } else {
       setSelected([item])
     }
@@ -73,14 +86,20 @@ export function MediaPicker({ open, onClose, onSelect, multiple = false, filterT
   async function handleUpload(e) {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
+    const [valid, rejected] = files.reduce(
+      ([v, r], f) => fileMatchesType(f, type) ? [[...v, f], r] : [v, [...r, f.name]],
+      [[], []]
+    )
+    if (rejected.length) toast.error(`Rejected (wrong type): ${rejected.join(', ')}`)
+    if (!valid.length) { if (fileRef.current) fileRef.current.value = ''; return }
     setUploading(true)
     try {
-      await Promise.all(files.map((f) => {
+      await Promise.all(valid.map((f) => {
         const fd = new FormData()
         fd.append('file', f)
         return AdminApi.media.upload(fd, type === '360' ? '360' : undefined)
       }))
-      toast.success(`${files.length} file(s) uploaded`)
+      toast.success(`${valid.length} file(s) uploaded`)
       load(1)
     } catch (err) {
       toast.error(err.response?.data?.message ?? 'Upload failed')
@@ -125,23 +144,25 @@ export function MediaPicker({ open, onClose, onSelect, multiple = false, filterT
             />
           </div>
 
-          {/* Type filter */}
-          <div className="flex items-center gap-1">
-            {TYPES.map((t) => (
-              <button
-                key={t.value}
-                onClick={() => handleTypeChange(t.value)}
-                className={cn(
-                  'px-3 h-9 rounded-lg text-xs font-medium transition-colors',
-                  type === t.value
-                    ? 'bg-blue-600 text-white'
-                    : 'dark:bg-white/[0.06] bg-slate-100 dark:text-slate-300 text-slate-600 dark:hover:bg-white/[0.1] hover:bg-slate-200'
-                )}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {/* Type filter — hidden when filterType locks the picker to one type */}
+          {!filterType && (
+            <div className="flex items-center gap-1">
+              {TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => handleTypeChange(t.value)}
+                  className={cn(
+                    'px-3 h-9 rounded-lg text-xs font-medium transition-colors',
+                    type === t.value
+                      ? 'bg-blue-600 text-white'
+                      : 'dark:bg-white/[0.06] bg-slate-100 dark:text-slate-300 text-slate-600 dark:hover:bg-white/[0.1] hover:bg-slate-200'
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Upload */}
           <input
@@ -177,15 +198,20 @@ export function MediaPicker({ open, onClose, onSelect, multiple = false, filterT
           ) : (
             <>
               <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-7 gap-2">
-                {items.map((item) => (
-                  <MediaCard
-                    key={item.id}
-                    item={item}
-                    selected={selected.some((s) => s.id === item.id)}
-                    selectable
-                    onClick={() => toggleSelect(item)}
-                  />
-                ))}
+                {items.map((item) => {
+                  const isSelected = selected.some((s) => s.id === item.id)
+                  const atLimit = maxItems > 0 && selected.length >= maxItems && !isSelected
+                  return (
+                    <div key={item.id} className={cn(atLimit && 'opacity-40 pointer-events-none')}>
+                      <MediaCard
+                        item={item}
+                        selected={isSelected}
+                        selectable
+                        onClick={() => toggleSelect(item)}
+                      />
+                    </div>
+                  )
+                })}
               </div>
               {hasMore && (
                 <div className="mt-4 flex justify-center">
@@ -206,8 +232,11 @@ export function MediaPicker({ open, onClose, onSelect, multiple = false, filterT
         <div className="flex items-center justify-between px-5 py-3 border-t dark:border-white/[0.08] border-black/[0.08] shrink-0">
           <p className="text-xs dark:text-slate-500 text-slate-400">
             {selected.length > 0
-              ? `${selected.length} selected · ${total} total`
+              ? `${selected.length}${maxItems > 0 ? ` / ${maxItems}` : ''} selected · ${total} total`
               : `${total} files`}
+            {maxItems > 0 && selected.length >= maxItems && (
+              <span className="ml-2 text-amber-500">Limit reached</span>
+            )}
           </p>
           <div className="flex items-center gap-2">
             <button onClick={onClose} className="px-3 py-1.5 rounded-lg text-sm dark:text-slate-400 text-slate-500 dark:hover:bg-white/[0.06] hover:bg-slate-100 transition-colors">

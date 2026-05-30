@@ -307,6 +307,7 @@ export default {
     primary: 'Основное', setPrimary: 'Сделать основным',
     removeFromProduct: 'Удалить',
     noMedia: 'Нет медиафайлов. Добавьте фото, видео или 3D-модели.',
+    maxItems: 'До {{max}} файлов',
   },
 
   banners: {

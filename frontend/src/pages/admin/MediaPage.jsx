@@ -18,6 +18,14 @@ const TYPES = [
 const ACCEPT = 'image/*,video/mp4,video/webm,video/quicktime,.glb,.gltf'
 const LIMIT = 48
 
+function isKnownType(file) {
+  if (file.type.startsWith('image/')) return true
+  if (['video/mp4', 'video/quicktime', 'video/webm'].includes(file.type)) return true
+  const ext = file.name.split('.').pop()?.toLowerCase()
+  if (['glb', 'gltf'].includes(ext)) return true
+  return false
+}
+
 export default function MediaPage() {
   const { t } = useTranslation()
   const [items, setItems] = useState([])
@@ -62,9 +70,15 @@ export default function MediaPage() {
   async function handleUpload(e) {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
+    const [valid, rejected] = files.reduce(
+      ([v, r], f) => isKnownType(f) ? [[...v, f], r] : [v, [...r, f.name]],
+      [[], []]
+    )
+    if (rejected.length) toast.error(`Unsupported type: ${rejected.join(', ')}`)
+    if (!valid.length) { if (fileRef.current) fileRef.current.value = ''; return }
     setUploading(true)
     try {
-      await Promise.all(files.map((f) => {
+      await Promise.all(valid.map((f) => {
         const fd = new FormData()
         fd.append('file', f)
         return AdminApi.media.upload(fd)
@@ -115,14 +129,20 @@ export default function MediaPage() {
   }
 
   async function handleUploadFiles(files) {
+    const [valid, rejected] = files.reduce(
+      ([v, r], f) => isKnownType(f) ? [[...v, f], r] : [v, [...r, f.name]],
+      [[], []]
+    )
+    if (rejected.length) toast.error(`Unsupported type: ${rejected.join(', ')}`)
+    if (!valid.length) return
     setUploading(true)
     try {
-      await Promise.all(files.map((f) => {
+      await Promise.all(valid.map((f) => {
         const fd = new FormData()
         fd.append('file', f)
         return AdminApi.media.upload(fd)
       }))
-      toast.success(`${files.length} file(s) uploaded`)
+      toast.success(`${valid.length} file(s) uploaded`)
       load(1)
     } catch (err) {
       toast.error(err.response?.data?.message ?? t('toast.error'))

@@ -143,6 +143,50 @@ const RULES = [
     // Shop members
     { p: /\/admin\/shop-members(?:\/(\d+))?/i,
       et: "ShopMember", gi: (m) => m[1] || null, ga: (m, r) => METHOD_ACTION[r.method] },
+
+    // Product tags
+    { p: /\/admin\/tags(?:\/(\d+))?/i,
+      et: "ProductTag", gi: (m) => m[1] || null, ga: (m, r) => METHOD_ACTION[r.method] },
+
+    // Brands
+    { p: /\/admin\/brands(?:\/(\d+))?/i,
+      et: "Brand", gi: (m) => m[1] || null, ga: (m, r) => METHOD_ACTION[r.method] },
+
+    // Suppliers
+    { p: /\/admin\/suppliers(?:\/(\d+))?/i,
+      et: "Supplier", gi: (m) => m[1] || null, ga: (m, r) => METHOD_ACTION[r.method] },
+
+    // Comments — status before generic
+    { p: /\/admin\/comments\/(\d+)\/status/i,
+      et: "Comment", gi: (m) => m[1], ga: () => "UPDATE_STATUS" },
+    { p: /\/admin\/comments(?:\/(\d+))?/i,
+      et: "Comment", gi: (m) => m[1] || null, ga: (m, r) => METHOD_ACTION[r.method] },
+
+    // KYC documents — upload → status → generic (most specific first)
+    { p: /\/admin\/shops\/(\d+)\/kyc\/upload/i,
+      et: "KycDocument", gi: () => null, ga: () => "UPLOAD" },
+    { p: /\/admin\/shops\/(\d+)\/kyc\/(\d+)\/status/i,
+      et: "KycDocument", gi: (m) => m[2], ga: () => "UPDATE_STATUS" },
+    { p: /\/admin\/shops\/(\d+)\/kyc(?:\/(\d+))?/i,
+      et: "KycDocument", gi: (m) => m[2] || null, ga: (m, r) => METHOD_ACTION[r.method] },
+
+    // Coins — grant/deduct before topup status before conditions
+    { p: /\/admin\/coins\/grant/i,
+      et: "CoinGrant", gi: () => null, ga: () => "CREATE" },
+    { p: /\/admin\/coins\/deduct/i,
+      et: "CoinDeduct", gi: () => null, ga: () => "CREATE" },
+    { p: /\/admin\/coins\/topups\/(\d+)\/status/i,
+      et: "CoinTopup", gi: (m) => m[1], ga: () => "UPDATE_STATUS" },
+    { p: /\/admin\/coins\/conditions(?:\/(\d+))?/i,
+      et: "CoinCondition", gi: (m) => m[1] || null, ga: (m, r) => METHOD_ACTION[r.method] },
+
+    // Warehouses / inventory
+    { p: /\/admin\/inventory\/adjust/i,
+      et: "Inventory", gi: () => null, ga: () => "UPDATE" },
+    { p: /\/admin\/inventory/i,
+      et: "Inventory", gi: () => null, ga: (m, r) => METHOD_ACTION[r.method] },
+    { p: /\/admin\/warehouses(?:\/(\d+))?/i,
+      et: "Warehouse", gi: (m) => m[1] || null, ga: (m, r) => METHOD_ACTION[r.method] },
 ];
 
 const ACTION_VERBS = {

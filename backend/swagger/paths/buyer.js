@@ -49,6 +49,55 @@ module.exports = {
         },
     },
 
+    // ── Unified full-text search ──────────────────────────────────────────────────
+
+    "/buyer/catalog/search": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Unified full-text search (products + categories + shops)",
+            description:
+                "Runs PostgreSQL full-text search (`to_tsvector` + `to_tsquery`) across " +
+                "products, categories, and shops in parallel and returns all three result sets. " +
+                "Results are ranked by `ts_rank`. Supports prefix matching (e.g. `iph` → iPhone). " +
+                "Returns empty arrays for blank `q`.",
+            parameters: [
+                { in: "query", name: "q",              required: true,  schema: { type: "string" }, description: "Search query" },
+                { in: "query", name: "product_limit",  required: false, schema: { type: "integer", default: 20, maximum: 50 } },
+                { in: "query", name: "category_limit", required: false, schema: { type: "integer", default: 8,  maximum: 20 } },
+                { in: "query", name: "shop_limit",     required: false, schema: { type: "integer", default: 8,  maximum: 20 } },
+            ],
+            responses: {
+                200: {
+                    description: "Search results grouped by entity type",
+                    content: { "application/json": { schema: {
+                        type: "object",
+                        properties: {
+                            query:      { type: "string", description: "Original query string" },
+                            products:   { type: "array", items: {
+                                allOf: [
+                                    { $ref: "#/components/schemas/Product" },
+                                    { type: "object", properties: { rank: { type: "number", description: "FTS relevance score" } } },
+                                ],
+                            }},
+                            categories: { type: "array", items: {
+                                allOf: [
+                                    { $ref: "#/components/schemas/Category" },
+                                    { type: "object", properties: { rank: { type: "number" } } },
+                                ],
+                            }},
+                            shops: { type: "array", items: {
+                                allOf: [
+                                    { $ref: "#/components/schemas/Shop" },
+                                    { type: "object", properties: { rank: { type: "number" } } },
+                                ],
+                            }},
+                        },
+                    }}},
+                },
+            },
+        },
+    },
+
     // ── Catalog — Categories ──────────────────────────────────────────────────────
 
     "/buyer/catalog/categories": {

@@ -1,5 +1,6 @@
 //#region Imports
-const { Op } = require("sequelize");
+const { Op, literal } = require("sequelize");
+const { buildTsQuery } = require("../../../services/search");
 const ApiError = require("../../../exceptions/api-error");
 const db = require("../../../models");
 const { FUNCTIONS } = require("../../../utils/functions");
@@ -186,11 +187,21 @@ class ShopController {
         const { text, is_active, paranoid } = params || {};
         const filter = {};
         if (text) {
-            filter[Op.or] = [
-                { name: { [Op.iLike]: `%${params.text}%` } },
-                { name_ru: { [Op.iLike]: `%${params.text}%` } },
-                { name_eng: { [Op.iLike]: `%${params.text}%` } },
-            ];
+            const q = buildTsQuery(text)
+            if (q) {
+                filter[Op.and] = [literal(
+                    `to_tsvector('simple',
+                       COALESCE(name,'') || ' ' || COALESCE(name_ru,'') || ' ' ||
+                       COALESCE(name_eng,'') || ' ' || COALESCE(description,'')
+                     ) @@ to_tsquery('simple', '${q.replace(/'/g, "''")}')`
+                )]
+            } else {
+                filter[Op.or] = [
+                    { name:     { [Op.iLike]: `%${text}%` } },
+                    { name_ru:  { [Op.iLike]: `%${text}%` } },
+                    { name_eng: { [Op.iLike]: `%${text}%` } },
+                ]
+            }
         }
         if (is_active) filter.is_active = { [Op.eq]: is_active };
         if (paranoid) filter.deletedAt = { [Op.ne]: null };

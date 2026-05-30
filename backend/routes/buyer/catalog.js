@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const ApiError = require('../../exceptions/api-error');
 const { FUNCTIONS } = require('../../utils/functions');
 const ProductService  = require('../../__modules__/catalog/services/products');
@@ -8,6 +8,7 @@ const CollectionService = require('../../__modules__/catalog/services/collection
 const ShopService     = require('../../__modules__/shops/services/shops');
 const BrandService    = require('../../__modules__/brands/services/BrandService');
 const SupplierService = require('../../__modules__/suppliers/services/SupplierService');
+const SearchService   = require('../../services/search');
 
 // ── Sort helper ───────────────────────────────────────────────────────────────
 // Maps buyer-facing sort keys to safe Sequelize order tuples.
@@ -27,6 +28,63 @@ const BUYER_SORT_MAP = {
 function resolveBuyerSort(param) {
     return BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
 }
+
+// ── FTS text-filter helpers ───────────────────────────────────────────────────
+// Builds a Sequelize where condition that uses FTS when a valid tsquery can be
+// constructed, and falls back to iLike for very short / symbol-only input.
+
+function productTextFilter(text) {
+    const q = SearchService.buildTsQuery(text)
+    if (q) {
+        return literal(
+            `to_tsvector('simple',
+               COALESCE(name,'') || ' ' || COALESCE(name_ru,'') || ' ' ||
+               COALESCE(name_eng,'') || ' ' || COALESCE(sku,'') || ' ' ||
+               COALESCE(description,'')
+             ) @@ to_tsquery('simple', '${q.replace(/'/g, "''")}')`
+        )
+    }
+    // fallback to iLike for very short queries
+    return { [Op.or]: [
+        { name:    { [Op.iLike]: `%${text}%` } },
+        { name_ru: { [Op.iLike]: `%${text}%` } },
+        { sku:     { [Op.iLike]: `%${text}%` } },
+    ]}
+}
+
+function shopTextFilter(text) {
+    const q = SearchService.buildTsQuery(text)
+    if (q) {
+        return literal(
+            `to_tsvector('simple',
+               COALESCE(name,'') || ' ' || COALESCE(name_ru,'') || ' ' ||
+               COALESCE(name_eng,'') || ' ' || COALESCE(description,'')
+             ) @@ to_tsquery('simple', '${q.replace(/'/g, "''")}')`
+        )
+    }
+    return { [Op.or]: [
+        { name:    { [Op.iLike]: `%${text}%` } },
+        { name_ru: { [Op.iLike]: `%${text}%` } },
+    ]}
+}
+
+// ── Unified full-text search ──────────────────────────────────────────────────
+
+// GET /buyer/catalog/search?q=&product_limit=20&category_limit=8&shop_limit=8
+router.get('/search', async (req, res, next) => {
+    try {
+        const { q, product_limit, category_limit, shop_limit } = req.query
+        if (!q || !String(q).trim()) {
+            return res.json({ products: [], categories: [], shops: [], query: '' })
+        }
+        const result = await SearchService.search(q, {
+            productLimit:  Math.min(Number(product_limit)  || 20, 50),
+            categoryLimit: Math.min(Number(category_limit) || 8,  20),
+            shopLimit:     Math.min(Number(shop_limit)     || 8,  20),
+        })
+        return res.json(result)
+    } catch (e) { next(e) }
+})
 
 // ── Categories ────────────────────────────────────────────────────────────────
 
@@ -85,12 +143,7 @@ router.get('/shops', async (req, res, next) => {
     try {
         const { limit, skip } = FUNCTIONS.getQueryParams(req);
         const filter = { is_active: true };
-        if (req.query.text) {
-            filter[Op.or] = [
-                { name:    { [Op.iLike]: `%${req.query.text}%` } },
-                { name_ru: { [Op.iLike]: `%${req.query.text}%` } },
-            ];
-        }
+        if (req.query.text) filter[Op.and] = [shopTextFilter(req.query.text)]
         if (req.query.type_id) filter.type_id = req.query.type_id;
         const [data, count] = await Promise.all([
             ShopService.get(filter, limit, undefined, skip),
@@ -121,12 +174,7 @@ router.get('/shops/:id/products', async (req, res, next) => {
             [Op.or]: [{ scheduled_at: null }, { scheduled_at: { [Op.lte]: now } }],
         };
         if (req.query.category_id) filter.category_id = req.query.category_id;
-        if (req.query.text) {
-            filter[Op.or] = [
-                { name:    { [Op.iLike]: `%${req.query.text}%` } },
-                { name_ru: { [Op.iLike]: `%${req.query.text}%` } },
-            ];
-        }
+        if (req.query.text) filter[Op.and] = [productTextFilter(req.query.text)]
         const [data, count] = await Promise.all([
             ProductService.get(filter, limit, sort, skip),
             ProductService.getCount(filter),
@@ -150,12 +198,7 @@ router.get('/products', async (req, res, next) => {
         };
         if (req.query.category_id) filter.category_id = req.query.category_id;
         if (req.query.shop_id)     filter.shop_id     = req.query.shop_id;
-        if (req.query.text) {
-            filter[Op.or] = [
-                { name:    { [Op.iLike]: `%${req.query.text}%` } },
-                { name_ru: { [Op.iLike]: `%${req.query.text}%` } },
-            ];
-        }
+        if (req.query.text) filter[Op.and] = [productTextFilter(req.query.text)]
         if (req.query.min_price) filter.price = { ...filter.price, [Op.gte]: parseFloat(req.query.min_price) };
         if (req.query.max_price) filter.price = { ...filter.price, [Op.lte]: parseFloat(req.query.max_price) };
 

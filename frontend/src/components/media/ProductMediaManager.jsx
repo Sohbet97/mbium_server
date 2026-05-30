@@ -10,6 +10,8 @@ import { cn } from '@/lib/utils'
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 const absUrl = (url) => (!url || url.startsWith('http') ? url : `${BASE}${url}`)
 
+const MAX_ITEMS = 20
+
 const TYPE_ICONS = { video: FileVideo, '3d': Box, '360': ScanLine, image: ImageIcon }
 const TYPE_LABELS = { image: 'IMG', video: 'VID', '3d': '3D', '360': '360°' }
 const TYPE_COLORS = {
@@ -118,6 +120,7 @@ export function ProductMediaManager({ productId }) {
         >
           <ImagePlus className="h-8 w-8" />
           <p className="text-sm">{t('products.addMediaHint')}</p>
+          <p className="text-xs opacity-60">{t('media.maxItems', { max: MAX_ITEMS })}</p>
         </button>
       ) : (
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -208,14 +211,17 @@ export function ProductMediaManager({ productId }) {
             )
           })}
 
-          {/* Add more tile */}
-          <button
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            className="aspect-square rounded-lg border-2 border-dashed flex items-center justify-center dark:border-white/[0.12] border-slate-200 dark:hover:border-white/[0.2] hover:border-slate-300 dark:text-slate-500 text-slate-400 transition-colors"
-          >
-            <ImagePlus className="h-6 w-6" />
-          </button>
+          {/* Add more tile — hidden when at cap */}
+          {items.length < MAX_ITEMS && (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 dark:border-white/[0.12] border-slate-200 dark:hover:border-white/[0.2] hover:border-slate-300 dark:text-slate-500 text-slate-400 transition-colors"
+            >
+              <ImagePlus className="h-6 w-6" />
+              <span className="text-[10px]">{items.length} / {MAX_ITEMS}</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -225,6 +231,7 @@ export function ProductMediaManager({ productId }) {
         onSelect={handleSelect}
         multiple
         filterType="image"
+        maxItems={Math.max(0, MAX_ITEMS - items.length)}
       />
 
       {viewer && (

@@ -1,4 +1,5 @@
-const { Op } = require("sequelize");
+const { Op, literal } = require("sequelize");
+const { buildTsQuery } = require("../../../services/search");
 const ApiError = require("../../../exceptions/api-error");
 const db = require("../../../models");
 const { FUNCTIONS } = require("../../../utils/functions");
@@ -112,11 +113,22 @@ class ProductController {
     static getFilter({ text, category_id, shop_id, is_active, status, paranoid } = {}) {
         const filter = {};
         if (text) {
-            filter[Op.or] = [
-                { name: { [Op.iLike]: `%${text}%` } },
-                { name_ru: { [Op.iLike]: `%${text}%` } },
-                { sku: { [Op.iLike]: `%${text}%` } },
-            ];
+            const q = buildTsQuery(text)
+            if (q) {
+                filter[Op.and] = [literal(
+                    `to_tsvector('simple',
+                       COALESCE(name,'') || ' ' || COALESCE(name_ru,'') || ' ' ||
+                       COALESCE(name_eng,'') || ' ' || COALESCE(sku,'') || ' ' ||
+                       COALESCE(description,'')
+                     ) @@ to_tsquery('simple', '${q.replace(/'/g, "''")}')`
+                )]
+            } else {
+                filter[Op.or] = [
+                    { name:    { [Op.iLike]: `%${text}%` } },
+                    { name_ru: { [Op.iLike]: `%${text}%` } },
+                    { sku:     { [Op.iLike]: `%${text}%` } },
+                ]
+            }
         }
         if (category_id) filter.category_id = category_id;
         if (shop_id) filter.shop_id = shop_id;
