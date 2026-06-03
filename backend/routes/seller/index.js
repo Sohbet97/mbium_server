@@ -20,5 +20,6 @@ router.use('/push-notifications',  require('./push-notifications'));
 router.use('/support',             require('./support'));
 router.use('/analytics',           require('./analytics'));
 router.use('/warehouses',          require('./warehouses'));
+router.use('/reels',               require('./reels'));
 
 module.exports = router;

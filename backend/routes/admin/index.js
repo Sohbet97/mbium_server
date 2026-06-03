@@ -37,6 +37,8 @@ const favoritesModuleRouter   = require("../../__modules__/favorites")
 const brandsModuleRouter      = require("../../__modules__/brands")
 const suppliersModuleRouter   = require("../../__modules__/suppliers")
 const commentsModuleRouter    = require("../../__modules__/comments")
+const reelsModuleRouter         = require("../../__modules__/reels")
+const buyerRequestsModuleRouter = require("../../__modules__/buyer-requests")
 //#endregion
 
 //#region Routes
@@ -79,6 +81,8 @@ adminRouter.use(favoritesModuleRouter)
 adminRouter.use(brandsModuleRouter)
 adminRouter.use(suppliersModuleRouter)
 adminRouter.use(commentsModuleRouter)
+adminRouter.use(reelsModuleRouter)
+adminRouter.use(buyerRequestsModuleRouter)
 //#endregion
 
 module.exports = adminRouter;

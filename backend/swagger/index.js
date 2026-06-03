@@ -27,6 +27,8 @@ const brandsPaths      = require("./paths/brands");
 const suppliersPaths   = require("./paths/suppliers");
 const commentsPaths    = require("./paths/comments");
 const kycPaths         = require("./paths/kyc");
+const reelsPaths          = require("./paths/reels");
+const buyerRequestsPaths  = require("./paths/buyer-requests");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -92,6 +94,12 @@ const swaggerSpec = {
         { name: "Comments",           description: "Product comment moderation queue (admin)" },
         { name: "Buyer — Comments",   description: "Public and authenticated buyer comment endpoints" },
         { name: "KYC Documents",      description: "Shop KYC document submission, file upload, and admin review" },
+        { name: "Reels",              description: "Admin reel moderation — view, toggle active, delete" },
+        { name: "Seller — Reels",     description: "Seller reel management — create, edit, delete own reels" },
+        { name: "Buyer — Reels",         description: "Public short-video feed and single-reel view" },
+        { name: "Buyer — Requests",      description: "Buyer RFQ/tender posts — create, track, close requests; matching shops are notified" },
+        { name: "Buyer — Notifications", description: "Buyer in-app notification inbox — read, mark, delete" },
+        { name: "Buyer Requests",        description: "Admin view of all buyer requests across the platform" },
     ],
     paths: {
         // Auth
@@ -133,6 +141,8 @@ const swaggerSpec = {
         ...suppliersPaths,
         ...commentsPaths,
         ...kycPaths,
+        ...reelsPaths,
+        ...buyerRequestsPaths,
     },
 };
 

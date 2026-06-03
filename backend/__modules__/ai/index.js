@@ -17,7 +17,7 @@ async function handleChat(req, res, next) {
 
         const history = messages.slice(-40).map(({ role, content }) => ({
             role: role === 'assistant' ? 'assistant' : 'user',
-            content: String(content).slice(0, 4000),
+            content: String(content).slice(0, 5000),
         }))
 
         await AiChatService.streamChat(history, res)

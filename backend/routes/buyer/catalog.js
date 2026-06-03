@@ -20,6 +20,7 @@ const BUYER_SORT_MAP = {
     price_desc: [['price',        'DESC'], ['createdAt', 'DESC']],
     rating:     [['rating',       'DESC'], ['review_count', 'DESC']],
     popular:    [['review_count', 'DESC'], ['rating',       'DESC']],
+    sold:       [['sold_count',   'DESC'], ['createdAt',    'DESC']],
     name_asc:   [['name',         'ASC']],
     name_desc:  [['name',         'DESC']],
     updated:    [['updatedAt',    'DESC']],

@@ -151,6 +151,11 @@ class Permissions {
     static KYC_POST   = 333
     static KYC_PUT    = 334
     static KYC_DELETE = 335
+
+    static REEL_GET    = 336
+    static REEL_POST   = 337
+    static REEL_PUT    = 338
+    static REEL_DELETE = 339
 }
 
 module.exports = Permissions

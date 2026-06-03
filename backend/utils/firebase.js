@@ -31,7 +31,7 @@ async function uploadBuffer(buffer, destPath, _contentType) {
     const filePath = path.join(MEDIA_BASE, relativePath)
     await fs.promises.mkdir(path.dirname(filePath), { recursive: true })
     await fs.promises.writeFile(filePath, buffer)
-    const base = (process.env.APP_URL || `http://localhost:${process.env.PORT || 4000}`).replace(/\/$/, '')
+    const base = (process.env.APP_URL || `http://localhost:${process.env.PORT || 5000}`).replace(/\/$/, '')
     return `${base}/media/${relativePath}`
 }
 
@@ -52,7 +52,7 @@ async function deleteFile(destPath) {
 
 /**
  * Extract the storage destPath from a local media URL.
- * "http://localhost:4000/media/images/x.jpg" → "media/images/x.jpg"
+ * "http://localhost:5000/media/images/x.jpg" → "media/images/x.jpg"
  */
 function urlToPath(publicUrl) {
     const match = publicUrl.match(/\/media\/(.+)$/)

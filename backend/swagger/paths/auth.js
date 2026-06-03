@@ -318,4 +318,87 @@ module.exports = {
             },
         },
     },
+
+    // ── Web deep-link (mobile → web shop creation) ────────────────────────────
+
+    "/auth/web-token": {
+        post: {
+            tags: ["Auth"],
+            summary: "Generate a one-time web link for shop creation (mobile)",
+            description:
+                "Mobile app calls this after the user taps 'Create Shop'. " +
+                "Returns a short-lived URL (10 min) that opens the web panel's `/apply` page " +
+                "and auto-authenticates the user — no password needed on web. " +
+                "The URL format is `WEB_URL/apply?token=<signed-jwt>`.",
+            security: [{ BearerAuth: [] }],
+            responses: {
+                200: {
+                    description: "Web redirect URL",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    url: {
+                                        type: "string",
+                                        example: "http://localhost:5173/apply?token=eyJhbGci...",
+                                        description: "Open this URL in the system browser",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                401: { description: "Unauthorized" },
+            },
+        },
+    },
+
+    "/auth/consume-web-token": {
+        post: {
+            tags: ["Auth"],
+            summary: "Exchange one-time web token for a real access token (web panel)",
+            description:
+                "Web panel calls this on page load when `?token=` is present in the URL. " +
+                "Verifies the signed JWT issued by `POST /auth/web-token`, then returns a normal " +
+                "`accessToken` that the web panel stores in `localStorage`. " +
+                "The token is valid for 10 minutes and can only be used once (URL is cleared after use).",
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            type: "object",
+                            required: ["token"],
+                            properties: {
+                                token: {
+                                    type: "string",
+                                    description: "The JWT from the `?token=` query parameter",
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Access token + user profile",
+                    content: {
+                        "application/json": {
+                            schema: {
+                                type: "object",
+                                properties: {
+                                    token: { type: "string", description: "Access token to store in localStorage" },
+                                    user:  { $ref: "#/components/schemas/User" },
+                                },
+                            },
+                        },
+                    },
+                },
+                400: { description: "token field missing" },
+                401: { description: "Token invalid or expired" },
+                404: { description: "User not found" },
+            },
+        },
+    },
 };

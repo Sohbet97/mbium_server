@@ -92,6 +92,11 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             defaultValue: 0
         },
+        sold_count: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0
+        },
         status: {
             type: DataTypes.SMALLINT,
             allowNull: false,

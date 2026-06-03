@@ -989,6 +989,104 @@ module.exports = {
             },
         },
 
+        // ── Buyer Request ─────────────────────────────────────────────────────────
+        BuyerRequest: {
+            type: "object",
+            properties: {
+                id:        { type: "integer" },
+                user_id:   { type: "string", format: "uuid" },
+                city_id:   { type: "integer", nullable: true },
+                text:      { type: "string",  nullable: true },
+                images:    { type: "array", items: { type: "string" }, description: "Array of media URLs" },
+                budget:    { type: "number",  nullable: true, description: "Max budget in TMT" },
+                quantity:  { type: "integer", default: 1 },
+                status:    { type: "integer", enum: [0, 1], description: "0=active, 1=closed" },
+                createdAt: { type: "string", format: "date-time" },
+                user:      { type: "object", nullable: true, properties: { id: { type: "string" }, name: { type: "string" }, surname: { type: "string" } } },
+                city:      { type: "object", nullable: true, properties: { id: { type: "integer" }, name: { type: "string" } } },
+            },
+        },
+        BuyerRequestCreate: {
+            type: "object",
+            description: "At least one of `text` or `images` must be provided.",
+            properties: {
+                text:     { type: "string",  nullable: true, description: "What the buyer needs (free text)" },
+                images:   { type: "array", items: { type: "string" }, description: "Media URLs from POST /seller/media/upload" },
+                city_id:  { type: "integer", nullable: true, description: "City to scope which shops are notified" },
+                budget:   { type: "number",  nullable: true, description: "Max budget in TMT" },
+                quantity: { type: "integer", default: 1 },
+            },
+        },
+
+        // ── Reel ──────────────────────────────────────────────────────────────────
+        Reel: {
+            type: "object",
+            properties: {
+                id:         { type: "integer" },
+                shop_id:    { type: "integer" },
+                caption:    { type: "string", nullable: true },
+                view_count: { type: "integer" },
+                is_active:  { type: "boolean" },
+                product_id: { type: "integer", nullable: true },
+                createdAt:  { type: "string", format: "date-time" },
+                video: {
+                    type: "object",
+                    properties: {
+                        id:        { type: "string", format: "uuid" },
+                        url:       { type: "string" },
+                        mime_type: { type: "string" },
+                        size:      { type: "integer", description: "File size in bytes" },
+                    },
+                },
+                thumbnail: {
+                    type: "object",
+                    nullable: true,
+                    properties: {
+                        id:            { type: "string", format: "uuid" },
+                        url:           { type: "string" },
+                        thumbnail_url: { type: "string", nullable: true },
+                    },
+                },
+                shop: {
+                    type: "object",
+                    properties: {
+                        id:   { type: "integer" },
+                        name: { type: "string" },
+                        logo: { type: "string", nullable: true },
+                    },
+                },
+                product: {
+                    type: "object",
+                    nullable: true,
+                    properties: {
+                        id:       { type: "integer" },
+                        name:     { type: "string" },
+                        price:    { type: "number" },
+                        currency: { type: "string", example: "TMT" },
+                    },
+                },
+            },
+        },
+        ReelCreateRequest: {
+            type: "object",
+            required: ["video_id"],
+            properties: {
+                video_id:     { type: "string", format: "uuid", description: "Media ID of the uploaded video (must be type=video)" },
+                thumbnail_id: { type: "string", format: "uuid", nullable: true, description: "Media ID of a cover image (optional but recommended)" },
+                caption:      { type: "string", nullable: true, description: "Caption displayed below the reel" },
+                product_id:   { type: "integer", nullable: true, description: "Link to one of your shop's products (optional)" },
+            },
+        },
+        ReelUpdateRequest: {
+            type: "object",
+            properties: {
+                thumbnail_id: { type: "string", format: "uuid", nullable: true },
+                caption:      { type: "string", nullable: true },
+                product_id:   { type: "integer", nullable: true },
+                is_active:    { type: "boolean" },
+            },
+        },
+
         // ── AI Recommendations ────────────────────────────────────────────────────
         AiRecommendation: {
             type: "object",

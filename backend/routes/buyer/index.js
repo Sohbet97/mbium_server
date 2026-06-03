@@ -25,9 +25,12 @@ router.use('/catalog',     require('./catalog'));
 router.use('/discounts',   require('./discounts'));
 router.use('/ai',          require('./ai'));
 router.use('/shop-types',  require('./shop-types'));
+router.use('/reels',       require('./reels'));
 
 // Authenticated buyer actions
-router.use('/cart',      authorizationMiddleware, require('./cart'));
+router.use('/notifications', authorizationMiddleware, require('./notifications'));
+router.use('/requests',     authorizationMiddleware, require('./requests'));
+router.use('/cart',          authorizationMiddleware, require('./cart'));
 router.use('/orders',    authorizationMiddleware, require('./orders'));
 router.use('/addresses', authorizationMiddleware, require('./addresses'));
 router.use('/reviews',   authorizationMiddleware, require('./reviews'));
