@@ -28,7 +28,7 @@ const app = express();
 // const { createRedisClient, redisMiddleware, bindRedisClient } = require("../utils/redis/redis-client");
 
 // Uncomment this for set up cors security
-var allowlist = ["http://localhost:3000"];
+var allowlist = ["http://localhost:3000", "http://localhost:5000"];
 var corsOptionsDelegate = function (req, callback) {
   var corsOptions = {
     origin: false,
@@ -74,6 +74,17 @@ app.use("*", cookieParser);
 cron.schedule("0 0 * * *", () => {
   const SystemDumpService = require("../services/system-dumps");
   SystemDumpService.create().catch((e) => console.error("[cron] daily dump failed:", e.message));
+});
+
+// Delete notifications older than 1 month — runs daily at 00:05
+cron.schedule("5 0 * * *", () => {
+  const { Op } = require("sequelize");
+  const db     = require("../models");
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - 1);
+  db.Notification.destroy({ where: { createdAt: { [Op.lt]: cutoff } } })
+    .then((n) => n > 0 && console.log(`[cron] deleted ${n} old notification(s)`))
+    .catch((e) => console.error("[cron] notification cleanup failed:", e.message));
 });
 
 

@@ -38,6 +38,19 @@ module.exports = {
             tags: ["Buyer — Catalog"],
             summary: "List active shop types (public)",
             description: "Returns all shop types where `is_active` is true. No auth required.",
+            parameters: [
+                {
+                    in: "query",
+                    name: "sort",
+                    required: false,
+                    schema: {
+                        type: "string",
+                        enum: ["order", "name", "-name"],
+                        default: "order",
+                    },
+                    description: "Sort order: `order` — by admin-set position (default), `name` — alphabetical A→Z, `-name` — alphabetical Z→A",
+                },
+            ],
             responses: {
                 200: {
                     description: "Active shop types",

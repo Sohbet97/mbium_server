@@ -156,6 +156,7 @@ class OrderService {
             if (status === STATUS_CLOSED) {
                 await this._applyCommission(orderId);
                 await CoinService.awardForOrder(order);
+                this._incrementSoldCount(orderId).catch(() => {});
             }
             PushService.onOrderStatusChanged(orderId, order.user_id, order.shop_id, status).catch(() => {});
         }
@@ -262,6 +263,13 @@ class OrderService {
 
         if (sellerAmount > 0) {
             await PayoutService.creditBalance(order.shop_id, sellerAmount);
+        }
+    }
+
+    static async _incrementSoldCount(orderId) {
+        const items = await db.OrderItem.findAll({ where: { order_id: orderId }, attributes: ['product_id', 'quantity'] });
+        for (const item of items) {
+            await db.Product.increment('sold_count', { by: item.quantity, where: { id: item.product_id } });
         }
     }
 

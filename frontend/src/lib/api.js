@@ -419,6 +419,8 @@ export const AuthApi = {
   getShopTypes:     ()         => http.get(`${AUTH}/shop-types`),
   applyForShop:     (data)     => http.post(`${AUTH}/me/shop`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getMyShop:        ()         => http.get(`${AUTH}/me/shop`),
+  getWebToken:      ()         => http.post(`${AUTH}/web-token`),
+  consumeWebToken:  (token)    => http.post(`${AUTH}/consume-web-token`, { token }),
 }
 
 export default http

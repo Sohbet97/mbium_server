@@ -1,8 +1,11 @@
 const authRouter = require('express').Router();
+const jwt = require('jsonwebtoken');
 const authorizationMiddleware = require('../../middlewares/authorization-middleware');
 const rbacMiddleware = require('../../middlewares/rbac-middleware');
 const Permissions = require('../../utils/permissions');
 const UserController = require('../../__modules__/user/controllers/user-controller');
+const UserService = require('../../__modules__/user/services/users');
+const db = require('../../models');
 const ShopController = require('../../__modules__/shops/controllers/shop');
 const ShopTypeController = require('../../__modules__/shops/controllers/shop-type');
 const { avatarUpload, kycUpload } = require('../../utils/upload');
@@ -43,6 +46,48 @@ authRouter.get('/me/shop',  authorizationMiddleware, ShopController.getMyShop.bi
 // ── FCM device token ──────────────────────────────────────────────────────────
 authRouter.patch('/me/device-token',  authorizationMiddleware, UserController.registerDeviceToken.bind(UserController));
 authRouter.delete('/me/device-token', authorizationMiddleware, UserController.removeDeviceToken.bind(UserController));
+
+// ── Web deep-link token (mobile → web shop creation) ─────────────────────────
+// Mobile calls this after auth to get a one-time URL for the web panel.
+authRouter.post('/web-token', authorizationMiddleware, (req, res) => {
+  const WEB_URL = (process.env.WEB_URL || 'http://localhost:5173').replace(/\/$/, '');
+  const token = jwt.sign(
+    { user_id: req.user.id, type: 'web_shop_create' },
+    process.env.ACCESS_TOKEN,
+    { expiresIn: '10m' }
+  );
+  return res.json({ url: `${WEB_URL}/apply?token=${token}` });
+});
+
+// Web panel calls this to exchange the one-time token for a real access token.
+authRouter.post('/consume-web-token', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: 'token hökman' });
+
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.ACCESS_TOKEN);
+    } catch {
+      return res.status(401).json({ message: 'Token nädogry ýa-da möhleti geçen' });
+    }
+
+    if (payload.type !== 'web_shop_create') {
+      return res.status(401).json({ message: 'Nädogry token görnüşi' });
+    }
+
+    const user = await db.User.findOne({
+      where: { id: payload.user_id },
+      include: [{ model: db.Role, as: '_role' }],
+    });
+    if (!user) return res.status(404).json({ message: 'Ulanyjy tapylmady' });
+
+    const accessToken = UserService.createAccessToken(user);
+    return res.json({ token: accessToken, user });
+  } catch (e) {
+    return res.status(500).json({ message: e.message });
+  }
+});
 
 // ── Admin ─────────────────────────────────────────────────────────────────────
 authRouter.post(

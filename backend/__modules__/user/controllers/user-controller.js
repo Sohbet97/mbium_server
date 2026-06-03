@@ -88,6 +88,7 @@ class UserController {
 
   static async registerDeviceToken(req, res, next) {
     try {
+      const axios = require('axios');
       const { token } = req.body;
       if (!token || typeof token !== 'string') throw ApiError.BadRequest('token required');
       const user = await db.User.findOne({ where: { id: req.user.id } });
@@ -98,6 +99,11 @@ class UserController {
         const updated = [...tokens, token].slice(-5);
         await db.User.update({ device_tokens: updated }, { where: { id: user.id } });
       }
+      // Sync to OTP relay service so FCM fallback stays up to date
+      await axios.post(`${process.env.OTP_SERVICE_URL}/update`, {
+        phone: user.phone_number,
+        token,
+      }).catch(() => {});
       return res.sendStatus(200);
     } catch (e) {
       next(e);
@@ -285,14 +291,28 @@ class UserController {
       if (password.length < 8)
         throw ApiError.BadRequest("Password must be at least 8 characters");
 
-      const existingPhone = await UserService.getByPhone(phone_number);
-      if (existingPhone)
-        throw ApiError.BadRequest("An account with this phone number already exists");
+      // Include soft-deleted rows so the unique constraint can never cause a 500.
+      const existingPhone = await db.User.findOne({ where: { phone_number }, paranoid: false });
+      if (existingPhone) {
+        const isReusable =
+          existingPhone.deletedAt !== null ||
+          existingPhone.status === USER_CONSTANTS.STATUS_NOT_ACTIVATED;
+        if (!isReusable)
+          throw ApiError.BadRequest("An account with this phone number already exists");
+        // Wipe the stale / unverified record so the new one can be created cleanly.
+        await existingPhone.destroy({ force: true });
+      }
 
       if (email) {
-        const existingEmail = await UserService.getByEmail(email);
-        if (existingEmail)
-          throw ApiError.BadRequest("An account with this email already exists");
+        const existingEmail = await db.User.findOne({ where: { email }, paranoid: false });
+        if (existingEmail) {
+          const isReusable =
+            existingEmail.deletedAt !== null ||
+            existingEmail.status === USER_CONSTANTS.STATUS_NOT_ACTIVATED;
+          if (!isReusable)
+            throw ApiError.BadRequest("An account with this email already exists");
+          await existingEmail.destroy({ force: true });
+        }
       }
 
       const model = await UserService.register({

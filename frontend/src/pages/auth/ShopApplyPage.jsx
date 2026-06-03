@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/store/auth'
 import { AuthApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -49,8 +49,9 @@ const EMPTY_TEXT = {
 }
 
 export default function ShopApplyPage() {
-  const { user, updateUser } = useAuth()
+  const { user, updateUser, setUser } = useAuth()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [shopTypes, setShopTypes]       = useState([])
   const [text, setText]                 = useState(EMPTY_TEXT)
@@ -58,6 +59,24 @@ export default function ShopApplyPage() {
   const [error, setError]               = useState('')
   const [loading, setLoading]           = useState(false)
   const [typesLoading, setTypesLoading] = useState(true)
+  const [tokenLoading, setTokenLoading] = useState(!!searchParams.get('token'))
+
+  // Exchange one-time deep-link token from mobile app
+  useEffect(() => {
+    const webToken = searchParams.get('token')
+    if (!webToken) return
+
+    AuthApi.consumeWebToken(webToken)
+      .then(async ({ data }) => {
+        localStorage.setItem('accessToken', data.token)
+        const { data: profileData } = await AuthApi.me()
+        setUser(profileData.model ?? null)
+        // Remove token from URL so refresh doesn't re-consume it
+        setSearchParams({}, { replace: true })
+      })
+      .catch(() => setError('Baglanyşyk nädogry ýa-da möhleti geçen. Täzeden synanyşyň.'))
+      .finally(() => setTokenLoading(false))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const isReApply = user?.shop?.verification_status === 3
 
@@ -125,6 +144,17 @@ export default function ShopApplyPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (tokenLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 dark:from-[#1a1f2e] dark:via-[#232727] dark:to-[#1f2937]">
+        <div className="text-center space-y-3">
+          <Store className="h-10 w-10 text-blue-500 mx-auto animate-pulse" />
+          <p className="text-slate-600 dark:text-slate-300 text-sm">Baglanyşyk barlanýar…</p>
+        </div>
+      </div>
+    )
   }
 
   return (

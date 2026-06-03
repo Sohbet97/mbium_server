@@ -285,13 +285,27 @@ class UserService {
     return String(Math.floor(100000 + Math.random() * 900000));
   }
 
-  /**
-   * Wire this up to your SMS transport (e.g. Turkmentelekom/Altyn Asyr gateway).
-   * Example: await SmsService.send(user.phone_number, `Your code: ${otp}`);
-   */
   static async _sendOtp(userId, otp) {
-    // TODO: replace with real SMS transport
-    console.log(`[OTP] user=${userId} otp=${otp}`);
+    const { QueryTypes } = require("sequelize");
+    const user = await db.User.findOne({
+      where: { id: userId },
+      attributes: ["phone_number"],
+    });
+    if (!user) return;
+
+    const [row] = await db.sequelize.query(
+      `INSERT INTO otp_codes (phone, code) VALUES (:phone, :code) RETURNING id`,
+      { replacements: { phone: user.phone_number, code: otp }, type: QueryTypes.SELECT }
+    );
+    await db.sequelize.query(
+      `SELECT pg_notify('otp_channel', :payload)`,
+      {
+        replacements: {
+          payload: JSON.stringify({ id: row.id, phone: user.phone_number, code: otp }),
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
   }
 
   // ─── Auth sessions ────────────────────────────────────────────────────────────
