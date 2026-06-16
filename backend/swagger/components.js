@@ -458,7 +458,7 @@ module.exports = {
                 id: { type: "integer" },
                 product_id: { type: "integer" },
                 media_id: { type: "string", format: "uuid" },
-                role: { type: "string", enum: ["primary", "gallery", "video", "3d", "360"] },
+                role: { type: "string", enum: ["primary", "gallery", "video", "3d", "360", "spin"] },
                 sort_order: { type: "integer" },
                 media: { $ref: "#/components/schemas/Media" },
             },

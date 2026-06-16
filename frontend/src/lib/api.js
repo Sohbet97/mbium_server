@@ -320,6 +320,11 @@ export class SellerApi {
   static products = {
     getAll:  (params)       => http.get(s('/products'), { params }),
     getOne:  (id)           => http.get(s(`/products/${id}`)),
+    generateSpin: (id, data) => http.post(s(`/products/${id}/spin/generate`), data),
+    generateSpinFromUpload: (id, formData) =>
+      http.post(s(`/products/${id}/spin/generate-from-upload`), formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
     create:  (data)         => http.post(s('/products'), data),
     update:  (id, data)     => http.put(s(`/products/${id}`), data),
     delete:  (id)           => http.delete(s(`/products/${id}`)),

@@ -3,7 +3,10 @@ const { Op } = require('sequelize');
 const ApiError = require('../../exceptions/api-error');
 const db = require('../../models');
 const ProductService = require('../../__modules__/catalog/services/products');
+const SpinViewService = require('../../__modules__/catalog/services/spin-view');
+const MediaService = require('../../__modules__/media/services/media');
 const { FUNCTIONS } = require('../../utils/functions');
+const { mediaUpload } = require('../../utils/upload');
 
 // GET /seller/products
 router.get('/', async (req, res, next) => {
@@ -105,6 +108,59 @@ router.delete('/:id/variants/:variantId', async (req, res, next) => {
         if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
         await ProductService.deleteVariant(req.params.variantId);
         return res.sendStatus(200);
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/spin/generate — AI-generate a 360° spin frame sequence from existing product media
+router.post('/:id/spin/generate', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+
+        const { media_ids, frame_count = 12 } = req.body;
+        let data;
+        try {
+            data = await SpinViewService.generateSpinFrames(
+                product.id, media_ids, Number(frame_count), req.user.id
+            );
+        } catch (e) {
+            throw ApiError.BadRequest(e.message);
+        }
+        return res.status(200).json({ data });
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/spin/generate-from-upload — upload 1-4 reference photos
+// (e.g. taken on a phone) and AI-generate a 360° spin frame sequence from them.
+// Uploaded photos are also attached to the product gallery as regular images.
+router.post('/:id/spin/generate-from-upload', mediaUpload.array('files', 4), async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+
+        if (!req.files?.length) throw ApiError.BadRequest('Iň az 1 surat ýükläň');
+
+        const existingMedia = await MediaService.getProductMedia(product.id);
+        let nextGallerySort = existingMedia.filter((pm) => pm.role === 'gallery').length;
+
+        const mediaIds = [];
+        for (const file of req.files) {
+            const media = await MediaService.processUpload(file, req.user.id);
+            await MediaService.attachToProduct(product.id, media.id, 'gallery', nextGallerySort);
+            nextGallerySort += 1;
+            mediaIds.push(media.id);
+        }
+
+        const { frame_count = 12 } = req.body;
+        let data;
+        try {
+            data = await SpinViewService.generateSpinFrames(
+                product.id, mediaIds, Number(frame_count), req.user.id
+            );
+        } catch (e) {
+            throw ApiError.BadRequest(e.message);
+        }
+        return res.status(200).json({ data });
     } catch (e) { next(e); }
 });
 

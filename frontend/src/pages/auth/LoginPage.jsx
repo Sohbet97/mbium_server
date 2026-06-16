@@ -51,7 +51,14 @@ export default function LoginPage() {
           setLoading(true)
           try {
             const result = await loginWithGoogle(credential)
-            navigate(resolveDestination(result.user))
+            const dest = resolveDestination(result.user)
+            if (!dest) {
+              localStorage.removeItem('accessToken')
+              localStorage.removeItem('activeShopId')
+              setError(WEB_PANEL_BLOCKED)
+              return
+            }
+            navigate(dest)
           } catch (err) {
             setError(err.response?.data?.message ?? t('login.error'))
           } finally {
@@ -82,15 +89,29 @@ export default function LoginPage() {
     }
   }, [loginWithGoogle, navigate, t, theme])
 
+  const WEB_PANEL_BLOCKED = 'Bu panel diňe satyjylar we adminler üçin elýeterlidir. Dükan açmak üçin mobil programmany ulanyň.'
+
+  function hasWebAccess(user) {
+    if (user?.permissions?.length > 0 || user?._role?.permissions?.length > 0) return true
+    if (user?.shop?.is_active) return true
+    return false
+  }
+
   function resolveDestination(user) {
-    // Platform staff take priority even if they also own a shop
     if (user?.permissions?.length > 0 || user?._role?.permissions?.length > 0) return '/admin'
     if (user?.shop?.is_active) return '/seller'
-    return '/pending'
+    return null
   }
 
   useEffect(() => {
     if (!loading && user) {
+      if (!hasWebAccess(user)) {
+        // Plain buyer — clear session and stay on login with an error
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('activeShopId')
+        setError(WEB_PANEL_BLOCKED)
+        return
+      }
       navigate(resolveDestination(user), { replace: true })
     }
   }, [loading, user, navigate])
@@ -106,7 +127,14 @@ export default function LoginPage() {
         setStep('otp')
         return
       }
-      navigate(resolveDestination(result.user))
+      const dest = resolveDestination(result.user)
+      if (!dest) {
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('activeShopId')
+        setError(WEB_PANEL_BLOCKED)
+        return
+      }
+      navigate(dest)
     } catch (err) {
       setError(err.response?.data?.message ?? t('login.error'))
     } finally {
@@ -120,7 +148,14 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const result = await verifyOtpAuth(sessionId, otp)
-      navigate(resolveDestination(result.user))
+      const dest = resolveDestination(result.user)
+      if (!dest) {
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('activeShopId')
+        setError(WEB_PANEL_BLOCKED)
+        return
+      }
+      navigate(dest)
     } catch (err) {
       setError(err.response?.data?.message ?? t('login.error'))
     } finally {

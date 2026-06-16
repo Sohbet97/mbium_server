@@ -20,7 +20,7 @@ module.exports = (sequelize) => {
             onDelete: 'CASCADE',
         },
         role: {
-            type: DataTypes.ENUM('primary', 'gallery', 'video', '3d', '360'),
+            type: DataTypes.ENUM('primary', 'gallery', 'video', '3d', '360', 'spin'),
             defaultValue: 'gallery',
         },
         sort_order: {

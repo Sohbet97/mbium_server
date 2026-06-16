@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { ArrowLeft, Plus, Trash2, Loader2, Save, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SellerProductMediaManager } from '@/components/media/SellerProductMediaManager'
+import { SellerProductSpinManager } from '@/components/media/SellerProductSpinManager'
 
 const CURRENCIES = ['TMT', 'USD', 'RUB']
 
@@ -531,6 +532,16 @@ export default function SellerProductFormPage() {
             <CardHeader><CardTitle>Suratlar</CardTitle></CardHeader>
             <CardContent>
               <SellerProductMediaManager productId={id} />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── 360° Spin View (edit mode only) ─────────────────────────────── */}
+        {isEdit && (
+          <Card>
+            <CardHeader><CardTitle>360° Aýlanma görnüşi</CardTitle></CardHeader>
+            <CardContent>
+              <SellerProductSpinManager productId={id} />
             </CardContent>
           </Card>
         )}

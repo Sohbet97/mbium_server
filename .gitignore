@@ -136,3 +136,5 @@ qm-frontend
 files
 
 .claude/
+
+backend/storage/

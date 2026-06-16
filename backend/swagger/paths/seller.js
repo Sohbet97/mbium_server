@@ -248,6 +248,64 @@ module.exports = {
         },
     },
 
+    // ── 360° Spin View (AI-generated) ───────────────────────────────────────────────
+    "/seller/products/{id}/spin/generate": {
+        post: {
+            tags: ["Seller"],
+            summary: "AI-generate a 360° spin frame sequence from existing product photos",
+            description: "Generates a spin frame sequence (Gemini Nano Banana) from 1-4 existing product " +
+                "media items and attaches them to the product as ProductMedia rows with role='spin', " +
+                "replacing any previously generated/uploaded spin frames.",
+            security,
+            parameters: [idParam],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["media_ids"], properties: {
+                    media_ids:   { type: "array", items: { type: "string", format: "uuid" }, minItems: 1, maxItems: 4, description: "Existing Media IDs (front/side/back/top photos) to use as references" },
+                    frame_count: { type: "integer", enum: [12, 24, 36], default: 12 },
+                } } } },
+            },
+            responses: {
+                200: {
+                    description: "Generated spin frame sequence (full product media list)",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/ProductMedia" } },
+                    } } } },
+                },
+                400: { description: "Invalid reference count/frame count, or generation failed" },
+                404: { description: "Not found or not owned by seller" },
+            },
+        },
+    },
+    "/seller/products/{id}/spin/generate-from-upload": {
+        post: {
+            tags: ["Seller"],
+            summary: "Upload reference photos and AI-generate a 360° spin frame sequence",
+            description: "Accepts 1-4 newly uploaded photos (e.g. taken on a phone), attaches them to the " +
+                "product gallery, then generates a spin frame sequence (Gemini Nano Banana) from them and " +
+                "attaches the frames as ProductMedia rows with role='spin', replacing any previous spin sequence.",
+            security,
+            parameters: [idParam],
+            requestBody: {
+                required: true,
+                content: { "multipart/form-data": { schema: { type: "object", required: ["files"], properties: {
+                    files:       { type: "array", items: { type: "string", format: "binary" }, minItems: 1, maxItems: 4 },
+                    frame_count: { type: "integer", enum: [12, 24, 36], default: 12 },
+                } } } },
+            },
+            responses: {
+                200: {
+                    description: "Generated spin frame sequence (full product media list)",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/ProductMedia" } },
+                    } } } },
+                },
+                400: { description: "No files uploaded, invalid frame count, or generation failed" },
+                404: { description: "Not found or not owned by seller" },
+            },
+        },
+    },
+
     // ── Orders ────────────────────────────────────────────────────────────────────
     "/seller/orders": {
         get: {

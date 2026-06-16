@@ -111,7 +111,8 @@ async function attachToProduct(productId, mediaId, role = 'gallery', sortOrder =
 
 async function updateProductMedia(productId, mediaId, { role, sort_order }) {
     const record = await db.ProductMedia.findOne({ where: { product_id: productId, media_id: mediaId } })
-    if (!record) throw new Error('Not found')
+    // Already detached/replaced (e.g. by AI spin regeneration mid-drag) — nothing to update.
+    if (!record) return null
     const updates = {}
     if (role !== undefined) updates.role = role
     if (sort_order !== undefined) updates.sort_order = sort_order
