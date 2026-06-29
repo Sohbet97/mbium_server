@@ -50,6 +50,7 @@ const swaggerSpec = {
     security: [],
     components: {
         securitySchemes: components.securitySchemes,
+        parameters: components.parameters,
         schemas: components.schemas,
     },
     tags: [

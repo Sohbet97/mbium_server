@@ -6,6 +6,17 @@ module.exports = {
             bearerFormat: "JWT",
         },
     },
+    parameters: {
+        XShopId: {
+            in: "header",
+            name: "X-Shop-Id",
+            required: false,
+            schema: { type: "string" },
+            description: "Active shop ID to operate under. Required when the seller owns multiple shops. " +
+                "The server verifies the shop belongs to the authenticated user. " +
+                "If omitted, resolves to the first active shop automatically.",
+        },
+    },
     schemas: {
         // ── Common ────────────────────────────────────────────────────────────────
         ErrorResponse: {

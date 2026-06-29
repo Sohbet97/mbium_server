@@ -87,6 +87,22 @@ cron.schedule("5 0 * * *", () => {
     .catch((e) => console.error("[cron] notification cleanup failed:", e.message));
 });
 
+// Delete temp background-removal files older than 1 hour — runs every 15 minutes
+cron.schedule("*/15 * * * *", () => {
+  const fs      = require("fs");
+  const tempDir = path.resolve(process.cwd(), "storage", "media", "temp");
+  const cutoff  = Date.now() - 60 * 60 * 1000;
+  fs.readdir(tempDir, (err, files) => {
+    if (err) return;
+    files.forEach((f) => {
+      const fp = path.join(tempDir, f);
+      fs.stat(fp, (_e, stat) => {
+        if (stat && stat.mtimeMs < cutoff) fs.unlink(fp, () => {});
+      });
+    });
+  });
+});
+
 
 // Serve uploaded media files
 app.use(
@@ -122,10 +138,10 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 app.get("/api-docs.json", (req, res) => res.json(swaggerSpec));
 
 // Authenticate user by accesstoken
-app.use("/auth",   authRouter);
-app.use("/admin",  adminRouter);
-app.use("/seller", sellerRouter);
-app.use("/buyer",  buyerRouter);
+app.use(["/auth",   "/api/auth"],   authRouter);
+app.use(["/admin",  "/api/admin"],  adminRouter);
+app.use(["/seller", "/api/seller"], sellerRouter);
+app.use(["/buyer",  "/api/buyer"],  buyerRouter);
 app.use(errorMiddleware);
 
 module.exports = { app };

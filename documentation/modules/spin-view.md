@@ -100,10 +100,16 @@ All endpoints require seller authentication:
 
 ```
 Authorization: Bearer <seller_jwt>
+X-Shop-Id: <shop_uuid>          (required when seller owns multiple shops)
 ```
 
-The product must belong to the authenticated seller's shop (`shop_id`
-ownership check is enforced server-side; otherwise `404 Haryt tapylmady`).
+`X-Shop-Id` selects which of the seller's shops to operate under. The server
+verifies the shop belongs to the authenticated user — an unowned or inactive ID
+is silently ignored and falls back to the first active shop. If omitted and the
+seller owns only one shop, it resolves automatically.
+
+The product must belong to the resolved shop (`shop_id` ownership check is
+enforced server-side; otherwise `404 Haryt tapylmady`).
 
 ### 3.1 Get product media (includes spin frames)
 

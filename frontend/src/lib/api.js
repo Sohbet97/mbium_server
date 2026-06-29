@@ -325,6 +325,14 @@ export class SellerApi {
       http.post(s(`/products/${id}/spin/generate-from-upload`), formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       }),
+    removeBg:        (productId, mediaId) =>
+      http.post(s(`/products/${productId}/media/${mediaId}/remove-bg`)),
+    confirmRemoveBg: (productId, mediaId, data) =>
+      http.post(s(`/products/${productId}/media/${mediaId}/remove-bg/confirm`), data),
+    rejectRemoveBg:  (productId, mediaId, data) =>
+      http.post(s(`/products/${productId}/media/${mediaId}/remove-bg/reject`), data),
+    rotateMedia:     (productId, mediaId, degrees) =>
+      http.post(s(`/products/${productId}/media/${mediaId}/rotate`), { degrees }),
     create:  (data)         => http.post(s('/products'), data),
     update:  (id, data)     => http.put(s(`/products/${id}`), data),
     delete:  (id)           => http.delete(s(`/products/${id}`)),

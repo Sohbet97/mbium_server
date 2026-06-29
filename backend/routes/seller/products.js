@@ -5,6 +5,7 @@ const db = require('../../models');
 const ProductService = require('../../__modules__/catalog/services/products');
 const SpinViewService = require('../../__modules__/catalog/services/spin-view');
 const MediaService = require('../../__modules__/media/services/media');
+const BgRemovalService = require('../../__modules__/media/services/background-removal');
 const { FUNCTIONS } = require('../../utils/functions');
 const { mediaUpload } = require('../../utils/upload');
 
@@ -115,6 +116,8 @@ router.delete('/:id/variants/:variantId', async (req, res, next) => {
 router.post('/:id/spin/generate', async (req, res, next) => {
     try {
         const product = await ProductService.getById(req.params.id);
+        console.log('aaaa');
+        
         if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
 
         const { media_ids, frame_count = 12 } = req.body;
@@ -136,6 +139,7 @@ router.post('/:id/spin/generate', async (req, res, next) => {
 router.post('/:id/spin/generate-from-upload', mediaUpload.array('files', 4), async (req, res, next) => {
     try {
         const product = await ProductService.getById(req.params.id);
+        
         if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
 
         if (!req.files?.length) throw ApiError.BadRequest('Iň az 1 surat ýükläň');
@@ -162,6 +166,105 @@ router.post('/:id/spin/generate-from-upload', mediaUpload.array('files', 4), asy
         }
         return res.status(200).json({ data });
     } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/media/:mediaId/remove-bg
+router.post('/:id/media/:mediaId/remove-bg', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const pm = await db.ProductMedia.findOne({
+            where: { product_id: product.id, media_id: req.params.mediaId },
+        });
+        if (!pm) throw ApiError.NotFound('Media tapylmady');
+        let result;
+        try {
+            result = await BgRemovalService.startRemoval(req.params.mediaId);
+        } catch (e) {
+            throw ApiError.BadRequest(e.message);
+        }
+        return res.status(200).json(result);
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/media/:mediaId/remove-bg/confirm
+router.post('/:id/media/:mediaId/remove-bg/confirm', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const { token, action, variant } = req.body;
+        if (!token || !['save_new', 'replace'].includes(action)) {
+            throw ApiError.BadRequest('token we action gerek');
+        }
+        const media = await BgRemovalService.confirmRemoval({
+            token,
+            productId: product.id,
+            mediaId: req.params.mediaId,
+            action,
+            variant: variant || 'transparent',
+        });
+        return res.status(200).json({ media });
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/media/:mediaId/remove-bg/reject
+router.post('/:id/media/:mediaId/remove-bg/reject', async (req, res, next) => {
+    try {
+        const { token } = req.body;
+        if (token) await BgRemovalService.rejectRemoval(token).catch(() => {});
+        return res.sendStatus(200);
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/media/:mediaId/rotate
+router.post('/:id/media/:mediaId/rotate', async (req, res, next) => {
+    try {
+        const degrees = parseInt(req.body.degrees)
+        if (![90, 180, 270].includes(degrees)) throw ApiError.BadRequest('degrees 90, 180 ýa-da 270 bolmaly')
+
+        const product = await ProductService.getById(req.params.id)
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady')
+
+        const pm = await db.ProductMedia.findOne({
+            where: { product_id: product.id, media_id: req.params.mediaId },
+        })
+        if (!pm) throw ApiError.NotFound('Media tapylmady')
+
+        const media = await db.Media.findByPk(req.params.mediaId)
+        if (!media) throw ApiError.NotFound('Media tapylmady')
+
+        let sharp
+        try { sharp = require('sharp') } catch { throw ApiError.BadRequest('sharp moduly ýok') }
+
+        const { uploadBuffer, urlToPath } = require('../../utils/firebase')
+        const path = require('path')
+        const fs   = require('fs')
+        const MEDIA_BASE = path.resolve(process.cwd(), 'storage', 'media')
+
+        const destPath    = urlToPath(media.url)
+        const relativePath = destPath.replace(/^media\//, '')
+        const srcBuffer = await fs.promises.readFile(path.join(MEDIA_BASE, relativePath))
+
+        const { data: rotated, info } = await sharp(srcBuffer)
+            .rotate(degrees)
+            .toBuffer({ resolveWithObject: true })
+
+        await uploadBuffer(rotated, destPath, media.mime_type || 'image/jpeg')
+
+        const updates = { width: info.width, height: info.height }
+
+        if (media.thumbnail_url) {
+            const thumbPath = urlToPath(media.thumbnail_url)
+            const thumbBuf  = await sharp(rotated)
+                .resize(480, 480, { fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 75 })
+                .toBuffer()
+            updates.thumbnail_url = await uploadBuffer(thumbBuf, thumbPath, 'image/webp')
+        }
+
+        await media.update(updates)
+        return res.status(200).json(await db.Media.findByPk(media.id))
+    } catch (e) { next(e) }
 });
 
 module.exports = router;
