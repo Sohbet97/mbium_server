@@ -2,11 +2,13 @@ const router = require('express').Router();
 const { Op, literal } = require('sequelize');
 const ApiError = require('../../exceptions/api-error');
 const { FUNCTIONS } = require('../../utils/functions');
+const { STATUSE_ACTIVE } = require('../../utils/statuses');
 const ProductService  = require('../../__modules__/catalog/services/products');
 const CategoryService = require('../../__modules__/catalog/services/categories');
 const CollectionService = require('../../__modules__/catalog/services/collections');
 const ShopService     = require('../../__modules__/shops/services/shops');
 const BrandService    = require('../../__modules__/brands/services/BrandService');
+const SizeService     = require('../../__modules__/sizes/services/SizeService');
 const SupplierService = require('../../__modules__/suppliers/services/SupplierService');
 const SearchService   = require('../../services/search');
 
@@ -92,7 +94,7 @@ router.get('/search', async (req, res, next) => {
 // GET /buyer/catalog/categories  – flat list (active only)
 router.get('/categories', async (req, res, next) => {
     try {
-        const data = await CategoryService.get({ status: 1 });
+        const data = await CategoryService.get({ status: STATUSE_ACTIVE });
         return res.status(200).json({ data });
     } catch (e) { next(e); }
 });
@@ -109,7 +111,7 @@ router.get('/categories/tree', async (req, res, next) => {
 router.get('/categories/:id', async (req, res, next) => {
     try {
         const model = await CategoryService.getById(req.params.id);
-        if (!model || model.status !== 1) throw ApiError.NotFound('Kategoriýa tapylmady');
+        if (!model || model.status !== STATUSE_ACTIVE) throw ApiError.NotFound('Kategoriýa tapylmady');
         return res.status(200).json({ model });
     } catch (e) { next(e); }
 });
@@ -233,6 +235,23 @@ router.get('/brands/:id', async (req, res, next) => {
     try {
         const model = await BrandService.getById(req.params.id);
         if (!model || !model.is_active) throw ApiError.NotFound('Marka tapylmady');
+        return res.status(200).json({ model });
+    } catch (e) { next(e); }
+});
+
+// ── Sizes (public, read-only) ─────────────────────────────────────────────────
+
+router.get('/sizes', async (req, res, next) => {
+    try {
+        const data = await SizeService.getTree();
+        return res.status(200).json({ data });
+    } catch (e) { next(e); }
+});
+
+router.get('/sizes/:id', async (req, res, next) => {
+    try {
+        const model = await SizeService.getById(req.params.id);
+        if (!model || !model.is_active) throw ApiError.NotFound('Ölçeg tapylmady');
         return res.status(200).json({ model });
     } catch (e) { next(e); }
 });

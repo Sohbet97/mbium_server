@@ -52,11 +52,18 @@ ctrl.remove = async (req, res) => {
 }
 
 // Product ↔ Media
+// variant_id: omitted in body → shared/product-level (service default). Passed as query
+// on GET/DELETE since those have no body; 'null' literal means shared-only there too.
+function parseQueryVariantId(req) {
+    if (req.query.variant_id === undefined) return undefined
+    return req.query.variant_id === 'null' ? null : Number(req.query.variant_id)
+}
+
 ctrl.attachToProduct = async (req, res) => {
     try {
         const { product_id } = req.params
-        const { media_id, role, sort_order } = req.body
-        const record = await svc.attachToProduct(product_id, media_id, role, sort_order)
+        const { media_id, role, sort_order, variant_id } = req.body
+        const record = await svc.attachToProduct(product_id, media_id, role, sort_order, variant_id)
         res.status(201).json({ data: record })
     } catch (e) {
         res.status(400).json({ message: e.message })
@@ -66,7 +73,8 @@ ctrl.attachToProduct = async (req, res) => {
 ctrl.updateProductMedia = async (req, res) => {
     try {
         const { product_id, media_id } = req.params
-        const record = await svc.updateProductMedia(product_id, media_id, req.body)
+        const { variant_id, ...rest } = req.body
+        const record = await svc.updateProductMedia(product_id, media_id, rest, variant_id)
         res.json({ data: record })
     } catch (e) {
         res.status(400).json({ message: e.message })
@@ -75,7 +83,7 @@ ctrl.updateProductMedia = async (req, res) => {
 
 ctrl.detachFromProduct = async (req, res) => {
     try {
-        await svc.detachFromProduct(req.params.product_id, req.params.media_id)
+        await svc.detachFromProduct(req.params.product_id, req.params.media_id, parseQueryVariantId(req) ?? null)
         res.json({ message: 'Detached' })
     } catch (e) {
         res.status(400).json({ message: e.message })
@@ -84,7 +92,7 @@ ctrl.detachFromProduct = async (req, res) => {
 
 ctrl.getProductMedia = async (req, res) => {
     try {
-        const items = await svc.getProductMedia(req.params.product_id)
+        const items = await svc.getProductMedia(req.params.product_id, parseQueryVariantId(req))
         res.json({ data: items })
     } catch (e) {
         res.status(500).json({ message: e.message })

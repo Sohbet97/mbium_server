@@ -25,6 +25,12 @@ module.exports = (sequelize) => {
             references: { model: "product_variants", key: "id" },
             onDelete: "CASCADE",
         },
+        variant_size_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "product_variant_sizes", key: "id" },
+            onDelete: "CASCADE",
+        },
         quantity: {
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -41,7 +47,8 @@ module.exports = (sequelize) => {
             { fields: ["warehouse_id"] },
             { fields: ["product_id"] },
             { fields: ["variant_id"] },
-            { fields: ["warehouse_id", "product_id", "variant_id"] },
+            { fields: ["variant_size_id"] },
+            { fields: ["warehouse_id", "product_id", "variant_id", "variant_size_id"] },
         ],
     });
 
@@ -50,6 +57,9 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.Product, { foreignKey: "product_id", as: "product" });
         if (db.ProductVariant) {
             Model.belongsTo(db.ProductVariant, { foreignKey: "variant_id", as: "variant" });
+        }
+        if (db.ProductVariantSize) {
+            Model.belongsTo(db.ProductVariantSize, { foreignKey: "variant_size_id", as: "variantSize" });
         }
     };
 

@@ -24,6 +24,7 @@ const EMPTY_FORM = {
   track_inventory: true,
   sell_when_out_of_stock: false,
   is_active: true,
+  brand_id: '',
 }
 
 const EMPTY_VARIANT = {
@@ -195,6 +196,110 @@ function VariantForm({ initial = EMPTY_VARIANT, onSave, onCancel, saving }) {
   )
 }
 
+// ── Per-variant size/stock rows ───────────────────────────────────────────────
+function VariantSizeManager({ productId, variant, sizeOptions }) {
+  const [sizes, setSizes] = useState(variant.sizes || [])
+  const [editing, setEditing] = useState(null) // sizeRowId | 'new' | null
+  const [saving, setSaving] = useState(false)
+  const [draft, setDraft] = useState({ size_id: '', stock: '0', sku: '', price: '' })
+
+  useEffect(() => { setSizes(variant.sizes || []) }, [variant.sizes])
+
+  function startNew() { setDraft({ size_id: '', stock: '0', sku: '', price: '' }); setEditing('new') }
+  function startEdit(row) {
+    setDraft({
+      size_id: row.size_id ?? row.size?.id ?? '',
+      stock: row.stock ?? 0,
+      sku: row.sku ?? '',
+      price: row.price ?? '',
+    })
+    setEditing(row.id)
+  }
+
+  async function save() {
+    if (!draft.size_id) { toast.error('Ölçegi saýlaň'); return }
+    setSaving(true)
+    try {
+      const payload = {
+        size_id: Number(draft.size_id),
+        stock: parseInt(draft.stock) || 0,
+        sku: draft.sku || null,
+        price: draft.price ? parseFloat(draft.price) : null,
+      }
+      if (editing === 'new') {
+        const { data } = await SellerApi.products.variants.sizes.create(productId, variant.id, payload)
+        setSizes((prev) => [...prev, data.model])
+      } else {
+        await SellerApi.products.variants.sizes.update(productId, variant.id, editing, payload)
+        setSizes((prev) => prev.map((s) => (s.id === editing ? { ...s, ...payload } : s)))
+      }
+      setEditing(null)
+      toast.success('Ölçeg ýatda saklandy')
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+    } finally { setSaving(false) }
+  }
+
+  async function remove(rowId) {
+    if (!confirm('Ölçegi pozmak?')) return
+    try {
+      await SellerApi.products.variants.sizes.delete(productId, variant.id, rowId)
+      setSizes((prev) => prev.filter((s) => s.id !== rowId))
+      toast.success('Ölçeg pozuldy')
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+    }
+  }
+
+  const editorRow = (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <select
+        value={draft.size_id}
+        onChange={(e) => setDraft((d) => ({ ...d, size_id: e.target.value }))}
+        className="h-7 text-xs border rounded px-1.5 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
+      >
+        <option value="">Ölçeg</option>
+        {sizeOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+      </select>
+      <Input className="h-7 text-xs w-16" type="number" min="0" value={draft.stock}
+        onChange={(e) => setDraft((d) => ({ ...d, stock: e.target.value }))} placeholder="Stok" />
+      <Input className="h-7 text-xs w-20" value={draft.sku}
+        onChange={(e) => setDraft((d) => ({ ...d, sku: e.target.value }))} placeholder="SKU" />
+      <Input className="h-7 text-xs w-20" type="number" min="0" step="0.01" value={draft.price}
+        onChange={(e) => setDraft((d) => ({ ...d, price: e.target.value }))} placeholder="Baha" />
+      <Button size="sm" className="h-7 text-xs px-2" onClick={save} disabled={saving}>
+        {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Sakla'}
+      </Button>
+      <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => setEditing(null)}>Ýatyr</Button>
+    </div>
+  )
+
+  return (
+    <div className="ml-4 pl-3 border-l-2 border-slate-200 dark:border-white/[0.08] space-y-1.5 py-1">
+      {sizes.map((row) => (
+        editing === row.id ? <div key={row.id}>{editorRow}</div> : (
+          <div key={row.id} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+            <span className="font-medium">{row.size?.name ?? sizeOptions.find((s) => s.id === row.size_id)?.name ?? '—'}</span>
+            <span>Stok: {row.stock}</span>
+            {row.sku && <span>SKU: {row.sku}</span>}
+            <button type="button" onClick={() => startEdit(row)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
+              <Pencil className="h-3 w-3" />
+            </button>
+            <button type="button" onClick={() => remove(row.id)} className="text-slate-400 hover:text-red-500">
+              <Trash2 className="h-3 w-3" />
+            </button>
+          </div>
+        )
+      ))}
+      {editing === 'new' ? editorRow : (
+        <button type="button" onClick={startNew} className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 dark:text-blue-400">
+          <Plus className="h-3 w-3" />Ölçeg goş
+        </button>
+      )}
+    </div>
+  )
+}
+
 // ── Variant display row ───────────────────────────────────────────────────────
 function VariantRow({ vr, onEdit, onDelete }) {
   const attrs = Object.entries(vr.attributes || {})
@@ -259,6 +364,8 @@ export default function SellerProductFormPage() {
 
   const [form, setForm]             = useState(EMPTY_FORM)
   const [categories, setCategories] = useState([])
+  const [brands, setBrands]         = useState([])
+  const [sizeOptions, setSizeOptions] = useState([])
   const [variants, setVariants]     = useState([])
   const [loading, setLoading]       = useState(isEdit)
   const [saving, setSaving]         = useState(false)
@@ -268,6 +375,8 @@ export default function SellerProductFormPage() {
 
   useEffect(() => {
     SellerApi.categories.getAll().then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
+    SellerApi.brands.getAll().then(({ data }) => setBrands(data.data ?? [])).catch(() => {})
+    SellerApi.sizes.getAll().then(({ data }) => setSizeOptions(data.data ?? [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -292,6 +401,7 @@ export default function SellerProductFormPage() {
           track_inventory:        p.track_inventory        ?? true,
           sell_when_out_of_stock: p.sell_when_out_of_stock ?? false,
           is_active:              p.is_active     ?? true,
+          brand_id:               p.brand_id      ?? '',
         })
         setVariants(p.variants ?? [])
       })
@@ -317,6 +427,7 @@ export default function SellerProductFormPage() {
         stock:             parseInt(form.stock)   || 0,
         weight:            form.weight            ? parseInt(form.weight)             : null,
         category_id:       Number(form.category_id),
+        brand_id:          form.brand_id ? Number(form.brand_id) : null,
       }
 
       if (isEdit) {
@@ -424,6 +535,20 @@ export default function SellerProductFormPage() {
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
+
+            {brands.length > 0 && (
+              <div>
+                <Label className="mb-1 block">Brend</Label>
+                <select
+                  value={form.brand_id}
+                  onChange={(e) => set('brand_id', e.target.value)}
+                  className="w-full h-9 border rounded-md px-3 text-sm bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">— Brend ýok —</option>
+                  {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
@@ -585,12 +710,16 @@ export default function SellerProductFormPage() {
                       onCancel={() => setEV(null)}
                     />
                   ) : (
-                    <VariantRow
-                      key={vr.id}
-                      vr={vr}
-                      onEdit={() => setEV(vr.id)}
-                      onDelete={() => deleteVariant(vr.id)}
-                    />
+                    <div key={vr.id}>
+                      <VariantRow
+                        vr={vr}
+                        onEdit={() => setEV(vr.id)}
+                        onDelete={() => deleteVariant(vr.id)}
+                      />
+                      {sizeOptions.length > 0 && (
+                        <VariantSizeManager productId={id} variant={vr} sizeOptions={sizeOptions} />
+                      )}
+                    </div>
                   )
                 ))}
 

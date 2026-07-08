@@ -14,4 +14,9 @@ router.post("/:id/variants", ProductController.addVariant.bind(ProductController
 router.put("/:id/variants/:variantId", ProductController.updateVariant.bind(ProductController));
 router.delete("/:id/variants/:variantId", ProductController.deleteVariant.bind(ProductController));
 
+// Variant sizes
+router.post("/:id/variants/:variantId/sizes", ProductController.addVariantSize.bind(ProductController));
+router.put("/:id/variants/:variantId/sizes/:sizeRowId", ProductController.updateVariantSize.bind(ProductController));
+router.delete("/:id/variants/:variantId/sizes/:sizeRowId", ProductController.deleteVariantSize.bind(ProductController));
+
 module.exports = router;

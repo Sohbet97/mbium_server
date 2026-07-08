@@ -36,10 +36,18 @@ class ProductService {
             include: [
                 { model: db.Category, as: "category", attributes: ["id", "name", "slug"] },
                 { model: db.Shop, as: "shop", attributes: ["id", "name", "logo"] },
-                { model: db.ProductVariant, as: "variants" },
+                { model: db.Brand, as: "brand", required: false },
+                {
+                    model: db.ProductVariant,
+                    as: "variants",
+                    include: [
+                        { model: db.ProductVariantSize, as: "sizes", include: [{ model: db.Size, as: "size" }] },
+                    ],
+                },
                 {
                     model: db.ProductMedia,
                     as: "productMedia",
+                    where: { variant_id: null },
                     required: false,
                     order: [["sort_order", "ASC"]],
                     include: [{ model: db.Media, as: "media" }],
@@ -125,12 +133,26 @@ class ProductService {
         return db.ProductVariant.create({ product_id: productId, ...data });
     }
 
-    static async updateVariant(variantId, data) {
-        return db.ProductVariant.update(data, { where: { id: variantId } });
+    static async updateVariant(productId, variantId, data) {
+        return db.ProductVariant.update(data, { where: { id: variantId, product_id: productId } });
     }
 
-    static async deleteVariant(variantId) {
-        return db.ProductVariant.destroy({ where: { id: variantId } });
+    static async deleteVariant(productId, variantId) {
+        return db.ProductVariant.destroy({ where: { id: variantId, product_id: productId } });
+    }
+
+    // ── Variant sizes ────────────────────────────────────────────────────────────
+
+    static async addVariantSize(variantId, data) {
+        return db.ProductVariantSize.create({ variant_id: variantId, ...data });
+    }
+
+    static async updateVariantSize(variantId, sizeRowId, data) {
+        return db.ProductVariantSize.update(data, { where: { id: sizeRowId, variant_id: variantId } });
+    }
+
+    static async deleteVariantSize(variantId, sizeRowId) {
+        return db.ProductVariantSize.destroy({ where: { id: sizeRowId, variant_id: variantId } });
     }
 }
 

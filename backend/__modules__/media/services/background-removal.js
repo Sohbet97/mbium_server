@@ -69,7 +69,7 @@ async function startRemoval(mediaId) {
     return { token, whiteUrl, transparentUrl }
 }
 
-async function confirmRemoval({ token, productId, mediaId, action, variant }) {
+async function confirmRemoval({ token, productId, variantId = null, mediaId, action, variant }) {
     const chosen = variant === 'white' ? 'white' : 'transparent'
     const other  = variant === 'white' ? 'transparent' : 'white'
 
@@ -108,20 +108,20 @@ async function confirmRemoval({ token, productId, mediaId, action, variant }) {
 
     if (action === 'replace') {
         const pm = await db.ProductMedia.findOne({
-            where: { product_id: productId, media_id: mediaId },
+            where: { product_id: productId, variant_id: variantId, media_id: mediaId },
         })
         const role       = pm?.role       ?? 'gallery'
         const sort_order = pm?.sort_order ?? 0
-        await MediaService.detachFromProduct(productId, mediaId)
+        await MediaService.detachFromProduct(productId, mediaId, variantId)
         await MediaService.remove(mediaId).catch(() => {})
-        await MediaService.attachToProduct(productId, newMedia.id, role, sort_order)
+        await MediaService.attachToProduct(productId, newMedia.id, role, sort_order, variantId)
     } else {
         const all = await db.ProductMedia.findAll({
-            where: { product_id: productId },
+            where: { product_id: productId, variant_id: variantId },
             order: [['sort_order', 'ASC']],
         })
         const nextSort = all.length ? all[all.length - 1].sort_order + 1 : 0
-        await MediaService.attachToProduct(productId, newMedia.id, 'gallery', nextSort)
+        await MediaService.attachToProduct(productId, newMedia.id, 'gallery', nextSort, variantId)
     }
 
     await Promise.allSettled([deleteFile(chosenTemp), deleteFile(otherTemp)])

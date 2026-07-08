@@ -307,6 +307,14 @@ export class SellerApi {
   static categories = {
     getAll: (params) => http.get(s('/categories'), { params }),
   }
+  static brands = {
+    getAll: (params) => http.get(s('/brands'), { params }),
+    getTree: () => http.get(s('/brands/tree')),
+  }
+  static sizes = {
+    getAll: (params) => http.get(s('/sizes'), { params }),
+    getTree: () => http.get(s('/sizes/tree')),
+  }
   static shop = {
     get:           ()             => http.get(s('/shop')),
     update:        (data)         => http.patch(s('/shop'), data),
@@ -340,6 +348,11 @@ export class SellerApi {
       create: (productId, data)             => http.post(s(`/products/${productId}/variants`), data),
       update: (productId, variantId, data)  => http.put(s(`/products/${productId}/variants/${variantId}`), data),
       delete: (productId, variantId)        => http.delete(s(`/products/${productId}/variants/${variantId}`)),
+      sizes: {
+        create: (productId, variantId, data)             => http.post(s(`/products/${productId}/variants/${variantId}/sizes`), data),
+        update: (productId, variantId, sizeRowId, data)  => http.put(s(`/products/${productId}/variants/${variantId}/sizes/${sizeRowId}`), data),
+        delete: (productId, variantId, sizeRowId)        => http.delete(s(`/products/${productId}/variants/${variantId}/sizes/${sizeRowId}`)),
+      },
     },
   }
   static orders = {

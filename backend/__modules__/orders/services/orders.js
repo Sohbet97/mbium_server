@@ -88,6 +88,10 @@ class OrderService {
                     include: [
                         { model: db.Product, as: "product", attributes: ["id", "name"] },
                         { model: db.ProductVariant, as: "variant", attributes: ["id", "name"], required: false },
+                        {
+                            model: db.ProductVariantSize, as: "variantSize", attributes: ["id", "sku"], required: false,
+                            include: [{ model: db.Size, as: "size", attributes: ["id", "name"] }],
+                        },
                     ],
                 },
                 { model: db.OrderStatusHistory, as: "status_history", order: [["createdAt", "DESC"]] },
@@ -101,21 +105,58 @@ class OrderService {
     static async create(userId, body) {
         const { shop_id, delivery_address, delivery_address_id, note, items } = body;
 
-        // Resolve prices from DB to prevent client-side price tampering
+        // Resolve prices/stock from DB to prevent client-side price tampering, including
+        // variants/sizes so line items can price and validate against the actual purchasable unit.
         const productIds = items.map((i) => i.product_id);
-        const products = await db.Product.findAll({ where: { id: { [Op.in]: productIds } } });
+        const products = await db.Product.findAll({
+            where: { id: { [Op.in]: productIds } },
+            include: [{
+                model: db.ProductVariant,
+                as: "variants",
+                where: { is_active: true },
+                required: false,
+                include: [{ model: db.ProductVariantSize, as: "sizes", where: { is_active: true }, required: false }],
+            }],
+        });
         const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
         let total_price = 0;
         const resolvedItems = items.map((item) => {
             const product = productMap[item.product_id];
             if (!product) throw ApiError.BadRequest(`Haryt #${item.product_id} tapylmady`);
-            const unit_price = parseFloat(product.price);
+
+            // Resolve the effective purchasable unit: size (if the variant has sizes) -> variant -> bare product.
+            const activeVariants = product.variants || [];
+            let variant = null;
+            let variantSize = null;
+
+            if (activeVariants.length > 0) {
+                if (!item.variant_id) throw ApiError.BadRequest(`"${product.name}" üçin wariant saýlaň`);
+                variant = activeVariants.find((v) => v.id === Number(item.variant_id));
+                if (!variant) throw ApiError.BadRequest(`"${product.name}" üçin wariant tapylmady`);
+
+                const sizes = variant.sizes || [];
+                if (sizes.length > 0) {
+                    if (!item.variant_size_id) throw ApiError.BadRequest(`"${product.name}" üçin ölçegi saýlaň`);
+                    variantSize = sizes.find((s) => s.id === Number(item.variant_size_id));
+                    if (!variantSize) throw ApiError.BadRequest(`"${product.name}" üçin ölçeg tapylmady`);
+                }
+            }
+
+            const effectiveStock = variantSize ? variantSize.stock : variant ? variant.stock : product.stock;
+            if (!product.sell_when_out_of_stock && effectiveStock < item.quantity) {
+                throw ApiError.BadRequest(
+                    `"${product.name}" üçin ýeterlik stok ýok (bar: ${effectiveStock}, gerek: ${item.quantity})`
+                );
+            }
+
+            const unit_price = parseFloat(variantSize?.price ?? variant?.price ?? product.price);
             const total = unit_price * item.quantity;
             total_price += total;
             return {
                 product_id: item.product_id,
-                variant_id: item.variant_id || null,
+                variant_id: variant?.id ?? null,
+                variant_size_id: variantSize?.id ?? null,
                 product_name: product.name,
                 quantity: item.quantity,
                 unit_price,
@@ -171,6 +212,7 @@ class OrderService {
                 include: [
                     { model: db.Product, as: "product", attributes: ["id", "name", "track_inventory", "sell_when_out_of_stock", "stock"] },
                     { model: db.ProductVariant, as: "variant", required: false, attributes: ["id", "stock"] },
+                    { model: db.ProductVariantSize, as: "variantSize", required: false, attributes: ["id", "stock"] },
                 ],
             }],
         });
@@ -189,9 +231,10 @@ class OrderService {
 
                 const productId = item.product_id;
                 const variantId = item.variant_id ?? null;
+                const variantSizeId = item.variant_size_id ?? null;
                 const qty = item.quantity;
 
-                const levelWhere = { warehouse_id: warehouse.id, product_id: productId, variant_id: variantId };
+                const levelWhere = { warehouse_id: warehouse.id, product_id: productId, variant_id: variantId, variant_size_id: variantSizeId };
                 const [level] = await db.InventoryLevel.findOrCreate({
                     where: levelWhere,
                     defaults: { ...levelWhere, quantity: 0, reserved: 0 },
@@ -212,6 +255,7 @@ class OrderService {
                     warehouse_id: warehouse.id,
                     product_id: productId,
                     variant_id: variantId,
+                    variant_size_id: variantSizeId,
                     order_id: orderId,
                     type: "OUTBOUND",
                     quantity: qty,
@@ -222,7 +266,9 @@ class OrderService {
                 }, { transaction: t });
 
                 const deductBy = Math.min(qty, before);
-                if (variantId) {
+                if (variantSizeId) {
+                    await db.ProductVariantSize.decrement("stock", { by: deductBy, where: { id: variantSizeId }, transaction: t });
+                } else if (variantId) {
                     await db.ProductVariant.decrement("stock", { by: deductBy, where: { id: variantId }, transaction: t });
                 } else {
                     await db.Product.decrement("stock", { by: deductBy, where: { id: productId }, transaction: t });

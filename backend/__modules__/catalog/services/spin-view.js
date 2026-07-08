@@ -39,10 +39,11 @@ async function generateFrame(model, refParts, angleDeg) {
 
 /**
  * Generate a 360° spin frame sequence from 1-4 reference photos and attach
- * them to the product as ProductMedia rows with role='spin', replacing any
- * previously generated/uploaded spin frames.
+ * them to the product (or one of its variants, when variantId is given) as
+ * ProductMedia rows with role='spin', replacing any previously generated/
+ * uploaded spin frames in that same scope (product-level, or that variant's).
  */
-async function generateSpinFrames(productId, referenceMediaIds, frameCount, userId) {
+async function generateSpinFrames(productId, variantId, referenceMediaIds, frameCount, userId) {
     if (!Array.isArray(referenceMediaIds) || referenceMediaIds.length < MIN_REFERENCES) {
         throw new Error(`Iň az ${MIN_REFERENCES} surat saýlaň`)
     }
@@ -65,10 +66,10 @@ async function generateSpinFrames(productId, referenceMediaIds, frameCount, user
         },
     })))
 
-    // Replace any existing spin sequence
-    const existing = await db.ProductMedia.findAll({ where: { product_id: productId, role: 'spin' } })
+    // Replace any existing spin sequence in this same scope (product-level, or this variant's)
+    const existing = await db.ProductMedia.findAll({ where: { product_id: productId, variant_id: variantId ?? null, role: 'spin' } })
     for (const pm of existing) {
-        await MediaService.detachFromProduct(productId, pm.media_id)
+        await MediaService.detachFromProduct(productId, pm.media_id, variantId ?? null)
         await MediaService.remove(pm.media_id).catch(() => {})
     }
 
@@ -92,10 +93,10 @@ async function generateSpinFrames(productId, referenceMediaIds, frameCount, user
             size: buffer.length,
         }
         const media = await MediaService.processUpload(file, userId)
-        await MediaService.attachToProduct(productId, media.id, 'spin', i)
+        await MediaService.attachToProduct(productId, media.id, 'spin', i, variantId ?? null)
     }
 
-    return MediaService.getProductMedia(productId)
+    return MediaService.getProductMedia(productId, variantId ?? null)
 }
 
 module.exports = { generateSpinFrames, ALLOWED_FRAME_COUNTS, MIN_REFERENCES, MAX_REFERENCES }

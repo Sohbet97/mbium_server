@@ -1,21 +1,23 @@
 const { DataTypes } = require("sequelize");
 
 module.exports = (sequelize) => {
-    const Model = sequelize.define("product_variants", {
+    const Model = sequelize.define("product_variant_sizes", {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
             primaryKey: true
         },
-        product_id: {
+        variant_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            references: { model: "products", key: "id" },
+            references: { model: "product_variants", key: "id" },
             onDelete: "CASCADE"
         },
-        name: {
-            type: DataTypes.STRING(255),
-            allowNull: false
+        size_id: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references: { model: "sizes", key: "id" },
+            onDelete: "RESTRICT"
         },
         sku: {
             type: DataTypes.STRING(100),
@@ -38,11 +40,6 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: 0
         },
-        attributes: {
-            type: DataTypes.JSONB,
-            allowNull: true,
-            defaultValue: {}
-        },
         is_active: {
             type: DataTypes.BOOLEAN,
             defaultValue: true
@@ -51,21 +48,18 @@ module.exports = (sequelize) => {
         timestamps: true,
         paranoid: true,
         indexes: [
-            { fields: ["product_id"] },
+            { unique: true, fields: ["variant_id", "size_id"] },
+            { fields: ["variant_id"] },
+            { fields: ["size_id"] },
             { fields: ["is_active"] },
         ]
     });
 
     Model.associate = (db) => {
-        Model.belongsTo(db.Product, { foreignKey: "product_id", as: "product" });
+        Model.belongsTo(db.ProductVariant, { foreignKey: "variant_id", as: "variant" });
+        Model.belongsTo(db.Size, { foreignKey: "size_id", as: "size" });
         if (db.InventoryLevel) {
-            Model.hasMany(db.InventoryLevel, { foreignKey: "variant_id", as: "inventoryLevels" });
-        }
-        if (db.ProductVariantSize) {
-            Model.hasMany(db.ProductVariantSize, { foreignKey: "variant_id", as: "sizes" });
-        }
-        if (db.ProductMedia) {
-            Model.hasMany(db.ProductMedia, { foreignKey: "variant_id", as: "media" });
+            Model.hasMany(db.InventoryLevel, { foreignKey: "variant_size_id", as: "inventoryLevels" });
         }
     };
 

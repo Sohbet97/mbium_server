@@ -9,6 +9,8 @@ router.use(sellerMiddleware);
 router.use('/dashboard',  require('./dashboard'));
 router.use('/shop',       require('./shop'));
 router.use('/categories', require('./categories'));
+router.use('/brands',     require('./brands'));
+router.use('/sizes',      require('./sizes'));
 router.use('/products',   require('./products'));
 router.use('/orders',     require('./orders'));
 router.use('/payouts',    require('./payouts'));

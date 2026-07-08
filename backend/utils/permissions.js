@@ -156,6 +156,11 @@ class Permissions {
     static REEL_POST   = 337
     static REEL_PUT    = 338
     static REEL_DELETE = 339
+
+    static SIZE_GET    = 340
+    static SIZE_POST   = 341
+    static SIZE_PUT    = 342
+    static SIZE_DELETE = 343
 }
 
 module.exports = Permissions
