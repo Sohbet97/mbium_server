@@ -10,7 +10,7 @@ const absUrl = (u) => (!u || u.startsWith('http') ? u : `${BASE}${u}`)
 const TABS = ['white', 'transparent', 'compare']
 const TAB_LABELS = { white: 'Ak fon', transparent: 'Aç-açan', compare: 'Deňeşdir' }
 
-export function BackgroundRemovalModal({ productId, media, onClose, onSaved }) {
+export function BackgroundRemovalModal({ productId, variantId, media, onClose, onSaved }) {
   const [phase, setPhase]   = useState('idle')   // idle | processing | preview | saving
   const [error, setError]   = useState(null)
   const [result, setResult] = useState(null)     // { token, whiteUrl, transparentUrl }
@@ -22,7 +22,7 @@ export function BackgroundRemovalModal({ productId, media, onClose, onSaved }) {
     setPhase('processing')
     setError(null)
     try {
-      const { data } = await SellerApi.products.removeBg(productId, media.id)
+      const { data } = await SellerApi.products.removeBg(productId, media.id, variantId)
       setResult(data)
       setTab('white')
       setPhase('preview')
@@ -41,7 +41,7 @@ export function BackgroundRemovalModal({ productId, media, onClose, onSaved }) {
         token: result.token,
         action,
         variant,
-      })
+      }, variantId)
       toast.success(action === 'replace' ? 'Surat çalşyldy' : 'Täze surat hökmünde goşuldy')
       onSaved?.()
       onClose()

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import { SellerApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,314 +7,53 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { ArrowLeft, Plus, Trash2, Loader2, Save, ChevronDown, ChevronUp, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { SellerProductMediaManager } from '@/components/media/SellerProductMediaManager'
-import { SellerProductSpinManager } from '@/components/media/SellerProductSpinManager'
+import { ArrowLeft, Plus, Loader2, Save, Layers } from 'lucide-react'
 
-const CURRENCIES = ['TMT', 'USD', 'RUB']
+const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
+function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
 
 const EMPTY_FORM = {
   name: '', name_ru: '', name_eng: '',
   category_id: '',
   description: '',
-  price: '', compare_at_price: '', cost_price: '',
-  currency: 'TMT',
-  stock: '0', sku: '', barcode: '', weight: '',
-  track_inventory: true,
-  sell_when_out_of_stock: false,
-  is_active: true,
   brand_id: '',
+  is_active: true,
 }
 
-const EMPTY_VARIANT = {
-  name: '', price: '', compare_at_price: '',
-  stock: '0', sku: '', barcode: '',
-  is_active: true, attributes: {},
-}
+// ── Variant summary row (read-only — editing happens on the variant's own page) ──
+function VariantSummaryRow({ productId, vr }) {
+  const thumb = vr.media?.[0]?.media?.thumbnail_url || vr.media?.[0]?.media?.url
+  const sizes = vr.sizes ?? []
+  const totalStock = sizes.length > 0
+    ? sizes.reduce((sum, s) => sum + (s.stock ?? 0), 0)
+    : (vr.stock ?? 0)
 
-// ── Attribute key-value editor ────────────────────────────────────────────────
-function AttributeEditor({ initial = {}, onChange }) {
-  const [pairs, setPairs] = useState(() => Object.entries(initial))
+  const prices = sizes.length > 0
+    ? sizes.map((s) => parseFloat(s.price ?? vr.price ?? 0)).filter((p) => !Number.isNaN(p))
+    : (vr.price ? [parseFloat(vr.price)] : [])
+  const minPrice = prices.length ? Math.min(...prices) : null
+  const maxPrice = prices.length ? Math.max(...prices) : null
 
-  function push(next) {
-    setPairs(next)
-    onChange(Object.fromEntries(next.filter(([k]) => k.trim())))
-  }
-
-  function updatePair(idx, field, v) {
-    push(pairs.map((p, i) => i === idx ? (field === 'k' ? [v, p[1]] : [p[0], v]) : p))
-  }
-
-  function addPair() { setPairs([...pairs, ['', '']]) }
-
-  function removePair(idx) {
-    const next = pairs.filter((_, i) => i !== idx)
-    push(next)
-  }
-
-  return (
-    <div className="space-y-1.5">
-      {pairs.map(([k, v], idx) => (
-        <div key={idx} className="flex gap-1.5 items-center">
-          <Input
-            value={k}
-            onChange={(e) => updatePair(idx, 'k', e.target.value)}
-            placeholder="Häsiýet (mysal: Reňk)"
-            className="h-7 text-xs flex-1"
-          />
-          <span className="text-slate-400 text-xs shrink-0">:</span>
-          <Input
-            value={v}
-            onChange={(e) => updatePair(idx, 'v', e.target.value)}
-            placeholder="Baha (mysal: Gyzyl)"
-            className="h-7 text-xs flex-1"
-          />
-          <button
-            type="button"
-            onClick={() => removePair(idx)}
-            className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={addPair}
-        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-      >
-        <Plus className="h-3 w-3" />Häsiýet goş
-      </button>
-    </div>
-  )
-}
-
-// ── Variant row form ──────────────────────────────────────────────────────────
-function VariantForm({ initial = EMPTY_VARIANT, onSave, onCancel, saving }) {
-  const [v, setV] = useState(initial)
-  const set = (k, val) => setV((f) => ({ ...f, [k]: val }))
-
-  return (
-    <div className="bg-slate-50 dark:bg-white/[0.03] rounded-xl p-4 space-y-3 border dark:border-white/[0.06]">
-      {/* Name + prices */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Ady <span className="text-red-500">*</span></Label>
-          <Input
-            value={v.name}
-            onChange={(e) => set('name', e.target.value)}
-            placeholder="mysal: Gyzyl / L"
-            className="h-8 text-sm"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Baha (TMT)</Label>
-          <Input
-            type="number" min="0" step="0.01"
-            value={v.price}
-            onChange={(e) => set('price', e.target.value)}
-            placeholder="Esasy bahadan alynar"
-            className="h-8 text-sm"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Asyl baha</Label>
-          <Input
-            type="number" min="0" step="0.01"
-            value={v.compare_at_price}
-            onChange={(e) => set('compare_at_price', e.target.value)}
-            placeholder="Öňki baha"
-            className="h-8 text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Stock + SKU + Barcode */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label className="text-xs">Stok</Label>
-          <Input
-            type="number" min="0"
-            value={v.stock}
-            onChange={(e) => set('stock', e.target.value)}
-            className="h-8 text-sm"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">SKU</Label>
-          <Input
-            value={v.sku}
-            onChange={(e) => set('sku', e.target.value)}
-            placeholder="ABC-001"
-            className="h-8 text-sm"
-          />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">Barkod</Label>
-          <Input
-            value={v.barcode}
-            onChange={(e) => set('barcode', e.target.value)}
-            placeholder="1234567890"
-            className="h-8 text-sm"
-          />
-        </div>
-      </div>
-
-      {/* Attributes */}
-      <div className="space-y-1">
-        <Label className="text-xs">Häsiýetler</Label>
-        <AttributeEditor
-          initial={v.attributes}
-          onChange={(attrs) => set('attributes', attrs)}
-        />
-      </div>
-
-      {/* Active toggle + actions */}
-      <div className="flex items-center justify-between pt-1">
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <div className="relative">
-            <input
-              type="checkbox"
-              className="sr-only"
-              checked={v.is_active}
-              onChange={(e) => set('is_active', e.target.checked)}
-            />
-            <div className={`w-8 h-4 rounded-full transition-colors ${v.is_active ? 'bg-blue-600' : 'bg-slate-200 dark:bg-white/20'}`} />
-            <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform ${v.is_active ? 'translate-x-4' : ''}`} />
-          </div>
-          <span className="text-xs text-slate-600 dark:text-slate-300">Işjeň</span>
-        </label>
-        <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={onCancel}>Ýatyr</Button>
-          <Button size="sm" onClick={() => onSave(v)} disabled={saving || !v.name.trim()}>
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Sakla'}
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── Per-variant size/stock rows ───────────────────────────────────────────────
-function VariantSizeManager({ productId, variant, sizeOptions }) {
-  const [sizes, setSizes] = useState(variant.sizes || [])
-  const [editing, setEditing] = useState(null) // sizeRowId | 'new' | null
-  const [saving, setSaving] = useState(false)
-  const [draft, setDraft] = useState({ size_id: '', stock: '0', sku: '', price: '' })
-
-  useEffect(() => { setSizes(variant.sizes || []) }, [variant.sizes])
-
-  function startNew() { setDraft({ size_id: '', stock: '0', sku: '', price: '' }); setEditing('new') }
-  function startEdit(row) {
-    setDraft({
-      size_id: row.size_id ?? row.size?.id ?? '',
-      stock: row.stock ?? 0,
-      sku: row.sku ?? '',
-      price: row.price ?? '',
-    })
-    setEditing(row.id)
-  }
-
-  async function save() {
-    if (!draft.size_id) { toast.error('Ölçegi saýlaň'); return }
-    setSaving(true)
-    try {
-      const payload = {
-        size_id: Number(draft.size_id),
-        stock: parseInt(draft.stock) || 0,
-        sku: draft.sku || null,
-        price: draft.price ? parseFloat(draft.price) : null,
-      }
-      if (editing === 'new') {
-        const { data } = await SellerApi.products.variants.sizes.create(productId, variant.id, payload)
-        setSizes((prev) => [...prev, data.model])
-      } else {
-        await SellerApi.products.variants.sizes.update(productId, variant.id, editing, payload)
-        setSizes((prev) => prev.map((s) => (s.id === editing ? { ...s, ...payload } : s)))
-      }
-      setEditing(null)
-      toast.success('Ölçeg ýatda saklandy')
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
-    } finally { setSaving(false) }
-  }
-
-  async function remove(rowId) {
-    if (!confirm('Ölçegi pozmak?')) return
-    try {
-      await SellerApi.products.variants.sizes.delete(productId, variant.id, rowId)
-      setSizes((prev) => prev.filter((s) => s.id !== rowId))
-      toast.success('Ölçeg pozuldy')
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
-    }
-  }
-
-  const editorRow = (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <select
-        value={draft.size_id}
-        onChange={(e) => setDraft((d) => ({ ...d, size_id: e.target.value }))}
-        className="h-7 text-xs border rounded px-1.5 bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white"
-      >
-        <option value="">Ölçeg</option>
-        {sizeOptions.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-      </select>
-      <Input className="h-7 text-xs w-16" type="number" min="0" value={draft.stock}
-        onChange={(e) => setDraft((d) => ({ ...d, stock: e.target.value }))} placeholder="Stok" />
-      <Input className="h-7 text-xs w-20" value={draft.sku}
-        onChange={(e) => setDraft((d) => ({ ...d, sku: e.target.value }))} placeholder="SKU" />
-      <Input className="h-7 text-xs w-20" type="number" min="0" step="0.01" value={draft.price}
-        onChange={(e) => setDraft((d) => ({ ...d, price: e.target.value }))} placeholder="Baha" />
-      <Button size="sm" className="h-7 text-xs px-2" onClick={save} disabled={saving}>
-        {saving ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Sakla'}
-      </Button>
-      <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => setEditing(null)}>Ýatyr</Button>
-    </div>
-  )
-
-  return (
-    <div className="ml-4 pl-3 border-l-2 border-slate-200 dark:border-white/[0.08] space-y-1.5 py-1">
-      {sizes.map((row) => (
-        editing === row.id ? <div key={row.id}>{editorRow}</div> : (
-          <div key={row.id} className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-            <span className="font-medium">{row.size?.name ?? sizeOptions.find((s) => s.id === row.size_id)?.name ?? '—'}</span>
-            <span>Stok: {row.stock}</span>
-            {row.sku && <span>SKU: {row.sku}</span>}
-            <button type="button" onClick={() => startEdit(row)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
-              <Pencil className="h-3 w-3" />
-            </button>
-            <button type="button" onClick={() => remove(row.id)} className="text-slate-400 hover:text-red-500">
-              <Trash2 className="h-3 w-3" />
-            </button>
-          </div>
-        )
-      ))}
-      {editing === 'new' ? editorRow : (
-        <button type="button" onClick={startNew} className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-700 dark:text-blue-400">
-          <Plus className="h-3 w-3" />Ölçeg goş
-        </button>
-      )}
-    </div>
-  )
-}
-
-// ── Variant display row ───────────────────────────────────────────────────────
-function VariantRow({ vr, onEdit, onDelete }) {
   const attrs = Object.entries(vr.attributes || {})
 
   return (
-    <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg border dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02]">
+    <Link
+      to={`/seller/products/${productId}/variants/${vr.id}`}
+      className="flex items-center gap-3 px-3 py-2.5 rounded-lg border dark:border-white/[0.06] bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.05] transition-colors"
+    >
+      {thumb
+        ? <img src={imgUrl(thumb)} alt={vr.name} className="h-10 w-10 rounded-lg object-cover shrink-0" />
+        : <div className="h-10 w-10 rounded-lg bg-slate-200 dark:bg-white/10 shrink-0" />
+      }
+
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <p className="text-sm font-medium dark:text-white">{vr.name}</p>
-          <span className={cn(
-            'text-[10px] px-1.5 py-0.5 rounded font-medium',
+          <p className="text-sm font-medium dark:text-white truncate">{vr.name}</p>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
             vr.is_active
               ? 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400'
               : 'bg-slate-100 text-slate-500 dark:bg-white/[0.05] dark:text-slate-500'
-          )}>
+          }`}>
             {vr.is_active ? 'Işjeň' : 'Öçürilen'}
           </span>
         </div>
@@ -328,31 +67,14 @@ function VariantRow({ vr, onEdit, onDelete }) {
           </div>
         )}
         <p className="text-xs text-slate-400 mt-0.5">
-          {vr.price
-            ? <>{parseFloat(vr.price).toFixed(2)} TMT{vr.compare_at_price && <span className="line-through ml-1.5 text-slate-300">{parseFloat(vr.compare_at_price).toFixed(2)}</span>}</>
-            : 'Esasy baha'}
-          {' · '}Stok: {vr.stock}
-          {vr.sku ? ` · SKU: ${vr.sku}` : ''}
-          {vr.barcode ? ` · ${vr.barcode}` : ''}
+          {minPrice != null
+            ? (minPrice === maxPrice ? `${minPrice.toFixed(2)} TMT` : `${minPrice.toFixed(2)}–${maxPrice.toFixed(2)} TMT`)
+            : 'Baha ýok'}
+          {' · '}Stok: {totalStock}
+          {sizes.length > 0 && ` · ${sizes.length} ölçeg`}
         </p>
       </div>
-      <div className="flex gap-1 shrink-0">
-        <button
-          type="button"
-          onClick={onEdit}
-          className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 transition-colors"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-950/30 text-slate-400 hover:text-red-500 transition-colors"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div>
+    </Link>
   )
 }
 
@@ -365,18 +87,13 @@ export default function SellerProductFormPage() {
   const [form, setForm]             = useState(EMPTY_FORM)
   const [categories, setCategories] = useState([])
   const [brands, setBrands]         = useState([])
-  const [sizeOptions, setSizeOptions] = useState([])
   const [variants, setVariants]     = useState([])
   const [loading, setLoading]       = useState(isEdit)
   const [saving, setSaving]         = useState(false)
-  const [variantSaving, setVSaving] = useState(null) // variantId | 'new'
-  const [editingVariant, setEV]     = useState(null)  // variantId | 'new' | null
-  const [showVariants, setShowVariants] = useState(true)
 
   useEffect(() => {
     SellerApi.categories.getAll().then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
     SellerApi.brands.getAll().then(({ data }) => setBrands(data.data ?? [])).catch(() => {})
-    SellerApi.sizes.getAll().then(({ data }) => setSizeOptions(data.data ?? [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -385,23 +102,13 @@ export default function SellerProductFormPage() {
       .then(({ data }) => {
         const p = data.model
         setForm({
-          name:                   p.name          ?? '',
-          name_ru:                p.name_ru       ?? '',
-          name_eng:               p.name_eng      ?? '',
-          category_id:            p.category_id   ?? '',
-          description:            p.description   ?? '',
-          price:                  p.price         ?? '',
-          compare_at_price:       p.compare_at_price ?? '',
-          cost_price:             p.cost_price    ?? '',
-          currency:               p.currency      ?? 'TMT',
-          stock:                  p.stock ?? 0,
-          sku:                    p.sku           ?? '',
-          barcode:                p.barcode       ?? '',
-          weight:                 p.weight        ?? '',
-          track_inventory:        p.track_inventory        ?? true,
-          sell_when_out_of_stock: p.sell_when_out_of_stock ?? false,
-          is_active:              p.is_active     ?? true,
-          brand_id:               p.brand_id      ?? '',
+          name:        p.name        ?? '',
+          name_ru:     p.name_ru     ?? '',
+          name_eng:    p.name_eng    ?? '',
+          category_id: p.category_id ?? '',
+          description: p.description ?? '',
+          brand_id:    p.brand_id    ?? '',
+          is_active:   p.is_active   ?? true,
         })
         setVariants(p.variants ?? [])
       })
@@ -415,19 +122,13 @@ export default function SellerProductFormPage() {
     e.preventDefault()
     if (!form.name.trim())    { toast.error('Haryt adyny giriziň'); return }
     if (!form.category_id)    { toast.error('Kategoriýa saýlaň');    return }
-    if (!form.price)          { toast.error('Bahany giriziň');        return }
 
     setSaving(true)
     try {
       const payload = {
         ...form,
-        price:             parseFloat(form.price) || 0,
-        compare_at_price:  form.compare_at_price ? parseFloat(form.compare_at_price) : null,
-        cost_price:        form.cost_price        ? parseFloat(form.cost_price)       : null,
-        stock:             parseInt(form.stock)   || 0,
-        weight:            form.weight            ? parseInt(form.weight)             : null,
-        category_id:       Number(form.category_id),
-        brand_id:          form.brand_id ? Number(form.brand_id) : null,
+        category_id: Number(form.category_id),
+        brand_id:    form.brand_id ? Number(form.brand_id) : null,
       }
 
       if (isEdit) {
@@ -435,67 +136,13 @@ export default function SellerProductFormPage() {
         toast.success('Haryt ýatda saklandy')
       } else {
         const { data } = await SellerApi.products.create(payload)
-        toast.success('Haryt döredildi')
+        toast.success('Haryt döredildi — indi görnüş goşuň')
         navigate(`/seller/products/${data.model.id}/edit`, { replace: true })
       }
     } catch (e) {
       toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
     } finally {
       setSaving(false)
-    }
-  }
-
-  // ── Variant handlers ──────────────────────────────────────────────────────
-  async function saveNewVariant(v) {
-    setVSaving('new')
-    try {
-      const { data } = await SellerApi.products.variants.create(id, {
-        name:             v.name.trim(),
-        price:            v.price ? parseFloat(v.price) : null,
-        compare_at_price: v.compare_at_price ? parseFloat(v.compare_at_price) : null,
-        stock:            parseInt(v.stock) || 0,
-        sku:              v.sku || null,
-        barcode:          v.barcode || null,
-        is_active:        v.is_active,
-        attributes:       v.attributes || {},
-      })
-      setVariants((prev) => [...prev, data.model])
-      setEV(null)
-      toast.success('Görnüş goşuldy')
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
-    } finally { setVSaving(null) }
-  }
-
-  async function saveEditVariant(variantId, v) {
-    setVSaving(variantId)
-    try {
-      await SellerApi.products.variants.update(id, variantId, {
-        name:             v.name.trim(),
-        price:            v.price ? parseFloat(v.price) : null,
-        compare_at_price: v.compare_at_price ? parseFloat(v.compare_at_price) : null,
-        stock:            parseInt(v.stock) || 0,
-        sku:              v.sku || null,
-        barcode:          v.barcode || null,
-        is_active:        v.is_active,
-        attributes:       v.attributes || {},
-      })
-      setVariants((prev) => prev.map((vr) => vr.id === variantId ? { ...vr, ...v } : vr))
-      setEV(null)
-      toast.success('Görnüş üýtgedildi')
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
-    } finally { setVSaving(null) }
-  }
-
-  async function deleteVariant(variantId) {
-    if (!confirm('Görnüşi pozmak?')) return
-    try {
-      await SellerApi.products.variants.delete(id, variantId)
-      setVariants((prev) => prev.filter((v) => v.id !== variantId))
-      toast.success('Görnüş pozuldy')
-    } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
     }
   }
 
@@ -569,180 +216,37 @@ export default function SellerProductFormPage() {
               <Label className="mb-1 block">Beýany</Label>
               <Textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={4} placeholder="Haryt barada maglumat…" />
             </div>
+
+            <Toggle
+              label="Işjeň"
+              desc="Müşderiler görüp bilýär"
+              checked={form.is_active}
+              onChange={(v) => set('is_active', v)}
+            />
           </CardContent>
         </Card>
 
-        {/* ── Pricing ────────────────────────────────────────────────────── */}
-        <Card>
-          <CardHeader><CardTitle>Baha</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <Label className="mb-1 block">Baha <span className="text-red-500">*</span></Label>
-                <Input type="number" min="0" step="0.01" value={form.price} onChange={(e) => set('price', e.target.value)} placeholder="0.00" required />
-              </div>
-              <div>
-                <Label className="mb-1 block">Asyl baha</Label>
-                <Input type="number" min="0" step="0.01" value={form.compare_at_price} onChange={(e) => set('compare_at_price', e.target.value)} placeholder="0.00" />
-                <p className="text-xs text-slate-400 mt-1">Düşürilen bahadan öňki</p>
-              </div>
-              <div>
-                <Label className="mb-1 block">Özüne düşen baha</Label>
-                <Input type="number" min="0" step="0.01" value={form.cost_price} onChange={(e) => set('cost_price', e.target.value)} placeholder="0.00" />
-                <p className="text-xs text-slate-400 mt-1">Görünmez, hasaplama üçin</p>
-              </div>
-              <div>
-                <Label className="mb-1 block">Pul birligi</Label>
-                <select
-                  value={form.currency}
-                  onChange={(e) => set('currency', e.target.value)}
-                  className="w-full h-9 border rounded-md px-3 text-sm bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Inventory ──────────────────────────────────────────────────── */}
-        <Card>
-          <CardHeader><CardTitle>Ammar we logistika</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div>
-                <Label className="mb-1 block">Stok</Label>
-                <Input type="number" min="0" value={form.stock} onChange={(e) => set('stock', e.target.value)} />
-              </div>
-              <div>
-                <Label className="mb-1 block">SKU</Label>
-                <Input value={form.sku} onChange={(e) => set('sku', e.target.value)} placeholder="ABC-001" />
-              </div>
-              <div>
-                <Label className="mb-1 block">Barkod</Label>
-                <Input value={form.barcode} onChange={(e) => set('barcode', e.target.value)} placeholder="1234567890" />
-              </div>
-              <div>
-                <Label className="mb-1 block">Agramy (gram)</Label>
-                <Input type="number" min="0" value={form.weight} onChange={(e) => set('weight', e.target.value)} placeholder="500" />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-5 pt-1">
-              <Toggle
-                label="Stok yzarlamak"
-                desc="Müşderilere galyk stok görkezilýär"
-                checked={form.track_inventory}
-                onChange={(v) => set('track_inventory', v)}
-              />
-              <Toggle
-                label="Stok gutaranda-da sat"
-                desc="0 stokda hem haryt görünýär"
-                checked={form.sell_when_out_of_stock}
-                onChange={(v) => set('sell_when_out_of_stock', v)}
-              />
-              <Toggle
-                label="Işjeň"
-                desc="Müşderiler görüp bilýär"
-                checked={form.is_active}
-                onChange={(v) => set('is_active', v)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* ── Media (edit mode only) ─────────────────────────────────────── */}
+        {/* ── Variants (edit mode only) — media/spin/sizes/stock/sales all live on each variant's own page ── */}
         {isEdit && (
           <Card>
-            <CardHeader><CardTitle>Suratlar</CardTitle></CardHeader>
-            <CardContent>
-              <SellerProductMediaManager productId={id} />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ── 360° Spin View (edit mode only) ─────────────────────────────── */}
-        {isEdit && (
-          <Card>
-            <CardHeader><CardTitle>360° Aýlanma görnüşi</CardTitle></CardHeader>
-            <CardContent>
-              <SellerProductSpinManager productId={id} />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ── Variants (edit mode only) ───────────────────────────────────── */}
-        {isEdit && (
-          <Card>
-            <CardHeader>
-              <button
-                type="button"
-                className="flex items-center justify-between w-full"
-                onClick={() => setShowVariants((v) => !v)}
-              >
-                <CardTitle>Görnüşler ({variants.length})</CardTitle>
-                {showVariants ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
-              </button>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-slate-400" />
+                Görnüşler ({variants.length})
+              </CardTitle>
+              <Button type="button" size="sm" onClick={() => navigate(`/seller/products/${id}/variants/new`)}>
+                <Plus className="h-4 w-4 mr-1.5" />Görnüş goş
+              </Button>
             </CardHeader>
-            {showVariants && (
-              <CardContent className="space-y-3">
-                {variants.length === 0 && editingVariant !== 'new' && (
-                  <p className="text-sm text-slate-400 text-center py-4">Görnüş ýok. Harydyň reňk, ölçeg ýaly görnüşleri bolsa goşuň.</p>
-                )}
-
-                {/* Existing variants */}
-                {variants.map((vr) => (
-                  editingVariant === vr.id ? (
-                    <VariantForm
-                      key={vr.id}
-                      initial={{
-                        name:             vr.name             ?? '',
-                        price:            vr.price            ?? '',
-                        compare_at_price: vr.compare_at_price ?? '',
-                        stock:            vr.stock            ?? 0,
-                        sku:              vr.sku              ?? '',
-                        barcode:          vr.barcode          ?? '',
-                        is_active:        vr.is_active        ?? true,
-                        attributes:       (typeof vr.attributes === 'object' ? vr.attributes : {}) ?? {},
-                      }}
-                      saving={variantSaving === vr.id}
-                      onSave={(v) => saveEditVariant(vr.id, v)}
-                      onCancel={() => setEV(null)}
-                    />
-                  ) : (
-                    <div key={vr.id}>
-                      <VariantRow
-                        vr={vr}
-                        onEdit={() => setEV(vr.id)}
-                        onDelete={() => deleteVariant(vr.id)}
-                      />
-                      {sizeOptions.length > 0 && (
-                        <VariantSizeManager productId={id} variant={vr} sizeOptions={sizeOptions} />
-                      )}
-                    </div>
-                  )
-                ))}
-
-                {/* New variant form */}
-                {editingVariant === 'new' ? (
-                  <VariantForm
-                    saving={variantSaving === 'new'}
-                    onSave={saveNewVariant}
-                    onCancel={() => setEV(null)}
-                  />
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() => setEV('new')}
-                  >
-                    <Plus className="h-4 w-4 mr-1.5" />Görnüş goş
-                  </Button>
-                )}
-              </CardContent>
-            )}
+            <CardContent className="space-y-2">
+              {variants.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-6">
+                  Bu haryt heniz görnüşsiz. Suraty, bahasy, stogy we ölçeglerini goşmak üçin bir görnüş dörediň (mysal: reňk).
+                </p>
+              ) : (
+                variants.map((vr) => <VariantSummaryRow key={vr.id} productId={id} vr={vr} />)
+              )}
+            </CardContent>
           </Card>
         )}
 
@@ -782,13 +286,5 @@ function Toggle({ label, desc, checked, onChange }) {
         {desc && <p className="text-xs text-slate-400">{desc}</p>}
       </div>
     </label>
-  )
-}
-
-function Pencil({ className }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-    </svg>
   )
 }

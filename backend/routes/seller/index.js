@@ -15,6 +15,7 @@ router.use('/products',   require('./products'));
 router.use('/orders',     require('./orders'));
 router.use('/payouts',    require('./payouts'));
 router.use('/discounts',  require('./discounts'));
+router.use('/flash-sales', require('./flash-sales'));
 router.use('/media',      require('./media'));
 router.use('/banners',    require('./banners'));
 router.use('/plans',               require('./plans'));

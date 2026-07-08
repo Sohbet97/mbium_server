@@ -254,6 +254,14 @@ export class AdminApi {
     update:  (id, data)   => http.put(a(`${PATHS.BRANDS}/${id}`), data),
     delete:  (id)         => http.delete(a(`${PATHS.BRANDS}/${id}`)),
   }
+  static sizes = {
+    getAll:  (params)     => http.get(a(`${PATHS.SIZES}`), { params }),
+    getTree: ()           => http.get(a(`${PATHS.SIZES}/tree`)),
+    getOne:  (id)         => http.get(a(`${PATHS.SIZES}/${id}`)),
+    create:  (data)       => http.post(a(`${PATHS.SIZES}`), data),
+    update:  (id, data)   => http.put(a(`${PATHS.SIZES}/${id}`), data),
+    delete:  (id)         => http.delete(a(`${PATHS.SIZES}/${id}`)),
+  }
   static suppliers = {
     getAll:  (params)     => http.get(a(`${PATHS.SUPPLIERS}`), { params }),
     getOne:  (id)         => http.get(a(`${PATHS.SUPPLIERS}/${id}`)),
@@ -328,15 +336,16 @@ export class SellerApi {
   static products = {
     getAll:  (params)       => http.get(s('/products'), { params }),
     getOne:  (id)           => http.get(s(`/products/${id}`)),
-    generateSpin: (id, data) => http.post(s(`/products/${id}/spin/generate`), data),
-    generateSpinFromUpload: (id, formData) =>
-      http.post(s(`/products/${id}/spin/generate-from-upload`), formData, {
+    generateSpin: (id, data, variantId) =>
+      http.post(s(variantId != null ? `/products/${id}/variants/${variantId}/spin/generate` : `/products/${id}/spin/generate`), data),
+    generateSpinFromUpload: (id, formData, variantId) =>
+      http.post(s(variantId != null ? `/products/${id}/variants/${variantId}/spin/generate-from-upload` : `/products/${id}/spin/generate-from-upload`), formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       }),
-    removeBg:        (productId, mediaId) =>
-      http.post(s(`/products/${productId}/media/${mediaId}/remove-bg`)),
-    confirmRemoveBg: (productId, mediaId, data) =>
-      http.post(s(`/products/${productId}/media/${mediaId}/remove-bg/confirm`), data),
+    removeBg:        (productId, mediaId, variantId) =>
+      http.post(s(`/products/${productId}/media/${mediaId}/remove-bg`), null, { params: variantId != null ? { variant_id: variantId } : {} }),
+    confirmRemoveBg: (productId, mediaId, data, variantId) =>
+      http.post(s(`/products/${productId}/media/${mediaId}/remove-bg/confirm`), { ...data, variant_id: variantId ?? undefined }),
     rejectRemoveBg:  (productId, mediaId, data) =>
       http.post(s(`/products/${productId}/media/${mediaId}/remove-bg/reject`), data),
     rotateMedia:     (productId, mediaId, degrees) =>
@@ -377,6 +386,12 @@ export class SellerApi {
     update:  (id, data)     => http.put(s(`/discounts/${id}`), data),
     delete:  (id)           => http.delete(s(`/discounts/${id}`)),
   }
+  static flashSales = {
+    getAll:  (params)       => http.get(s('/flash-sales'), { params }),
+    create:  (data)         => http.post(s('/flash-sales'), data),
+    update:  (id, data)     => http.put(s(`/flash-sales/${id}`), data),
+    delete:  (id)           => http.delete(s(`/flash-sales/${id}`)),
+  }
   static banners = {
     getAll:  ()             => http.get(s('/banners')),
     create:  (data)         => http.post(s('/banners'), data),
@@ -400,10 +415,10 @@ export class SellerApi {
         headers: { 'Content-Type': 'multipart/form-data' },
       }),
     delete: (id)                  => http.delete(s(`/media/${id}`)),
-    getProductMedia:    (productId)             => http.get(s(`/media/product/${productId}`)),
-    attachToProduct:    (productId, data)       => http.post(s(`/media/product/${productId}`), data),
-    updateProductMedia: (productId, mediaId, data) => http.patch(s(`/media/product/${productId}/${mediaId}`), data),
-    detachFromProduct:  (productId, mediaId)   => http.delete(s(`/media/product/${productId}/${mediaId}`)),
+    getProductMedia:    (productId, variantId)   => http.get(s(`/media/product/${productId}`), { params: variantId != null ? { variant_id: variantId } : {} }),
+    attachToProduct:    (productId, data, variantId) => http.post(s(`/media/product/${productId}`), { ...data, variant_id: variantId ?? undefined }),
+    updateProductMedia: (productId, mediaId, data, variantId) => http.patch(s(`/media/product/${productId}/${mediaId}`), { ...data, variant_id: variantId ?? undefined }),
+    detachFromProduct:  (productId, mediaId, variantId)   => http.delete(s(`/media/product/${productId}/${mediaId}`), { params: variantId != null ? { variant_id: variantId } : {} }),
   }
   static support = {
     getRoom:     ()     => http.get(s('/support/room')),

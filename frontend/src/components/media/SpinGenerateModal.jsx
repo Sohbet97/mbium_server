@@ -15,7 +15,7 @@ const MAX_REFS = 4
  * Modal for AI-generating a 360° spin frame sequence via Gemini (Nano Banana),
  * either from the product's existing photos or from newly uploaded reference photos.
  */
-export function SpinGenerateModal({ productId, onClose, onGenerated }) {
+export function SpinGenerateModal({ productId, variantId, onClose, onGenerated }) {
   const [tab, setTab] = useState('existing') // 'existing' | 'upload'
   const [items, setItems]       = useState([])
   const [loading, setLoading]   = useState(true)
@@ -26,14 +26,14 @@ export function SpinGenerateModal({ productId, onClose, onGenerated }) {
   const fileRef = useRef(null)
 
   useEffect(() => {
-    SellerApi.media.getProductMedia(productId)
+    SellerApi.media.getProductMedia(productId, variantId)
       .then(({ data }) => {
         const photos = (data.data ?? []).filter((pm) => pm.media?.type === 'image' && pm.role !== 'spin')
         setItems(photos)
       })
       .catch(() => toast.error('Suratlar ýüklenip bolmady'))
       .finally(() => setLoading(false))
-  }, [productId])
+  }, [productId, variantId])
 
   function toggle(mediaId) {
     setSelected((prev) => {
@@ -86,7 +86,7 @@ export function SpinGenerateModal({ productId, onClose, onGenerated }) {
         const fd = new FormData()
         uploadFiles.forEach(({ file }) => fd.append('files', file))
         fd.append('frame_count', frameCount)
-        const res = await SellerApi.products.generateSpinFromUpload(productId, fd)
+        const res = await SellerApi.products.generateSpinFromUpload(productId, fd, variantId)
         data = res.data
       } else {
         if (selected.length < MIN_REFS) {
@@ -96,7 +96,7 @@ export function SpinGenerateModal({ productId, onClose, onGenerated }) {
         const res = await SellerApi.products.generateSpin(productId, {
           media_ids: selected,
           frame_count: frameCount,
-        })
+        }, variantId)
         data = res.data
       }
       toast.success('360° aýlanma görnüşi döredildi')

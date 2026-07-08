@@ -74,13 +74,13 @@ Object.values(db).forEach((model) => {
 // db.Media.sync({ alter: true });
 // db.PushNotificationCampaign.model.sync({ alter: true });
 
-// Object.keys(db)?.map(async (modelKey) => {
-//   try {
-//     if (db[modelKey] && db[modelKey] != null) await db[modelKey]?.sync({ alter: true }).catch((e) => console.log(e));
-//   } catch (e) {
-//     console.error(`Error while trying to sync ${modelKey} model: `, e);
-//   }
-// });
+Object.keys(db)?.map(async (modelKey) => {
+  try {
+    if (db[modelKey] && db[modelKey] != null) await db[modelKey]?.sync({ alter: true }).catch((e) => console.log(e));
+  } catch (e) {
+    console.error(`Error while trying to sync ${modelKey} model: `, e);
+  }
+});
 
 //#endregion
 

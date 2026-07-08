@@ -42,6 +42,14 @@ class ProductService {
                     as: "variants",
                     include: [
                         { model: db.ProductVariantSize, as: "sizes", include: [{ model: db.Size, as: "size" }] },
+                        {
+                            model: db.ProductMedia,
+                            as: "media",
+                            required: false,
+                            where: { role: { [Op.in]: ["primary", "gallery"] } },
+                            order: [["sort_order", "ASC"]],
+                            include: [{ model: db.Media, as: "media" }],
+                        },
                     ],
                 },
                 {
@@ -64,7 +72,7 @@ class ProductService {
             name_ru:                req.body?.name_ru,
             name_eng:               req.body?.name_eng,
             description:            req.body?.description,
-            price:                  req.body?.price,
+            price:                  req.body?.price ?? 0,
             compare_at_price:       req.body?.compare_at_price,
             currency:               req.body?.currency || "TMT",
             cost_price:             req.body?.cost_price,

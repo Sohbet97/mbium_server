@@ -11,7 +11,7 @@ const absUrl = (url) => (!url || url.startsWith('http') ? url : `${BASE}${url}`)
 const MAX_FRAMES = 36
 const MIN_FRAMES_FOR_PREVIEW = 2
 
-export function SellerProductSpinManager({ productId }) {
+export function SellerProductSpinManager({ productId, variantId }) {
   const [items, setItems]       = useState([])
   const [loading, setLoading]   = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -25,7 +25,7 @@ export function SellerProductSpinManager({ productId }) {
   async function load() {
     setLoading(true)
     try {
-      const { data } = await SellerApi.media.getProductMedia(productId)
+      const { data } = await SellerApi.media.getProductMedia(productId, variantId)
       const frames = (data.data ?? [])
         .filter((pm) => pm.role === 'spin')
         .sort((a, b) => a.sort_order - b.sort_order)
@@ -34,12 +34,12 @@ export function SellerProductSpinManager({ productId }) {
     finally   { setLoading(false) }
   }
 
-  useEffect(() => { if (productId) load() }, [productId])
+  useEffect(() => { if (productId) load() }, [productId, variantId])
 
   // ── Renormalize sort_order to a contiguous 0..N-1 sequence ─────────────────
   async function persistOrder(ordered) {
     await Promise.all(ordered.map((pm, i) =>
-      SellerApi.media.updateProductMedia(productId, pm.media_id, { sort_order: i })
+      SellerApi.media.updateProductMedia(productId, pm.media_id, { sort_order: i }, variantId)
     ))
   }
 
@@ -70,7 +70,7 @@ export function SellerProductSpinManager({ productId }) {
           media_id: media.id,
           role: 'spin',
           sort_order: nextIndex,
-        })
+        }, variantId)
         nextIndex += 1
       }
       toast.success(`${toUpload.length} kadr goşuldy`)
@@ -86,7 +86,7 @@ export function SellerProductSpinManager({ productId }) {
   async function handleDelete(e, pm) {
     e.stopPropagation()
     try {
-      await SellerApi.media.detachFromProduct(productId, pm.media_id)
+      await SellerApi.media.detachFromProduct(productId, pm.media_id, variantId)
       const remaining = itemsRef.current.filter((it) => it.media_id !== pm.media_id)
       await persistOrder(remaining)
       setItems(remaining.map((it, i) => ({ ...it, sort_order: i })))
@@ -252,6 +252,7 @@ export function SellerProductSpinManager({ productId }) {
       {generateOpen && (
         <SpinGenerateModal
           productId={productId}
+          variantId={variantId}
           onClose={() => setGenerateOpen(false)}
           onGenerated={() => load()}
         />

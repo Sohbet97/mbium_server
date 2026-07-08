@@ -165,7 +165,7 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
   )
 }
 
-export function SellerProductMediaManager({ productId }) {
+export function SellerProductMediaManager({ productId, variantId }) {
   const [items, setItems]     = useState([])
   const [loading, setLoading] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -178,13 +178,13 @@ export function SellerProductMediaManager({ productId }) {
   async function load() {
     setLoading(true)
     try {
-      const { data } = await SellerApi.media.getProductMedia(productId)
+      const { data } = await SellerApi.media.getProductMedia(productId, variantId)
       setItems(data.data ?? [])
     } catch { toast.error('Suratlar ýüklenip bolmady') }
     finally   { setLoading(false) }
   }
 
-  useEffect(() => { if (productId) load() }, [productId])
+  useEffect(() => { if (productId) load() }, [productId, variantId])
 
   async function handleSelect(selected) {
     if (!selected.length) return
@@ -194,7 +194,7 @@ export function SellerProductMediaManager({ productId }) {
         SellerApi.media.attachToProduct(productId, {
           media_id: m.id,
           role: !hasPrimary && i === 0 ? 'primary' : 'gallery',
-        })
+        }, variantId)
       ))
       load()
     } catch (e) {
@@ -216,7 +216,7 @@ export function SellerProductMediaManager({ productId }) {
   async function handleDetach(e, mediaId) {
     e.stopPropagation()
     try {
-      await SellerApi.media.detachFromProduct(productId, mediaId)
+      await SellerApi.media.detachFromProduct(productId, mediaId, variantId)
       setItems((prev) => prev.filter((it) => it.media_id !== mediaId))
     } catch { toast.error('Aýrylyp bolmady') }
   }
@@ -224,7 +224,7 @@ export function SellerProductMediaManager({ productId }) {
   async function handleSetPrimary(e, mediaId) {
     e.stopPropagation()
     try {
-      await SellerApi.media.updateProductMedia(productId, mediaId, { role: 'primary' })
+      await SellerApi.media.updateProductMedia(productId, mediaId, { role: 'primary' }, variantId)
       load()
     } catch { toast.error('Belläp bolmady') }
   }
@@ -249,7 +249,7 @@ export function SellerProductMediaManager({ productId }) {
     dragSrc.current = null
     try {
       await Promise.all(itemsRef.current.map((pm, i) =>
-        SellerApi.media.updateProductMedia(productId, pm.media_id, { sort_order: i })
+        SellerApi.media.updateProductMedia(productId, pm.media_id, { sort_order: i }, variantId)
       ))
     } catch { /* silently ignore reorder save failure */ }
   }
@@ -374,6 +374,7 @@ export function SellerProductMediaManager({ productId }) {
       {bgRemovalMedia && (
         <BackgroundRemovalModal
           productId={productId}
+          variantId={variantId}
           media={bgRemovalMedia}
           onClose={() => setBgRemovalMedia(null)}
           onSaved={() => { setBgRemovalMedia(null); load() }}
