@@ -11,6 +11,7 @@ const orderSchema = yup.object().shape({
             yup.object().shape({
                 product_id: yup.number().integer().required("Haryt saýlaň"),
                 variant_id: yup.number().integer().nullable().optional(),
+                variant_size_id: yup.number().integer().nullable().optional(),
                 quantity: yup.number().integer().required("Mukdary giriziň").min(1),
             })
         )
@@ -21,6 +22,7 @@ const orderSchema = yup.object().shape({
 const cartItemSchema = yup.object().shape({
     product_id: yup.number().integer().required("Haryt saýlaň"),
     variant_id: yup.number().integer().nullable().optional(),
+    variant_size_id: yup.number().integer().nullable().optional(),
     quantity: yup.number().integer().required("Mukdary giriziň").min(1),
 });
 

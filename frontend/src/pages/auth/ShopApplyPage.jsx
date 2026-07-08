@@ -100,11 +100,12 @@ export default function ShopApplyPage() {
   }, [user, navigate])
 
   useEffect(() => {
+    if (tokenLoading) return
     AuthApi.getShopTypes({ limit: 100 })
       .then(({ data }) => setShopTypes(data.data ?? []))
       .catch(() => {})
       .finally(() => setTypesLoading(false))
-  }, [])
+  }, [tokenLoading])
 
   function setFile(name, file) {
     setFiles((f) => ({ ...f, [name]: file }))

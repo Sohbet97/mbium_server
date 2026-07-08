@@ -98,19 +98,53 @@ class ProductController {
 
     static async updateVariant(req, res, next) {
         try {
-            await ProductService.updateVariant(req.params.variantId, req.body);
+            const [count] = await ProductService.updateVariant(req.params.id, req.params.variantId, req.body);
+            if (!count) throw ApiError.NotFound("Wariant tapylmady");
             return res.status(200).json({ ok: true });
         } catch (e) { next(e); }
     }
 
     static async deleteVariant(req, res, next) {
         try {
-            await ProductService.deleteVariant(req.params.variantId);
+            const count = await ProductService.deleteVariant(req.params.id, req.params.variantId);
+            if (!count) throw ApiError.NotFound("Wariant tapylmady");
             return res.sendStatus(200);
         } catch (e) { next(e); }
     }
 
-    static getFilter({ text, category_id, shop_id, is_active, status, paranoid } = {}) {
+    // ── Variant sizes ─────────────────────────────────────────────────────────────
+
+    static async addVariantSize(req, res, next) {
+        try {
+            const variant = await db.ProductVariant.findOne({ where: { id: req.params.variantId, product_id: req.params.id } });
+            if (!variant) throw ApiError.NotFound("Wariant tapylmady");
+            if (!req.body?.size_id) throw ApiError.BadRequest("Ölçegi saýlaň");
+            const sizeRow = await ProductService.addVariantSize(req.params.variantId, req.body);
+            return res.status(201).json({ model: sizeRow });
+        } catch (e) { next(e); }
+    }
+
+    static async updateVariantSize(req, res, next) {
+        try {
+            const variant = await db.ProductVariant.findOne({ where: { id: req.params.variantId, product_id: req.params.id } });
+            if (!variant) throw ApiError.NotFound("Wariant tapylmady");
+            const [count] = await ProductService.updateVariantSize(req.params.variantId, req.params.sizeRowId, req.body);
+            if (!count) throw ApiError.NotFound("Ölçeg tapylmady");
+            return res.status(200).json({ ok: true });
+        } catch (e) { next(e); }
+    }
+
+    static async deleteVariantSize(req, res, next) {
+        try {
+            const variant = await db.ProductVariant.findOne({ where: { id: req.params.variantId, product_id: req.params.id } });
+            if (!variant) throw ApiError.NotFound("Wariant tapylmady");
+            const count = await ProductService.deleteVariantSize(req.params.variantId, req.params.sizeRowId);
+            if (!count) throw ApiError.NotFound("Ölçeg tapylmady");
+            return res.sendStatus(200);
+        } catch (e) { next(e); }
+    }
+
+    static getFilter({ text, category_id, shop_id, brand_id, is_active, status, paranoid } = {}) {
         const filter = {};
         if (text) {
             const q = buildTsQuery(text)
@@ -132,6 +166,7 @@ class ProductController {
         }
         if (category_id) filter.category_id = category_id;
         if (shop_id) filter.shop_id = shop_id;
+        if (brand_id) filter.brand_id = brand_id;
         if (is_active !== undefined) filter.is_active = is_active;
         if (status !== undefined) filter.status = status;
         if (paranoid) filter.deletedAt = { [Op.ne]: null };

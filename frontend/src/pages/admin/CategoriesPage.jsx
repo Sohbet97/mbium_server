@@ -46,7 +46,7 @@ function buildTree(flat) {
 
 const EMPTY_FORM = {
   name: '', name_ru: '', name_eng: '',
-  slug: '', parent_id: '', icon: '', order: '',
+  slug: '', parent_id: '', icon: '', image: '', order: '',
   seo_title: '', seo_description: '',
 }
 
@@ -59,6 +59,7 @@ function buildForm(category) {
     slug:            category.slug            ?? '',
     parent_id:       category.parent_id       ?? '',
     icon:            category.icon            ?? '',
+    image:           category.image           ?? '',
     order:           category.order           ?? '',
     seo_title:       category.seo_title       ?? '',
     seo_description: category.seo_description ?? '',
@@ -69,6 +70,7 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
   const { t } = useTranslation()
   const [form, setForm]             = useState(() => buildForm(category))
   const [saving, setSaving]         = useState(false)
+  const [uploading, setUploading]   = useState(false)
   const [error, setError]           = useState('')
   const [slugTouched, setSlugTouched] = useState(() => Boolean(category))
 
@@ -78,6 +80,23 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
       if (field === 'name' && !slugTouched) next.slug = slugify(value)
       return next
     })
+  }
+
+  async function handleImageChange(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setError(''); setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const { data } = await AdminApi.media.upload(formData)
+      set('image', data?.data?.url ?? '')
+    } catch (e) {
+      setError(e.response?.data?.message ?? 'Error')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const isValid = Boolean(form.name.trim() && form.slug.trim())
@@ -93,6 +112,7 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
         slug:            form.slug.trim(),
         parent_id:       form.parent_id !== '' ? Number(form.parent_id) : null,
         icon:            form.icon.trim() || null,
+        image:           form.image.trim() || null,
         order:           form.order !== '' ? Number(form.order) : null,
         seo_title:       form.seo_title.trim()       || null,
         seo_description: form.seo_description.trim() || null,
@@ -152,6 +172,35 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
             </FormField>
           </div>
 
+          <FormField label={t('categories.image')}>
+            <div className="flex items-center gap-3">
+              {form.image ? (
+                <img src={form.image} alt="" className="h-14 w-14 rounded object-cover border flex-shrink-0" />
+              ) : (
+                <div className="h-14 w-14 rounded border border-dashed flex-shrink-0" />
+              )}
+              <div className="flex-1 space-y-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploading}
+                  onChange={handleImageChange}
+                  className="text-sm text-slate-500 file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium hover:file:bg-slate-200"
+                />
+                {uploading && <p className="text-xs text-slate-400">{t('common.loading')}</p>}
+                {form.image && (
+                  <button
+                    type="button"
+                    className="text-xs text-red-600 hover:underline"
+                    onClick={() => set('image', '')}
+                  >
+                    {t('common.remove', 'Remove')}
+                  </button>
+                )}
+              </div>
+            </div>
+          </FormField>
+
           <FormField label={t('categories.seoTitle')}>
             <Input value={form.seo_title} onChange={(e) => set('seo_title', e.target.value)} maxLength={70} />
           </FormField>
@@ -193,7 +242,11 @@ function CategoryTreeRow({ cat, depth = 0, forceExpand, onEdit, onDelete }) {
             ) : (
               <span className="w-5 flex-shrink-0" />
             )}
-            {cat.icon && <span className="text-sm flex-shrink-0">{cat.icon}</span>}
+            {cat.image ? (
+              <img src={cat.image} alt="" className="h-6 w-6 rounded object-cover flex-shrink-0" />
+            ) : cat.icon ? (
+              <span className="text-sm flex-shrink-0">{cat.icon}</span>
+            ) : null}
             <div className="min-w-0">
               <p className="text-sm font-medium text-slate-900 truncate">{cat.name}</p>
               {cat.name_ru && (
@@ -432,7 +485,11 @@ export default function CategoriesPage() {
                     <tr key={cat.id} className="border-b last:border-0 hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {cat.icon && <span className="text-base">{cat.icon}</span>}
+                          {cat.image ? (
+                            <img src={cat.image} alt="" className="h-8 w-8 rounded object-cover flex-shrink-0" />
+                          ) : cat.icon ? (
+                            <span className="text-base">{cat.icon}</span>
+                          ) : null}
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-slate-900 truncate">{cat.name}</p>
                             {cat.name_ru && (

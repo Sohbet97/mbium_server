@@ -43,6 +43,7 @@ import SellerShopPage from '@/pages/seller/SellerShopPage'
 import SellerDiscountsPage from '@/pages/seller/SellerDiscountsPage'
 import SellerPayoutsPage from '@/pages/seller/SellerPayoutsPage'
 import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
+import SellerProductVariantPage from '@/pages/seller/SellerProductVariantPage'
 import SellerMediaPage from '@/pages/seller/SellerMediaPage'
 import SellerBannersPage from '@/pages/seller/SellerBannersPage'
 import SellerSubscriptionPage from '@/pages/seller/SellerSubscriptionPage'
@@ -58,6 +59,7 @@ import AdminCoinsPage from '@/pages/admin/AdminCoinsPage'
 import AdminFavoritesPage from '@/pages/admin/AdminFavoritesPage'
 import ProductTagsPage from '@/pages/admin/ProductTagsPage'
 import BrandsPage from '@/pages/admin/BrandsPage'
+import SizesPage from '@/pages/admin/SizesPage'
 import SuppliersPage from '@/pages/admin/SuppliersPage'
 import AdminCommentsPage from '@/pages/admin/AdminCommentsPage'
 import AdminKycPage from '@/pages/admin/AdminKycPage'
@@ -108,6 +110,7 @@ const router = createBrowserRouter([
           { path: 'favorites',          element: <AdminFavoritesPage />,           handle: { titleKey: 'favorites.title' } },
           { path: 'catalog/tags',       element: <ProductTagsPage />,              handle: { titleKey: 'productTags.title' } },
           { path: 'catalog/brands',    element: <BrandsPage />,                   handle: { titleKey: 'brands.title' } },
+          { path: 'catalog/sizes',     element: <SizesPage />,                    handle: { titleKey: 'sizes.title' } },
           { path: 'catalog/suppliers', element: <SuppliersPage />,                handle: { titleKey: 'suppliers.title' } },
           { path: 'comments',         element: <AdminCommentsPage />,            handle: { titleKey: 'comments.title' } },
           { path: 'kyc',             element: <AdminKycPage />,                 handle: { titleKey: 'kyc.title' } },
@@ -119,9 +122,11 @@ const router = createBrowserRouter([
         element: <SellerLayout />,
         children: [
           { index: true,        element: <SellerDashboardPage /> },
-          { path: 'products',          element: <SellerProductsPage /> },
-          { path: 'products/new',      element: <SellerProductFormPage /> },
-          { path: 'products/:id/edit', element: <SellerProductFormPage /> },
+          { path: 'products',                         element: <SellerProductsPage /> },
+          { path: 'products/new',                     element: <SellerProductFormPage /> },
+          { path: 'products/:id/edit',                element: <SellerProductFormPage /> },
+          { path: 'products/:id/variants/new',        element: <SellerProductVariantPage /> },
+          { path: 'products/:id/variants/:variantId', element: <SellerProductVariantPage /> },
           { path: 'orders',     element: <SellerOrdersPage /> },
           { path: 'shop',       element: <SellerShopPage /> },
           { path: 'discounts',  element: <SellerDiscountsPage /> },

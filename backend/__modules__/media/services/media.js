@@ -93,44 +93,50 @@ async function remove(id) {
 }
 
 // ── Product ↔ Media ───────────────────────────────────────────────────────────
-async function attachToProduct(productId, mediaId, role = 'gallery', sortOrder = 0) {
+// variantId: null (default) = shared/product-level media; a number = scoped to that ProductVariant.
+async function attachToProduct(productId, mediaId, role = 'gallery', sortOrder = 0, variantId = null) {
     const [record] = await db.ProductMedia.findOrCreate({
-        where: { product_id: productId, media_id: mediaId },
+        where: { product_id: productId, media_id: mediaId, variant_id: variantId },
         defaults: { role, sort_order: sortOrder },
     })
     if (role === 'primary') {
-        // Demote other primaries
+        // Demote other primaries within the same scope (product-shared, or this variant)
         await db.ProductMedia.update(
             { role: 'gallery' },
-            { where: { product_id: productId, role: 'primary', media_id: { [Op.ne]: mediaId } } }
+            { where: { product_id: productId, variant_id: variantId, role: 'primary', media_id: { [Op.ne]: mediaId } } }
         )
         await record.update({ role: 'primary' })
     }
     return record
 }
 
-async function updateProductMedia(productId, mediaId, { role, sort_order }) {
-    const record = await db.ProductMedia.findOne({ where: { product_id: productId, media_id: mediaId } })
-    if (!record) throw new Error('Not found')
+async function updateProductMedia(productId, mediaId, { role, sort_order }, variantId = null) {
+    const record = await db.ProductMedia.findOne({ where: { product_id: productId, media_id: mediaId, variant_id: variantId } })
+    // Already detached/replaced (e.g. by AI spin regeneration mid-drag) — nothing to update.
+    if (!record) return null
     const updates = {}
     if (role !== undefined) updates.role = role
     if (sort_order !== undefined) updates.sort_order = sort_order
     if (role === 'primary') {
         await db.ProductMedia.update(
             { role: 'gallery' },
-            { where: { product_id: productId, role: 'primary', media_id: { [require('sequelize').Op.ne]: mediaId } } }
+            { where: { product_id: productId, variant_id: variantId, role: 'primary', media_id: { [Op.ne]: mediaId } } }
         )
     }
     return record.update(updates)
 }
 
-async function detachFromProduct(productId, mediaId) {
-    return db.ProductMedia.destroy({ where: { product_id: productId, media_id: mediaId } })
+async function detachFromProduct(productId, mediaId, variantId = null) {
+    return db.ProductMedia.destroy({ where: { product_id: productId, media_id: mediaId, variant_id: variantId } })
 }
 
-async function getProductMedia(productId) {
+// variantId omitted → all media for the product (shared + every variant's), for a full overview.
+// variantId === null → shared/product-level only. variantId === <id> → that variant's media only.
+async function getProductMedia(productId, variantId) {
+    const where = { product_id: productId }
+    if (variantId !== undefined) where.variant_id = variantId
     return db.ProductMedia.findAll({
-        where: { product_id: productId },
+        where,
         include: [{ model: db.Media, as: 'media' }],
         order: [['sort_order', 'ASC'], ['id', 'ASC']],
     })

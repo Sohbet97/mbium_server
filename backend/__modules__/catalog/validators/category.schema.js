@@ -7,6 +7,7 @@ const categorySchema = yup.object().shape({
     slug: yup.string().required("Slug talap edilýär").max(255),
     parent_id: yup.number().integer().nullable().optional(),
     icon: yup.string().nullable().optional(),
+    image: yup.string().nullable().optional(),
     order: yup.number().integer().nullable().optional(),
     status: yup.number().integer().optional(),
 });

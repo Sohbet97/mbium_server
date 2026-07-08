@@ -15,8 +15,8 @@ class CartController {
         try {
             const { isError, errors } = await Validator.validate(cartItemSchema, req.body);
             if (isError) throw ApiError.BadRequest(null, errors);
-            const { product_id, variant_id, quantity } = req.body;
-            const item = await CartService.upsert(req.user?.id, product_id, variant_id, quantity);
+            const { product_id, variant_id, variant_size_id, quantity } = req.body;
+            const item = await CartService.upsert(req.user?.id, product_id, variant_id ?? null, variant_size_id ?? null, quantity);
             return res.status(200).json({ model: item });
         } catch (e) { next(e); }
     }

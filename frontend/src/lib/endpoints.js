@@ -54,6 +54,8 @@ export const PATHS = {
   PRODUCT_TAGS: '/tags',
   // Brands
   BRANDS: '/brands',
+  // Sizes
+  SIZES: '/sizes',
   // Suppliers
   SUPPLIERS: '/suppliers',
   // Comments

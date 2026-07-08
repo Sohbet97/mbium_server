@@ -23,7 +23,7 @@ router.get("/favorites", async (req, res, next) => {
                     attributes: ["id", "name", "price", "currency", "rating"],
                     include: [{
                         model: db.ProductMedia, as: "productMedia",
-                        where: { role: "primary" }, required: false,
+                        where: { role: "primary", variant_id: null }, required: false,
                         include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
                     }],
                 },

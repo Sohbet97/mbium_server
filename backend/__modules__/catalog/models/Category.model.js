@@ -35,6 +35,10 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
+        image: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
         order: {
             type: DataTypes.SMALLINT,
             allowNull: true

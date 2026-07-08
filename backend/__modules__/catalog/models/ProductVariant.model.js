@@ -61,6 +61,12 @@ module.exports = (sequelize) => {
         if (db.InventoryLevel) {
             Model.hasMany(db.InventoryLevel, { foreignKey: "variant_id", as: "inventoryLevels" });
         }
+        if (db.ProductVariantSize) {
+            Model.hasMany(db.ProductVariantSize, { foreignKey: "variant_id", as: "sizes" });
+        }
+        if (db.ProductMedia) {
+            Model.hasMany(db.ProductMedia, { foreignKey: "variant_id", as: "media" });
+        }
     };
 
     return Model;

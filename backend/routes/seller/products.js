@@ -3,7 +3,11 @@ const { Op } = require('sequelize');
 const ApiError = require('../../exceptions/api-error');
 const db = require('../../models');
 const ProductService = require('../../__modules__/catalog/services/products');
+const SpinViewService = require('../../__modules__/catalog/services/spin-view');
+const MediaService = require('../../__modules__/media/services/media');
+const BgRemovalService = require('../../__modules__/media/services/background-removal');
 const { FUNCTIONS } = require('../../utils/functions');
+const { mediaUpload } = require('../../utils/upload');
 
 // GET /seller/products
 router.get('/', async (req, res, next) => {
@@ -93,7 +97,8 @@ router.put('/:id/variants/:variantId', async (req, res, next) => {
     try {
         const product = await ProductService.getById(req.params.id);
         if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
-        await ProductService.updateVariant(req.params.variantId, req.body);
+        const [count] = await ProductService.updateVariant(req.params.id, req.params.variantId, req.body);
+        if (!count) throw ApiError.NotFound('Wariant tapylmady');
         return res.status(200).json({ ok: true });
     } catch (e) { next(e); }
 });
@@ -103,9 +108,226 @@ router.delete('/:id/variants/:variantId', async (req, res, next) => {
     try {
         const product = await ProductService.getById(req.params.id);
         if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
-        await ProductService.deleteVariant(req.params.variantId);
+        const count = await ProductService.deleteVariant(req.params.id, req.params.variantId);
+        if (!count) throw ApiError.NotFound('Wariant tapylmady');
         return res.sendStatus(200);
     } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/variants/:variantId/sizes
+router.post('/:id/variants/:variantId/sizes', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variant = (product.variants ?? []).find((v) => String(v.id) === String(req.params.variantId));
+        if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+        if (!req.body?.size_id) throw ApiError.BadRequest('Ölçegi saýlaň');
+        const sizeRow = await ProductService.addVariantSize(req.params.variantId, req.body);
+        return res.status(201).json({ model: sizeRow });
+    } catch (e) { next(e); }
+});
+
+// PUT /seller/products/:id/variants/:variantId/sizes/:sizeRowId
+router.put('/:id/variants/:variantId/sizes/:sizeRowId', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variant = (product.variants ?? []).find((v) => String(v.id) === String(req.params.variantId));
+        if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+        const [count] = await ProductService.updateVariantSize(req.params.variantId, req.params.sizeRowId, req.body);
+        if (!count) throw ApiError.NotFound('Ölçeg tapylmady');
+        return res.status(200).json({ ok: true });
+    } catch (e) { next(e); }
+});
+
+// DELETE /seller/products/:id/variants/:variantId/sizes/:sizeRowId
+router.delete('/:id/variants/:variantId/sizes/:sizeRowId', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variant = (product.variants ?? []).find((v) => String(v.id) === String(req.params.variantId));
+        if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+        const count = await ProductService.deleteVariantSize(req.params.variantId, req.params.sizeRowId);
+        if (!count) throw ApiError.NotFound('Ölçeg tapylmady');
+        return res.sendStatus(200);
+    } catch (e) { next(e); }
+});
+
+// Verifies req.params.variantId (if the route has one) belongs to this product,
+// using the product's already-eager-loaded variants — returns null for product-level routes.
+function resolveSpinVariantId(req, product) {
+    if (req.params.variantId === undefined) return null;
+    const variant = (product.variants ?? []).find((v) => String(v.id) === String(req.params.variantId));
+    if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+    return variant.id;
+}
+
+// POST /seller/products/:id/spin/generate — AI-generate a 360° spin frame sequence from existing product media
+// POST /seller/products/:id/variants/:variantId/spin/generate — same, scoped to one variant
+router.post(['/:id/spin/generate', '/:id/variants/:variantId/spin/generate'], async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variantId = resolveSpinVariantId(req, product);
+
+        const { media_ids, frame_count = 12 } = req.body;
+        let data;
+        try {
+            data = await SpinViewService.generateSpinFrames(
+                product.id, variantId, media_ids, Number(frame_count), req.user.id
+            );
+        } catch (e) {
+            throw ApiError.BadRequest(e.message);
+        }
+        return res.status(200).json({ data });
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/spin/generate-from-upload — upload 1-4 reference photos
+// (e.g. taken on a phone) and AI-generate a 360° spin frame sequence from them.
+// Uploaded photos are also attached to the product (or variant) gallery as regular images.
+// POST /seller/products/:id/variants/:variantId/spin/generate-from-upload — same, scoped to one variant
+router.post(['/:id/spin/generate-from-upload', '/:id/variants/:variantId/spin/generate-from-upload'], mediaUpload.array('files', 4), async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variantId = resolveSpinVariantId(req, product);
+
+        if (!req.files?.length) throw ApiError.BadRequest('Iň az 1 surat ýükläň');
+
+        const existingMedia = await MediaService.getProductMedia(product.id, variantId);
+        let nextGallerySort = existingMedia.filter((pm) => pm.role === 'gallery').length;
+
+        const mediaIds = [];
+        for (const file of req.files) {
+            const media = await MediaService.processUpload(file, req.user.id);
+            await MediaService.attachToProduct(product.id, media.id, 'gallery', nextGallerySort, variantId);
+            nextGallerySort += 1;
+            mediaIds.push(media.id);
+        }
+
+        const { frame_count = 12 } = req.body;
+        let data;
+        try {
+            data = await SpinViewService.generateSpinFrames(
+                product.id, variantId, mediaIds, Number(frame_count), req.user.id
+            );
+        } catch (e) {
+            throw ApiError.BadRequest(e.message);
+        }
+        return res.status(200).json({ data });
+    } catch (e) { next(e); }
+});
+
+// Validates an optional variant_id (body or query) against the product's own variants.
+function resolveBodyVariantId(req, product) {
+    const raw = req.body?.variant_id ?? req.query.variant_id;
+    if (raw === undefined || raw === null || raw === '') return null;
+    const variant = (product.variants ?? []).find((v) => String(v.id) === String(raw));
+    if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+    return variant.id;
+}
+
+// POST /seller/products/:id/media/:mediaId/remove-bg
+router.post('/:id/media/:mediaId/remove-bg', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variantId = resolveBodyVariantId(req, product);
+        const pm = await db.ProductMedia.findOne({
+            where: { product_id: product.id, variant_id: variantId, media_id: req.params.mediaId },
+        });
+        if (!pm) throw ApiError.NotFound('Media tapylmady');
+        let result;
+        try {
+            result = await BgRemovalService.startRemoval(req.params.mediaId);
+        } catch (e) {
+            throw ApiError.BadRequest(e.message);
+        }
+        return res.status(200).json(result);
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/media/:mediaId/remove-bg/confirm
+router.post('/:id/media/:mediaId/remove-bg/confirm', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variantId = resolveBodyVariantId(req, product);
+        const { token, action, variant } = req.body;
+        if (!token || !['save_new', 'replace'].includes(action)) {
+            throw ApiError.BadRequest('token we action gerek');
+        }
+        const media = await BgRemovalService.confirmRemoval({
+            token,
+            productId: product.id,
+            variantId,
+            mediaId: req.params.mediaId,
+            action,
+            variant: variant || 'transparent',
+        });
+        return res.status(200).json({ media });
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/media/:mediaId/remove-bg/reject
+router.post('/:id/media/:mediaId/remove-bg/reject', async (req, res, next) => {
+    try {
+        const { token } = req.body;
+        if (token) await BgRemovalService.rejectRemoval(token).catch(() => {});
+        return res.sendStatus(200);
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/media/:mediaId/rotate
+router.post('/:id/media/:mediaId/rotate', async (req, res, next) => {
+    try {
+        const degrees = parseInt(req.body.degrees)
+        if (![90, 180, 270].includes(degrees)) throw ApiError.BadRequest('degrees 90, 180 ýa-da 270 bolmaly')
+
+        const product = await ProductService.getById(req.params.id)
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady')
+
+        const pm = await db.ProductMedia.findOne({
+            where: { product_id: product.id, media_id: req.params.mediaId },
+        })
+        if (!pm) throw ApiError.NotFound('Media tapylmady')
+
+        const media = await db.Media.findByPk(req.params.mediaId)
+        if (!media) throw ApiError.NotFound('Media tapylmady')
+
+        let sharp
+        try { sharp = require('sharp') } catch { throw ApiError.BadRequest('sharp moduly ýok') }
+
+        const { uploadBuffer, urlToPath } = require('../../utils/firebase')
+        const path = require('path')
+        const fs   = require('fs')
+        const MEDIA_BASE = path.resolve(process.cwd(), 'storage', 'media')
+
+        const destPath    = urlToPath(media.url)
+        const relativePath = destPath.replace(/^media\//, '')
+        const srcBuffer = await fs.promises.readFile(path.join(MEDIA_BASE, relativePath))
+
+        const { data: rotated, info } = await sharp(srcBuffer)
+            .rotate(degrees)
+            .toBuffer({ resolveWithObject: true })
+
+        await uploadBuffer(rotated, destPath, media.mime_type || 'image/jpeg')
+
+        const updates = { width: info.width, height: info.height }
+
+        if (media.thumbnail_url) {
+            const thumbPath = urlToPath(media.thumbnail_url)
+            const thumbBuf  = await sharp(rotated)
+                .resize(480, 480, { fit: 'inside', withoutEnlargement: true })
+                .webp({ quality: 75 })
+                .toBuffer()
+            updates.thumbnail_url = await uploadBuffer(thumbBuf, thumbPath, 'image/webp')
+        }
+
+        await media.update(updates)
+        return res.status(200).json(await db.Media.findByPk(media.id))
+    } catch (e) { next(e) }
 });
 
 module.exports = router;

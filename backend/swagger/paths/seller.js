@@ -1,7 +1,9 @@
-const security = [{ BearerAuth: [] }];
-const idParam  = { in: "path", name: "id", required: true, schema: { type: "integer" } };
+const security    = [{ BearerAuth: [] }];
+const idParam     = { in: "path", name: "id", required: true, schema: { type: "integer" } };
+const shopHeader  = { $ref: "#/components/parameters/XShopId" };
 
-// All seller routes require auth + approved shop (seller-middleware)
+// All seller routes require auth + approved shop (seller-middleware).
+// Pass X-Shop-Id header to select a specific shop when the seller owns multiple.
 module.exports = {
     // ── Plans & Subscription (read-only for seller) ───────────────────────────────
     "/seller/plans": {
@@ -9,6 +11,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "List all active plans (for comparison UI)",
             security,
+            parameters: [shopHeader],
             responses: {
                 200: {
                     description: "Active plans",
@@ -24,6 +27,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Get the current active subscription for the seller's shop",
             security,
+            parameters: [shopHeader],
             responses: {
                 200: {
                     description: "Active subscription or null",
@@ -41,6 +45,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Seller dashboard summary (revenue, orders, top products)",
             security,
+            parameters: [shopHeader],
             responses: { 200: { description: "Dashboard data" } },
         },
     },
@@ -51,12 +56,14 @@ module.exports = {
             tags: ["Seller"],
             summary: "Get own shop profile (includes categories)",
             security,
+            parameters: [shopHeader],
             responses: { 200: { description: "Shop", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Shop" } } } } } } },
         },
         patch: {
             tags: ["Seller"],
             summary: "Update own shop profile fields",
             security,
+            parameters: [shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", properties: {
@@ -79,6 +86,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Set shop categories (full replace)",
             security,
+            parameters: [shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", properties: {
@@ -93,6 +101,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Upload shop logo",
             security,
+            parameters: [shopHeader],
             requestBody: {
                 required: true,
                 content: { "multipart/form-data": { schema: { type: "object", required: ["logo"], properties: {
@@ -107,6 +116,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Upload KYC documents or update IBAN/card number",
             security,
+            parameters: [shopHeader],
             requestBody: {
                 required: true,
                 content: { "multipart/form-data": { schema: { type: "object", properties: {
@@ -127,6 +137,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "List active categories (flat, for product form picker)",
             security,
+            parameters: [shopHeader],
             responses: {
                 200: {
                     description: "Categories",
@@ -145,6 +156,7 @@ module.exports = {
             summary: "List own shop products",
             security,
             parameters: [
+                shopHeader,
                 { in: "query", name: "text",        schema: { type: "string" } },
                 { in: "query", name: "category_id", schema: { type: "integer" } },
                 { in: "query", name: "is_active",   schema: { type: "boolean" } },
@@ -165,6 +177,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Create product (enforces plan product_limit)",
             security,
+            parameters: [shopHeader],
             requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductRequest" } } } },
             responses: {
                 201: { description: "Created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Product" } } } } } },
@@ -177,14 +190,14 @@ module.exports = {
             tags: ["Seller"],
             summary: "Get own product by ID (includes variants)",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             responses: { 200: { description: "Product" }, 404: { description: "Not found or not owned by seller" } },
         },
         put: {
             tags: ["Seller"],
             summary: "Update own product",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductRequest" } } } },
             responses: { 200: { description: "Updated" }, 404: { description: "Not found" } },
         },
@@ -192,7 +205,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Soft-delete own product",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             responses: { 200: { description: "Deleted" } },
         },
     },
@@ -201,7 +214,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Add variant to own product",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", required: ["name"], properties: {
@@ -223,7 +236,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Update variant",
             security,
-            parameters: [idParam, { in: "path", name: "variantId", required: true, schema: { type: "integer" } }],
+            parameters: [idParam, { in: "path", name: "variantId", required: true, schema: { type: "integer" } }, shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", properties: {
@@ -243,8 +256,66 @@ module.exports = {
             tags: ["Seller"],
             summary: "Delete variant",
             security,
-            parameters: [idParam, { in: "path", name: "variantId", required: true, schema: { type: "integer" } }],
+            parameters: [idParam, { in: "path", name: "variantId", required: true, schema: { type: "integer" } }, shopHeader],
             responses: { 200: { description: "Deleted" } },
+        },
+    },
+
+    // ── 360° Spin View (AI-generated) ───────────────────────────────────────────────
+    "/seller/products/{id}/spin/generate": {
+        post: {
+            tags: ["Seller"],
+            summary: "AI-generate a 360° spin frame sequence from existing product photos",
+            description: "Generates a spin frame sequence (Gemini Nano Banana) from 1-4 existing product " +
+                "media items and attaches them to the product as ProductMedia rows with role='spin', " +
+                "replacing any previously generated/uploaded spin frames.",
+            security,
+            parameters: [idParam, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["media_ids"], properties: {
+                    media_ids:   { type: "array", items: { type: "string", format: "uuid" }, minItems: 1, maxItems: 4, description: "Existing Media IDs (front/side/back/top photos) to use as references" },
+                    frame_count: { type: "integer", enum: [12, 24, 36], default: 12 },
+                } } } },
+            },
+            responses: {
+                200: {
+                    description: "Generated spin frame sequence (full product media list)",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/ProductMedia" } },
+                    } } } },
+                },
+                400: { description: "Invalid reference count/frame count, or generation failed" },
+                404: { description: "Not found or not owned by seller" },
+            },
+        },
+    },
+    "/seller/products/{id}/spin/generate-from-upload": {
+        post: {
+            tags: ["Seller"],
+            summary: "Upload reference photos and AI-generate a 360° spin frame sequence",
+            description: "Accepts 1-4 newly uploaded photos (e.g. taken on a phone), attaches them to the " +
+                "product gallery, then generates a spin frame sequence (Gemini Nano Banana) from them and " +
+                "attaches the frames as ProductMedia rows with role='spin', replacing any previous spin sequence.",
+            security,
+            parameters: [idParam, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "multipart/form-data": { schema: { type: "object", required: ["files"], properties: {
+                    files:       { type: "array", items: { type: "string", format: "binary" }, minItems: 1, maxItems: 4 },
+                    frame_count: { type: "integer", enum: [12, 24, 36], default: 12 },
+                } } } },
+            },
+            responses: {
+                200: {
+                    description: "Generated spin frame sequence (full product media list)",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/ProductMedia" } },
+                    } } } },
+                },
+                400: { description: "No files uploaded, invalid frame count, or generation failed" },
+                404: { description: "Not found or not owned by seller" },
+            },
         },
     },
 
@@ -255,6 +326,7 @@ module.exports = {
             summary: "List orders for own shop",
             security,
             parameters: [
+                shopHeader,
                 { in: "query", name: "status", schema: { type: "integer" }, description: "0=pending, 1=confirmed, 2=processing, 3=shipped, 4=delivered, 5=closed, 10=cancelled" },
                 { in: "query", name: "limit",  schema: { type: "integer" } },
                 { in: "query", name: "skip",   schema: { type: "integer" } },
@@ -275,7 +347,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Get single order detail",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             responses: { 200: { description: "Order detail" }, 404: { description: "Not found" } },
         },
     },
@@ -284,7 +356,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Advance order status (seller can move to confirmed/processing/shipped only)",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", required: ["status"], properties: {
@@ -299,14 +371,14 @@ module.exports = {
             tags: ["Seller"],
             summary: "List shipments for an order",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             responses: { 200: { description: "Shipments" } },
         },
         post: {
             tags: ["Seller"],
             summary: "Add shipment tracking",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", properties: {
@@ -325,6 +397,7 @@ module.exports = {
             summary: "List own shop discount codes",
             security,
             parameters: [
+                shopHeader,
                 { in: "query", name: "is_active", schema: { type: "boolean" } },
                 { in: "query", name: "limit",     schema: { type: "integer" } },
                 { in: "query", name: "skip",      schema: { type: "integer" } },
@@ -343,6 +416,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Create discount code",
             security,
+            parameters: [shopHeader],
             requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/DiscountRequest" } } } },
             responses: { 201: { description: "Created" } },
         },
@@ -352,7 +426,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Update discount",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/DiscountRequest" } } } },
             responses: { 200: { description: "Updated" } },
         },
@@ -360,7 +434,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Delete discount",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             responses: { 200: { description: "Deleted" } },
         },
     },
@@ -371,6 +445,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Get seller payout balance",
             security,
+            parameters: [shopHeader],
             responses: {
                 200: {
                     description: "Balance",
@@ -385,6 +460,7 @@ module.exports = {
             summary: "Payout request history",
             security,
             parameters: [
+                shopHeader,
                 { in: "query", name: "limit", schema: { type: "integer" } },
                 { in: "query", name: "skip",  schema: { type: "integer" } },
             ],
@@ -396,6 +472,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Request a payout",
             security,
+            parameters: [shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", required: ["amount"], properties: {
@@ -415,6 +492,7 @@ module.exports = {
             summary: "List own media files",
             security,
             parameters: [
+                shopHeader,
                 { in: "query", name: "media_type", schema: { type: "string" }, description: "image or video" },
                 { in: "query", name: "text",       schema: { type: "string" } },
                 { in: "query", name: "limit",      schema: { type: "integer" } },
@@ -428,7 +506,10 @@ module.exports = {
             tags: ["Seller"],
             summary: "Upload a media file",
             security,
-            parameters: [{ in: "query", name: "media_type", schema: { type: "string" }, description: "image or video" }],
+            parameters: [
+                shopHeader,
+                { in: "query", name: "media_type", schema: { type: "string" }, description: "image or video" },
+            ],
             requestBody: {
                 required: true,
                 content: { "multipart/form-data": { schema: { type: "object", required: ["file"], properties: {
@@ -443,7 +524,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Delete own media file",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             responses: { 200: { description: "Deleted" }, 403: { description: "Not owner" } },
         },
     },
@@ -452,14 +533,14 @@ module.exports = {
             tags: ["Seller"],
             summary: "Get media attached to a product",
             security,
-            parameters: [{ in: "path", name: "productId", required: true, schema: { type: "integer" } }],
+            parameters: [{ in: "path", name: "productId", required: true, schema: { type: "integer" } }, shopHeader],
             responses: { 200: { description: "Product media list" } },
         },
         post: {
             tags: ["Seller"],
             summary: "Attach media to a product",
             security,
-            parameters: [{ in: "path", name: "productId", required: true, schema: { type: "integer" } }],
+            parameters: [{ in: "path", name: "productId", required: true, schema: { type: "integer" } }, shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", required: ["media_id"], properties: {
@@ -479,6 +560,7 @@ module.exports = {
             parameters: [
                 { in: "path", name: "productId", required: true, schema: { type: "integer" } },
                 { in: "path", name: "mediaId",   required: true, schema: { type: "integer" } },
+                shopHeader,
             ],
             requestBody: {
                 required: true,
@@ -496,6 +578,7 @@ module.exports = {
             parameters: [
                 { in: "path", name: "productId", required: true, schema: { type: "integer" } },
                 { in: "path", name: "mediaId",   required: true, schema: { type: "integer" } },
+                shopHeader,
             ],
             responses: { 200: { description: "Detached" } },
         },
@@ -507,12 +590,14 @@ module.exports = {
             tags: ["Seller"],
             summary: "List own shop banners",
             security,
+            parameters: [shopHeader],
             responses: { 200: { description: "Banners list" } },
         },
         post: {
             tags: ["Seller"],
             summary: "Create banner",
             security,
+            parameters: [shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", required: ["title"], properties: {
@@ -534,7 +619,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Update own banner",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", properties: {
@@ -554,7 +639,7 @@ module.exports = {
             tags: ["Seller"],
             summary: "Delete own banner",
             security,
-            parameters: [idParam],
+            parameters: [idParam, shopHeader],
             responses: { 200: { description: "Deleted" } },
         },
     },

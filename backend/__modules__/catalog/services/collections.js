@@ -40,7 +40,7 @@ class CollectionService {
                         {
                             model: db.ProductMedia,
                             as: "productMedia",
-                            where: { role: "primary" },
+                            where: { role: "primary", variant_id: null },
                             required: false,
                             include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
                         },
@@ -118,7 +118,7 @@ class CollectionService {
             include: [{
                 model: db.ProductMedia,
                 as: "productMedia",
-                where: { role: "primary" },
+                where: { role: "primary", variant_id: null },
                 required: false,
                 include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
             }],

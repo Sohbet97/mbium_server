@@ -35,7 +35,19 @@ const ALL_PERMISSIONS = [
     77,  78,  79,  80,  // Subscriptions
     81,  82,  83,  84,  // Shops
     85,  86,  87,  88,  // AI Recommendations
+    89,  90,  91,  92,  // Push Notifications
+    93,  94,            // Logs
     309,                // User login-as
+    310,                // Audit Logs
+    311,                // Analytics
+    312, 313, 314, 315, // Warehouses
+    316, 317, 318, 319, // Coins
+    320, 321, 322, 323, // Brands
+    324, 325, 326, 327, // Suppliers
+    328, 329, 330, 331, // Comments
+    332, 333, 334, 335, // KYC
+    336, 337, 338, 339, // Reels
+    340, 341, 342, 343, // Sizes
 ];
 
 const ADMIN_PHONE    = '61000000';

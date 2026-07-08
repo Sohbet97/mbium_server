@@ -12,7 +12,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const OTP_SERVICE_URL = process.env.OTP_SERVICE_URL || 'http://216.250.11.232:4001';
+const OTP_SERVICE_URL = process.env.4000 || 'http://216.250.11.232:4001';
 const OTP_SECRET      = process.env.OTP_SECRET;
 const TEST_PHONE      = process.env.TEST_RELAY_PHONE || '61000000'; // this relay phone's number
 const TEST_FCM_TOKEN  = 'test-fcm-token';

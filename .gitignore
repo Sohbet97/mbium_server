@@ -75,8 +75,10 @@ web_modules/
 # dotenv environment variable files
 .env
 .env.development.local
+.env.development
 .env.test.local
 .env.production.local
+.env.production
 .env.local
 
 # parcel-bundler cache (https://parceljs.org/)
@@ -136,3 +138,8 @@ qm-frontend
 files
 
 .claude/
+
+backend/storage/
+
+# Firebase service account credentials
+backend/config/firebase-adminsdk.json

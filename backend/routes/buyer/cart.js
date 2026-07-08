@@ -11,12 +11,12 @@ router.get('/', async (req, res, next) => {
 });
 
 // PUT /buyer/cart  – add or update item
-// Body: { product_id, variant_id?, quantity }
+// Body: { product_id, variant_id?, variant_size_id?, quantity }
 router.put('/', async (req, res, next) => {
     try {
-        const { product_id, variant_id, quantity } = req.body;
+        const { product_id, variant_id, variant_size_id, quantity } = req.body;
         if (!product_id) throw ApiError.BadRequest('product_id hökman');
-        const item = await CartService.upsert(req.user.id, product_id, variant_id ?? null, quantity ?? 1);
+        const item = await CartService.upsert(req.user.id, product_id, variant_id ?? null, variant_size_id ?? null, quantity ?? 1);
         return res.status(200).json({ model: item });
     } catch (e) { next(e); }
 });

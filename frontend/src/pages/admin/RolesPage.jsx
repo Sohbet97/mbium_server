@@ -48,6 +48,8 @@ const PERM_GROUPS = [
   { label: 'Suppliers',    perms: [324, 325, 326, 327] },
   { label: 'Comments',     perms: [328, 329, 330, 331] },
   { label: 'KYC',          perms: [332, 333, 334, 335] },
+  { label: 'Reels',        perms: [336, 337, 338, 339] },
+  { label: 'Sizes',        perms: [340, 341, 342, 343] },
 ]
 
 const ALL_PERMS = PERM_GROUPS.flatMap((g) => g.perms).filter(Boolean)

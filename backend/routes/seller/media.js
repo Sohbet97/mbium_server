@@ -44,17 +44,31 @@ router.delete('/:id', async (req, res, next) => {
     } catch (e) { next(e); }
 });
 
+// Resolves an optional ?variant_id= query param and verifies it belongs to this product
+// before it's used to scope a media read/write — same ownership-scoping pattern used for
+// product variants themselves (a variant_id from another shop's product must be rejected).
+async function resolveVariantId(req, productId) {
+    const raw = req.query.variant_id ?? req.body?.variant_id;
+    if (raw === undefined || raw === null || raw === '') return null;
+    const variantId = Number(raw);
+    const variant = await db.ProductVariant.findOne({ where: { id: variantId, product_id: productId } });
+    if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+    return variantId;
+}
+
 // GET /seller/media/product/:productId — media attached to one of seller's products
+// (optionally ?variant_id= to scope to one variant, or 'null' for shared-only)
 router.get('/product/:productId', async (req, res, next) => {
     try {
         const product = await db.Product.findOne({ where: { id: req.params.productId, shop_id: req.shop.id } });
         if (!product) throw ApiError.NotFound('Haryt tapylmady');
-        const data = await MediaService.getProductMedia(product.id);
+        const variantId = req.query.variant_id === undefined ? undefined : await resolveVariantId(req, product.id);
+        const data = await MediaService.getProductMedia(product.id, variantId);
         return res.status(200).json({ data });
     } catch (e) { next(e); }
 });
 
-// POST /seller/media/product/:productId — attach media to product
+// POST /seller/media/product/:productId — attach media to product (optionally to one variant)
 router.post('/product/:productId', async (req, res, next) => {
     try {
         const product = await db.Product.findOne({ where: { id: req.params.productId, shop_id: req.shop.id } });
@@ -63,8 +77,9 @@ router.post('/product/:productId', async (req, res, next) => {
         const { media_id, role = 'gallery', sort_order = 0 } = req.body;
         const m = await db.Media.findOne({ where: { id: media_id, uploaded_by: req.user.id } });
         if (!m) throw ApiError.NotFound('Media tapylmady ýa-da siziňki däl');
+        const variantId = await resolveVariantId(req, product.id);
 
-        const record = await MediaService.attachToProduct(product.id, media_id, role, Number(sort_order));
+        const record = await MediaService.attachToProduct(product.id, media_id, role, Number(sort_order), variantId);
         return res.status(200).json({ model: record });
     } catch (e) { next(e); }
 });
@@ -74,7 +89,8 @@ router.patch('/product/:productId/:mediaId', async (req, res, next) => {
     try {
         const product = await db.Product.findOne({ where: { id: req.params.productId, shop_id: req.shop.id } });
         if (!product) throw ApiError.NotFound('Haryt tapylmady');
-        const record = await MediaService.updateProductMedia(product.id, req.params.mediaId, req.body);
+        const variantId = await resolveVariantId(req, product.id);
+        const record = await MediaService.updateProductMedia(product.id, req.params.mediaId, req.body, variantId);
         return res.status(200).json({ model: record });
     } catch (e) { next(e); }
 });
@@ -84,7 +100,8 @@ router.delete('/product/:productId/:mediaId', async (req, res, next) => {
     try {
         const product = await db.Product.findOne({ where: { id: req.params.productId, shop_id: req.shop.id } });
         if (!product) throw ApiError.NotFound('Haryt tapylmady');
-        await MediaService.detachFromProduct(product.id, req.params.mediaId);
+        const variantId = await resolveVariantId(req, product.id);
+        await MediaService.detachFromProduct(product.id, req.params.mediaId, variantId);
         return res.status(200).json({ message: 'Aýryldy' });
     } catch (e) { next(e); }
 });

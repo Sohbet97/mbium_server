@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { ImagePlus, Trash2, Star, Loader2, Upload, X, GripVertical, CheckCircle } from 'lucide-react'
+import { ImagePlus, Trash2, Star, Loader2, Upload, X, GripVertical, CheckCircle, Scissors, RotateCw } from 'lucide-react'
 import { SellerApi } from '@/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { BackgroundRemovalModal } from './BackgroundRemovalModal'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 const absUrl = (url) => (!url || url.startsWith('http') ? url : `${BASE}${url}`)
@@ -164,10 +165,12 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
   )
 }
 
-export function SellerProductMediaManager({ productId }) {
+export function SellerProductMediaManager({ productId, variantId }) {
   const [items, setItems]     = useState([])
   const [loading, setLoading] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [bgRemovalMedia, setBgRemovalMedia] = useState(null)
+  const [rotatingId, setRotatingId] = useState(null)
   const dragSrc  = useRef(null)
   const itemsRef = useRef(items)
   useEffect(() => { itemsRef.current = items }, [items])
@@ -175,13 +178,13 @@ export function SellerProductMediaManager({ productId }) {
   async function load() {
     setLoading(true)
     try {
-      const { data } = await SellerApi.media.getProductMedia(productId)
+      const { data } = await SellerApi.media.getProductMedia(productId, variantId)
       setItems(data.data ?? [])
     } catch { toast.error('Suratlar ýüklenip bolmady') }
     finally   { setLoading(false) }
   }
 
-  useEffect(() => { if (productId) load() }, [productId])
+  useEffect(() => { if (productId) load() }, [productId, variantId])
 
   async function handleSelect(selected) {
     if (!selected.length) return
@@ -191,7 +194,7 @@ export function SellerProductMediaManager({ productId }) {
         SellerApi.media.attachToProduct(productId, {
           media_id: m.id,
           role: !hasPrimary && i === 0 ? 'primary' : 'gallery',
-        })
+        }, variantId)
       ))
       load()
     } catch (e) {
@@ -199,10 +202,21 @@ export function SellerProductMediaManager({ productId }) {
     }
   }
 
+  async function handleRotate(e, mediaId) {
+    e.stopPropagation()
+    if (rotatingId === mediaId) return
+    setRotatingId(mediaId)
+    try {
+      await SellerApi.products.rotateMedia(productId, mediaId, 90)
+      load()
+    } catch { toast.error('Aýlamak başartmady') }
+    finally { setRotatingId(null) }
+  }
+
   async function handleDetach(e, mediaId) {
     e.stopPropagation()
     try {
-      await SellerApi.media.detachFromProduct(productId, mediaId)
+      await SellerApi.media.detachFromProduct(productId, mediaId, variantId)
       setItems((prev) => prev.filter((it) => it.media_id !== mediaId))
     } catch { toast.error('Aýrylyp bolmady') }
   }
@@ -210,7 +224,7 @@ export function SellerProductMediaManager({ productId }) {
   async function handleSetPrimary(e, mediaId) {
     e.stopPropagation()
     try {
-      await SellerApi.media.updateProductMedia(productId, mediaId, { role: 'primary' })
+      await SellerApi.media.updateProductMedia(productId, mediaId, { role: 'primary' }, variantId)
       load()
     } catch { toast.error('Belläp bolmady') }
   }
@@ -235,7 +249,7 @@ export function SellerProductMediaManager({ productId }) {
     dragSrc.current = null
     try {
       await Promise.all(itemsRef.current.map((pm, i) =>
-        SellerApi.media.updateProductMedia(productId, pm.media_id, { sort_order: i })
+        SellerApi.media.updateProductMedia(productId, pm.media_id, { sort_order: i }, variantId)
       ))
     } catch { /* silently ignore reorder save failure */ }
   }
@@ -301,6 +315,25 @@ export function SellerProductMediaManager({ productId }) {
                   )}
                   <button
                     type="button"
+                    onClick={(e) => handleRotate(e, m.id)}
+                    disabled={rotatingId === m.id}
+                    className="p-1.5 rounded-full bg-white/90 hover:bg-white text-blue-600 disabled:opacity-50"
+                    title="Aýla (90°)"
+                  >
+                    {rotatingId === m.id
+                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      : <RotateCw className="h-3.5 w-3.5" />}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setBgRemovalMedia(m) }}
+                    className="p-1.5 rounded-full bg-white/90 hover:bg-white text-violet-600"
+                    title="Fon aýyr"
+                  >
+                    <Scissors className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
                     onClick={(e) => handleDetach(e, m.id)}
                     className="p-1.5 rounded-full bg-white/90 hover:bg-white text-red-600"
                     title="Aýyr"
@@ -337,6 +370,16 @@ export function SellerProductMediaManager({ productId }) {
         onSelect={handleSelect}
         remaining={Math.max(0, MAX_ITEMS - items.length)}
       />
+
+      {bgRemovalMedia && (
+        <BackgroundRemovalModal
+          productId={productId}
+          variantId={variantId}
+          media={bgRemovalMedia}
+          onClose={() => setBgRemovalMedia(null)}
+          onSaved={() => { setBgRemovalMedia(null); load() }}
+        />
+      )}
     </div>
   )
 }

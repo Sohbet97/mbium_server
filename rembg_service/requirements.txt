@@ -1,0 +1,4 @@
+flask>=3.0.3
+rembg>=2.0.62
+Pillow>=11.0.0
+gunicorn>=22.0.0
