@@ -33,6 +33,17 @@ router.post('/upload', mediaUpload.single('file'), async (req, res, next) => {
     } catch (e) { next(e); }
 });
 
+// PATCH /seller/media/:id — rename own media (alt_text)
+router.patch('/:id', async (req, res, next) => {
+    try {
+        const m = await db.Media.findByPk(req.params.id);
+        if (!m) throw ApiError.NotFound('Media tapylmady');
+        if (m.uploaded_by !== req.user.id) throw ApiError.Forbidden('Bu media siziňki däl');
+        const updated = await MediaService.update(m.id, req.body);
+        return res.status(200).json({ model: updated });
+    } catch (e) { next(e); }
+});
+
 // DELETE /seller/media/:id — delete own media
 router.delete('/:id', async (req, res, next) => {
     try {

@@ -14,10 +14,10 @@ const TYPES = [
 ]
 
 const ACCEPT = {
-  '':      'image/*,video/mp4,video/webm,video/quicktime,.glb,.gltf',
+  '':      'image/*,video/mp4,video/webm,video/quicktime,.glb,.gltf,.obj,.usdz',
   image:   'image/*',
   video:   'video/mp4,video/webm,video/quicktime',
-  '3d':    '.glb,.gltf',
+  '3d':    '.glb,.gltf,.obj,.usdz',
   '360':   'image/*',
 }
 
@@ -27,7 +27,7 @@ function fileMatchesType(file, filterType) {
   if (filterType === 'video') return ['video/mp4', 'video/quicktime', 'video/webm'].includes(file.type)
   if (filterType === '3d') {
     const ext = file.name.split('.').pop()?.toLowerCase()
-    return ['model/gltf-binary', 'model/gltf+json'].includes(file.type) || ['glb', 'gltf'].includes(ext)
+    return ['model/gltf-binary', 'model/gltf+json', 'model/obj', 'model/vnd.usdz+zip'].includes(file.type) || ['glb', 'gltf', 'obj', 'usdz'].includes(ext)
   }
   return true
 }

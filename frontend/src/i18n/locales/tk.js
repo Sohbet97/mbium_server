@@ -34,6 +34,7 @@ export default {
     favorites: 'Halanlar',
     brands: 'Markalar',
     sizes: 'Ölçegler',
+    deliveryTypes: 'Eltip bermek görnüşleri',
     suppliers: 'Üpjünçiler',
     comments: 'Teswirler',
     kyc: 'KYC Resminamalar',
@@ -800,6 +801,14 @@ export default {
     slug: 'Slug', parent: 'Ata topar', noParent: 'Esasy ölçeg',
     nameRequired: 'Ad hökmanydyr',
     empty: 'Heniz ölçeg ýok',
+  },
+  deliveryTypes: {
+    title: 'Eltip bermek görnüşleri', totalCount: '{{count}} görnüş',
+    add: 'Görnüş goş', edit: 'Görnüşi üýtget',
+    name: 'Ady (TK)', nameRu: 'Ady (RU)', nameEn: 'Ady (EN)',
+    code: 'Kod', codeHint: 'mysal: courier, pickup, cargo',
+    nameRequired: 'Ad hökmanydyr', codeRequired: 'Kod hökmanydyr',
+    empty: 'Heniz eltip bermek görnüşi ýok',
   },
   suppliers: {
     title: 'Üpjünçiler', totalCount: '{{count}} üpjünçi',

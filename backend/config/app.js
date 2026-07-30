@@ -60,7 +60,6 @@ app.use(helmet());
 // Morgan is HTTP logging library
 app.use(morgan("common"));
 
-
 /**
  * Bind Redis client to req.redis
  */

@@ -161,6 +161,11 @@ class Permissions {
     static SIZE_POST   = 341
     static SIZE_PUT    = 342
     static SIZE_DELETE = 343
+
+    static DELIVERY_TYPE_GET    = 344
+    static DELIVERY_TYPE_POST   = 345
+    static DELIVERY_TYPE_PUT    = 346
+    static DELIVERY_TYPE_DELETE = 347
 }
 
 module.exports = Permissions

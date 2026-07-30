@@ -184,6 +184,22 @@ module.exports = (sequelize) => {
         if (db.KycDocument) {
             Model.hasMany(db.KycDocument, { foreignKey: "shop_id", as: "kycDocuments" });
         }
+        if (db.ShopDeliveryType && db.DeliveryType) {
+            Model.belongsToMany(db.DeliveryType, {
+                through: db.ShopDeliveryType,
+                foreignKey: "shop_id",
+                otherKey: "delivery_type_id",
+                as: "deliveryTypes",
+            });
+        }
+        if (db.ShopBrand && db.Brand) {
+            Model.belongsToMany(db.Brand, {
+                through: db.ShopBrand,
+                foreignKey: "shop_id",
+                otherKey: "brand_id",
+                as: "brands",
+            });
+        }
     };
 
     return Model;

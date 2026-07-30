@@ -6,9 +6,21 @@ const AuthContext = createContext(null)
 async function fetchFullProfile() {
   const { data } = await AuthApi.me()
   const model = data.model ?? null
-  if (model?.shop && !localStorage.getItem('activeShopId')) {
+  const shops = model?.shops ?? (model?.shop ? [model.shop] : [])
+  const activeShopId = localStorage.getItem('activeShopId')
+  const activeShop = activeShopId ? shops.find((s) => String(s.id) === String(activeShopId)) : null
+
+  if (activeShopId && !activeShop?.is_active) {
+    // Stored shop is gone or no longer active — fall back to the user's active shop, if any.
+    if (model?.shop?.is_active) {
+      localStorage.setItem('activeShopId', model.shop.id)
+    } else {
+      localStorage.removeItem('activeShopId')
+    }
+  } else if (model?.shop && !activeShopId) {
     localStorage.setItem('activeShopId', model.shop.id)
   }
+
   return model
 }
 

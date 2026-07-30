@@ -240,4 +240,175 @@ module.exports = {
             },
         },
     },
+
+    // ── Shop Applications (verification queue — distinct router from /admin/shops) ──
+    "/admin/shop-applications": {
+        get: {
+            tags: [tag],
+            summary: "List pending shop applications (verification_status = pending)",
+            security,
+            parameters: [
+                { in: "query", name: "limit", schema: { type: "integer" } },
+                { in: "query", name: "skip",  schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Pending applications",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/Shop" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/admin/shop-applications/history": {
+        get: {
+            tags: [tag],
+            summary: "List reviewed shop applications (approved or rejected)",
+            security,
+            parameters: [
+                { in: "query", name: "limit", schema: { type: "integer" } },
+                { in: "query", name: "skip",  schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Reviewed applications, each including `verifier`",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/Shop" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/admin/shop-applications/{id}/history": {
+        get: {
+            tags: [tag],
+            summary: "Full verification log for a single shop application",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Verification log entries" } },
+        },
+    },
+    "/admin/shop-applications/{id}/reopen": {
+        post: {
+            tags: [tag],
+            summary: "Re-open a rejected application (moves it back to pending)",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Reopened" }, 400: { description: "Only rejected applications can be reopened" }, 404: { description: "Not found" } },
+        },
+    },
+    "/admin/shop-applications/{id}/verify": {
+        post: {
+            tags: [tag],
+            summary: "Approve a shop application",
+            description: "Emits a socket notification to the shop owner.",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Verified" }, 404: { description: "Not found" } },
+        },
+    },
+    "/admin/shop-applications/{id}/reject": {
+        post: {
+            tags: [tag],
+            summary: "Reject a shop application",
+            description: "Emits a socket notification to the shop owner.",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", properties: { note: { type: "string" } } } } },
+            },
+            responses: { 200: { description: "Rejected" }, 404: { description: "Not found" } },
+        },
+    },
+
+    // ── Shop Type Change Requests ─────────────────────────────────────────────
+    "/admin/shop-type-requests": {
+        get: {
+            tags: [tag],
+            summary: "List shop type-change requests",
+            security,
+            parameters: [
+                { in: "query", name: "status",  schema: { type: "integer" }, description: "0=pending, 1=approved, 2=rejected" },
+                { in: "query", name: "shop_id", schema: { type: "integer" } },
+                { in: "query", name: "limit",   schema: { type: "integer" } },
+                { in: "query", name: "skip",    schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Requests",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { type: "object" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/admin/shop-type-requests/{id}/approve": {
+        post: {
+            tags: [tag],
+            summary: "Approve a shop type-change request",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Approved" }, 404: { description: "Not found" } },
+        },
+    },
+    "/admin/shop-type-requests/{id}/reject": {
+        post: {
+            tags: [tag],
+            summary: "Reject a shop type-change request",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", properties: { note: { type: "string" } } } } },
+            },
+            responses: { 200: { description: "Rejected" }, 404: { description: "Not found" } },
+        },
+    },
+
+    // ── Seller — Shop Type (self-service) ─────────────────────────────────────
+    "/seller/shop/types": {
+        get: {
+            tags: ["Seller"],
+            summary: "List active shop types (for the shop-type-change picker)",
+            security,
+            responses: {
+                200: {
+                    description: "Active shop types",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/ShopType" } },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/seller/shop/type-change-request": {
+        get: {
+            tags: ["Seller"],
+            summary: "Get the latest shop type-change request for own shop",
+            security,
+            parameters: [{ $ref: "#/components/parameters/XShopId" }],
+            responses: {
+                200: { description: "Latest request or null", content: { "application/json": { schema: { type: "object", properties: { model: { type: "object", nullable: true } } } } } },
+            },
+        },
+        post: {
+            tags: ["Seller"],
+            summary: "Request a shop type change",
+            security,
+            parameters: [{ $ref: "#/components/parameters/XShopId" }],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["requested_type_id"], properties: {
+                    requested_type_id: { type: "integer" },
+                } } } },
+            },
+            responses: { 201: { description: "Request submitted" } },
+        },
+    },
 };

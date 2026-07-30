@@ -32,7 +32,26 @@ const crudLocation = (base, tag, schema) => ({
             responses: { 201: { description: "Created" } },
         },
     },
+    [`${base}/count`]: {
+        get: {
+            tags: [tag],
+            summary: `Count ${schema.toLowerCase()}s`,
+            security,
+            parameters: [{ in: "query", name: "text", schema: { type: "string" } }],
+            responses: { 200: { description: "Count", content: { "application/json": { schema: { type: "object", properties: { count: { type: "integer" } } } } } } },
+        },
+    },
     [`${base}/{id}`]: {
+        get: {
+            tags: [tag],
+            summary: `Get ${schema.toLowerCase()} by ID`,
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: {
+                200: { description: schema, content: { "application/json": { schema: { type: "object", properties: { model: { $ref: `#/components/schemas/${schema}` } } } } } },
+                404: { description: "Not found" },
+            },
+        },
         put: {
             tags: [tag],
             summary: `Update ${schema.toLowerCase()}`,
@@ -96,7 +115,29 @@ module.exports = {
             responses: { 201: { description: "Created" } },
         },
     },
+    "/admin/city/count": {
+        get: {
+            tags: ["Locations"],
+            summary: "Count cities",
+            security,
+            parameters: [
+                { in: "query", name: "text",      schema: { type: "string" } },
+                { in: "query", name: "region_id", schema: { type: "integer" } },
+            ],
+            responses: { 200: { description: "Count", content: { "application/json": { schema: { type: "object", properties: { count: { type: "integer" } } } } } } },
+        },
+    },
     "/admin/city/{id}": {
+        get: {
+            tags: ["Locations"],
+            summary: "Get city by ID",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: {
+                200: { description: "City", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/City" } } } } } },
+                404: { description: "Not found" },
+            },
+        },
         put: {
             tags: ["Locations"],
             summary: "Update city",

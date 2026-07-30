@@ -26,6 +26,14 @@ module.exports = (sequelize) => {
         Model.belongsTo(Model,  { foreignKey: "parent_id", as: "parent" });
         Model.hasMany(Model,    { foreignKey: "parent_id", as: "children" });
         Model.hasMany(db.Product, { foreignKey: "brand_id", as: "products" });
+        if (db.ShopBrand && db.Shop) {
+            Model.belongsToMany(db.Shop, {
+                through: db.ShopBrand,
+                foreignKey: "brand_id",
+                otherKey: "shop_id",
+                as: "shops",
+            });
+        }
     };
 
     return Model;

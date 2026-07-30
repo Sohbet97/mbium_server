@@ -37,6 +37,7 @@ class ProductService {
                 { model: db.Category, as: "category", attributes: ["id", "name", "slug"] },
                 { model: db.Shop, as: "shop", attributes: ["id", "name", "logo"] },
                 { model: db.Brand, as: "brand", required: false },
+                { model: db.DeliveryType, as: "deliveryTypes", required: false, through: { attributes: [] } },
                 {
                     model: db.ProductVariant,
                     as: "variants",
@@ -55,7 +56,15 @@ class ProductService {
                 {
                     model: db.ProductMedia,
                     as: "productMedia",
-                    where: { variant_id: null },
+                    where: { variant_id: null, role: { [Op.ne]: "3d" } },
+                    required: false,
+                    order: [["sort_order", "ASC"]],
+                    include: [{ model: db.Media, as: "media" }],
+                },
+                {
+                    model: db.ProductMedia,
+                    as: "models3d",
+                    where: { variant_id: null, role: "3d" },
                     required: false,
                     order: [["sort_order", "ASC"]],
                     include: [{ model: db.Media, as: "media" }],
@@ -65,7 +74,7 @@ class ProductService {
     }
 
     static async create(req) {
-        return db.Product.create({
+        const product = await db.Product.create({
             shop_id:                req.body?.shop_id,
             category_id:            req.body?.category_id,
             name:                   req.body?.name,
@@ -95,10 +104,14 @@ class ProductService {
             scheduled_at:           req.body?.scheduled_at ?? null,
             createdBy:              req.user?.id,
         });
+        if (Array.isArray(req.body?.delivery_type_ids)) {
+            await product.setDeliveryTypes(req.body.delivery_type_ids);
+        }
+        return product;
     }
 
     static async update(id, req) {
-        return db.Product.update(
+        const result = await db.Product.update(
             {
                 category_id:            req.body?.category_id,
                 name:                   req.body?.name,
@@ -129,6 +142,11 @@ class ProductService {
             },
             { where: { id } }
         );
+        if (Array.isArray(req.body?.delivery_type_ids)) {
+            const product = await db.Product.findByPk(id);
+            if (product) await product.setDeliveryTypes(req.body.delivery_type_ids);
+        }
+        return result;
     }
 
     static async delete(id, force = false) {

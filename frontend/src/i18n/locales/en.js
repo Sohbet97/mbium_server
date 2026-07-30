@@ -35,6 +35,7 @@ export default {
     favorites: 'Favorites',
     brands: 'Brands',
     sizes: 'Sizes',
+    deliveryTypes: 'Delivery Types',
     suppliers: 'Suppliers',
     comments: 'Comments',
     kyc: 'KYC Docs',
@@ -801,6 +802,14 @@ export default {
     slug: 'Slug', parent: 'Parent group', noParent: 'Top-level size',
     nameRequired: 'Name is required',
     empty: 'No sizes yet',
+  },
+  deliveryTypes: {
+    title: 'Delivery Types', totalCount: '{{count}} delivery types',
+    add: 'Add Delivery Type', edit: 'Edit Delivery Type',
+    name: 'Name (TK)', nameRu: 'Name (RU)', nameEn: 'Name (EN)',
+    code: 'Code', codeHint: 'e.g. courier, pickup, cargo',
+    nameRequired: 'Name is required', codeRequired: 'Code is required',
+    empty: 'No delivery types yet',
   },
   suppliers: {
     title: 'Suppliers', totalCount: '{{count}} suppliers',

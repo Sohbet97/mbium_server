@@ -60,4 +60,54 @@ const crudPaths = (base, tag, schema, requestSchema) => ({
 module.exports = {
     ...crudPaths("/admin/discounts",   tagD, "Discount",  "DiscountRequest"),
     ...crudPaths("/admin/flash-sales", tagF, "FlashSale", "FlashSaleRequest"),
+
+    // ── Seller — Flash Sales ──────────────────────────────────────────────────
+    "/seller/flash-sales": {
+        get: {
+            tags: [tagF],
+            summary: "List own shop's flash sales",
+            security,
+            parameters: [
+                { $ref: "#/components/parameters/XShopId" },
+                { in: "query", name: "product_id", schema: { type: "integer" } },
+                { in: "query", name: "variant_id", schema: { type: "integer" }, description: "Pass 'null' for product-level (no variant) flash sales" },
+            ],
+            responses: {
+                200: {
+                    description: "Flash sales",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/FlashSale" } },
+                    } } } },
+                },
+            },
+        },
+        post: {
+            tags: [tagF],
+            summary: "Create a flash sale for an own product/variant",
+            security,
+            parameters: [{ $ref: "#/components/parameters/XShopId" }],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/FlashSaleRequest" } } } },
+            responses: {
+                201: { description: "Created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/FlashSale" } } } } } },
+                404: { description: "Product or variant not found / not owned by seller" },
+            },
+        },
+    },
+    "/seller/flash-sales/{id}": {
+        put: {
+            tags: [tagF],
+            summary: "Update own flash sale",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }, { $ref: "#/components/parameters/XShopId" }],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/FlashSaleRequest" } } } },
+            responses: { 200: { description: "Updated" }, 404: { description: "Not found" } },
+        },
+        delete: {
+            tags: [tagF],
+            summary: "Delete own flash sale",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }, { $ref: "#/components/parameters/XShopId" }],
+            responses: { 200: { description: "Deleted" }, 404: { description: "Not found" } },
+        },
+    },
 };

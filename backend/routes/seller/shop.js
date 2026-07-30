@@ -36,6 +36,30 @@ router.put('/categories', async (req, res, next) => {
     } catch (e) { next(e); }
 });
 
+// PUT /seller/shop/delivery-types — set shop delivery types (full replace)
+router.put('/delivery-types', async (req, res, next) => {
+    try {
+        const deliveryTypeIds = Array.isArray(req.body.delivery_type_ids)
+            ? req.body.delivery_type_ids.map(Number).filter(Boolean)
+            : [];
+        await ShopService.setDeliveryTypes(req.shop.id, deliveryTypeIds);
+        const model = await ShopService.getById(req.shop.id);
+        return res.status(200).json({ model });
+    } catch (e) { next(e); }
+});
+
+// PUT /seller/shop/brands — set shop brands (full replace)
+router.put('/brands', async (req, res, next) => {
+    try {
+        const brandIds = Array.isArray(req.body.brand_ids)
+            ? req.body.brand_ids.map(Number).filter(Boolean)
+            : [];
+        await ShopService.setBrands(req.shop.id, brandIds);
+        const model = await ShopService.getById(req.shop.id);
+        return res.status(200).json({ model });
+    } catch (e) { next(e); }
+});
+
 // POST /seller/shop/logo — replace shop logo image
 router.post('/logo', shopLogoUpload.single('logo'), async (req, res, next) => {
     try {

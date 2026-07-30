@@ -275,11 +275,83 @@ module.exports = {
     "/buyer/catalog/products/{id}": {
         get: {
             tags: ["Buyer — Catalog"],
-            summary: "Get a single active product (includes variants + media)",
+            summary: "Get a single active product (includes variants, shared media, and shared 3D models)",
             parameters: [idParam],
             responses: {
                 200: { description: "Product", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Product" } } } } } },
                 404: { description: "Not found" },
+            },
+        },
+    },
+
+    // ── Catalog — Brands (public, read-only) ─────────────────────────────────────
+    "/buyer/catalog/brands": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Get brand tree (nested children, public)",
+            responses: {
+                200: {
+                    description: "Nested brand tree",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/BrandTree" } },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/buyer/catalog/brands/{id}": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Get active brand by ID (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "Brand", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Brand" } } } } } },
+                404: { description: "Not found or inactive" },
+            },
+        },
+    },
+
+    // ── Catalog — Sizes (public, read-only) ──────────────────────────────────────
+    "/buyer/catalog/sizes": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Get size tree (nested children, public)",
+            responses: {
+                200: {
+                    description: "Nested size tree",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/SizeTree" } },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/buyer/catalog/sizes/{id}": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Get active size by ID (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "Size", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Size" } } } } } },
+                404: { description: "Not found or inactive" },
+            },
+        },
+    },
+
+    // ── Suppliers (public, read-only) ────────────────────────────────────────────
+    "/buyer/catalog/suppliers": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "List active suppliers (public)",
+            parameters: paginationParams,
+            responses: {
+                200: {
+                    description: "Suppliers",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/Supplier" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
             },
         },
     },
@@ -332,6 +404,7 @@ module.exports = {
                 content: { "application/json": { schema: { type: "object", required: ["product_id"], properties: {
                     product_id: { type: "integer" },
                     variant_id: { type: "integer", nullable: true },
+                    variant_size_id: { type: "integer", nullable: true, description: "Resolves price/stock at the per-size level when set" },
                     quantity:   { type: "integer", default: 1 },
                 } } } },
             },

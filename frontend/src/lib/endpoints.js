@@ -56,6 +56,8 @@ export const PATHS = {
   BRANDS: '/brands',
   // Sizes
   SIZES: '/sizes',
+  // Delivery types
+  DELIVERY_TYPES: '/delivery-types',
   // Suppliers
   SUPPLIERS: '/suppliers',
   // Comments

@@ -29,6 +29,11 @@ const commentsPaths    = require("./paths/comments");
 const kycPaths         = require("./paths/kyc");
 const reelsPaths          = require("./paths/reels");
 const buyerRequestsPaths  = require("./paths/buyer-requests");
+const sizesPaths          = require("./paths/sizes");
+const coinsPaths          = require("./paths/coins");
+const favoritesPaths      = require("./paths/favorites");
+const systemPaths         = require("./paths/system");
+const deliveryTypesPaths  = require("./paths/delivery-types");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -45,7 +50,7 @@ const swaggerSpec = {
     },
     servers: [
         { url: "http://localhost:4000", description: "Local dev" },
-        { url: "http://216.250.11.232/api", description: "Mbium server" },
+        { url: "https://mbium.com/api", description: "Mbium server" },
     ],
     security: [],
     components: {
@@ -87,6 +92,7 @@ const swaggerSpec = {
         { name: "AI Recommendations", description: "Admin CRUD for AI agent suggestion cards" },
         { name: "AI Chat",            description: "Streaming AI chat (SSE) and persistent conversation history — admin and buyer" },
         { name: "Admin Support",      description: "Admin-side support inbox — list/search rooms, start new conversations, send replies" },
+        { name: "Seller — Support",   description: "Seller's own support conversation with the platform admin team" },
         { name: "Push Notifications", description: "FCM push notification campaigns — admin (no quota) and seller (plan-quota enforced)" },
         { name: "Analytics",          description: "Admin and seller analytics — revenue, orders, users, shop performance" },
         { name: "Warehouses",         description: "Multi-warehouse inventory management — warehouses, stock levels, and movement history (admin + seller)" },
@@ -101,6 +107,12 @@ const swaggerSpec = {
         { name: "Buyer — Requests",      description: "Buyer RFQ/tender posts — create, track, close requests; matching shops are notified" },
         { name: "Buyer — Notifications", description: "Buyer in-app notification inbox — read, mark, delete" },
         { name: "Buyer Requests",        description: "Admin view of all buyer requests across the platform" },
+        { name: "Sizes",                 description: "Structured size catalogue with hierarchical parent/child tree and flat list" },
+        { name: "Coins",                 description: "Admin coin balance, grant/deduct, earning conditions, and top-up review" },
+        { name: "Buyer — Coins",         description: "Buyer coin wallet — balance, history, and top-up requests" },
+        { name: "Favorites",             description: "Admin view of all users' favorited products" },
+        { name: "Buyer — Favorites",     description: "Buyer favorited products — list, add, remove" },
+        { name: "System",                description: "App configuration, activity log, audit log, and system dumps" },
     ],
     paths: {
         // Auth
@@ -144,6 +156,11 @@ const swaggerSpec = {
         ...kycPaths,
         ...reelsPaths,
         ...buyerRequestsPaths,
+        ...sizesPaths,
+        ...coinsPaths,
+        ...favoritesPaths,
+        ...systemPaths,
+        ...deliveryTypesPaths,
     },
 };
 

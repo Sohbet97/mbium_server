@@ -20,8 +20,10 @@ module.exports = class ApiError extends Error {
         return new ApiError(404, message);
     }
 
-    static NotAllowed(message = "You haven't enough permission for this operation!", PERMISSION_KEY = null) {
-        return new ApiError(403, message);
+    static NotAllowed(message = "You haven't enough permission for this operation!", code = null) {
+        const error = new ApiError(403, message);
+        if (code) error.code = code;
+        return error;
     }
 
     static Conflict(message = "Conflict occurred due to duplicate or existing data!", errors = []) {

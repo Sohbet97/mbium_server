@@ -60,6 +60,7 @@ import AdminFavoritesPage from '@/pages/admin/AdminFavoritesPage'
 import ProductTagsPage from '@/pages/admin/ProductTagsPage'
 import BrandsPage from '@/pages/admin/BrandsPage'
 import SizesPage from '@/pages/admin/SizesPage'
+import DeliveryTypesPage from '@/pages/admin/DeliveryTypesPage'
 import SuppliersPage from '@/pages/admin/SuppliersPage'
 import AdminCommentsPage from '@/pages/admin/AdminCommentsPage'
 import AdminKycPage from '@/pages/admin/AdminKycPage'
@@ -111,6 +112,7 @@ const router = createBrowserRouter([
           { path: 'catalog/tags',       element: <ProductTagsPage />,              handle: { titleKey: 'productTags.title' } },
           { path: 'catalog/brands',    element: <BrandsPage />,                   handle: { titleKey: 'brands.title' } },
           { path: 'catalog/sizes',     element: <SizesPage />,                    handle: { titleKey: 'sizes.title' } },
+          { path: 'catalog/delivery-types', element: <DeliveryTypesPage />,       handle: { titleKey: 'deliveryTypes.title' } },
           { path: 'catalog/suppliers', element: <SuppliersPage />,                handle: { titleKey: 'suppliers.title' } },
           { path: 'comments',         element: <AdminCommentsPage />,            handle: { titleKey: 'comments.title' } },
           { path: 'kyc',             element: <AdminKycPage />,                 handle: { titleKey: 'kyc.title' } },

@@ -168,6 +168,7 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.Category, { foreignKey: "category_id", as: "category" });
         Model.hasMany(db.ProductVariant, { foreignKey: "product_id", as: "variants" });
         if (db.ProductMedia) Model.hasMany(db.ProductMedia, { foreignKey: "product_id", as: "productMedia" });
+        if (db.ProductMedia) Model.hasMany(db.ProductMedia, { foreignKey: "product_id", as: "models3d" });
         Model.hasMany(db.Review, { foreignKey: "product_id", as: "reviews" });
         Model.belongsToMany(db.Collection, {
             through: db.CollectionProduct,
@@ -197,6 +198,14 @@ module.exports = (sequelize) => {
         }
         if (db.Supplier) {
             Model.belongsTo(db.Supplier, { foreignKey: "supplier_id", as: "supplier" });
+        }
+        if (db.DeliveryType && db.ProductDeliveryType) {
+            Model.belongsToMany(db.DeliveryType, {
+                through: db.ProductDeliveryType,
+                foreignKey: "product_id",
+                otherKey: "delivery_type_id",
+                as: "deliveryTypes",
+            });
         }
     };
 

@@ -34,6 +34,7 @@ export default {
     favorites: 'Избранное',
     brands: 'Бренды',
     sizes: 'Размеры',
+    deliveryTypes: 'Способы доставки',
     suppliers: 'Поставщики',
     comments: 'Комментарии',
     kyc: 'KYC Документы',
@@ -800,6 +801,14 @@ export default {
     slug: 'Slug', parent: 'Родительская группа', noParent: 'Верхний уровень',
     nameRequired: 'Название обязательно',
     empty: 'Размеров пока нет',
+  },
+  deliveryTypes: {
+    title: 'Способы доставки', totalCount: '{{count}} способов',
+    add: 'Добавить способ', edit: 'Редактировать способ',
+    name: 'Название (TK)', nameRu: 'Название (RU)', nameEn: 'Название (EN)',
+    code: 'Код', codeHint: 'например: courier, pickup, cargo',
+    nameRequired: 'Название обязательно', codeRequired: 'Код обязателен',
+    empty: 'Способов доставки пока нет',
   },
   suppliers: {
     title: 'Поставщики', totalCount: '{{count}} поставщиков',

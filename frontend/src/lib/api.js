@@ -22,6 +22,12 @@ http.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config
+    const errCode = err.response?.data?.code
+    if (err.response?.status === 403 && (errCode === 'SHOP_NOT_ACTIVE' || errCode === 'SHOP_NOT_FOUND')) {
+      // Selected shop is stale (deactivated/deleted) — clear it so the app falls back
+      // to the user's actual active shop on next profile fetch, instead of looping 403s.
+      localStorage.removeItem('activeShopId')
+    }
     if (err.response?.status === 401 && !original._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -262,6 +268,13 @@ export class AdminApi {
     update:  (id, data)   => http.put(a(`${PATHS.SIZES}/${id}`), data),
     delete:  (id)         => http.delete(a(`${PATHS.SIZES}/${id}`)),
   }
+  static deliveryTypes = {
+    getAll:  (params)     => http.get(a(`${PATHS.DELIVERY_TYPES}`), { params }),
+    getOne:  (id)         => http.get(a(`${PATHS.DELIVERY_TYPES}/${id}`)),
+    create:  (data)       => http.post(a(`${PATHS.DELIVERY_TYPES}`), data),
+    update:  (id, data)   => http.put(a(`${PATHS.DELIVERY_TYPES}/${id}`), data),
+    delete:  (id)         => http.delete(a(`${PATHS.DELIVERY_TYPES}/${id}`)),
+  }
   static suppliers = {
     getAll:  (params)     => http.get(a(`${PATHS.SUPPLIERS}`), { params }),
     getOne:  (id)         => http.get(a(`${PATHS.SUPPLIERS}/${id}`)),
@@ -323,10 +336,15 @@ export class SellerApi {
     getAll: (params) => http.get(s('/sizes'), { params }),
     getTree: () => http.get(s('/sizes/tree')),
   }
+  static deliveryTypes = {
+    getAll: (params) => http.get(s('/delivery-types'), { params }),
+  }
   static shop = {
     get:           ()             => http.get(s('/shop')),
     update:        (data)         => http.patch(s('/shop'), data),
     setCategories: (category_ids) => http.put(s('/shop/categories'), { category_ids }),
+    setDeliveryTypes: (delivery_type_ids) => http.put(s('/shop/delivery-types'), { delivery_type_ids }),
+    setBrands: (brand_ids) => http.put(s('/shop/brands'), { brand_ids }),
     uploadLogo:    (formData)     => http.post(s('/shop/logo'), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
     uploadDocs:    (formData)     => http.post(s('/shop/docs'), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
     getTypes:                ()       => http.get(s('/shop/types')),
@@ -415,7 +433,8 @@ export class SellerApi {
         headers: { 'Content-Type': 'multipart/form-data' },
       }),
     delete: (id)                  => http.delete(s(`/media/${id}`)),
-    getProductMedia:    (productId, variantId)   => http.get(s(`/media/product/${productId}`), { params: variantId != null ? { variant_id: variantId } : {} }),
+    update: (id, data)            => http.patch(s(`/media/${id}`), data),
+    getProductMedia:    (productId, variantId)   => http.get(s(`/media/product/${productId}`), { params: variantId === undefined ? {} : { variant_id: variantId ?? '' } }),
     attachToProduct:    (productId, data, variantId) => http.post(s(`/media/product/${productId}`), { ...data, variant_id: variantId ?? undefined }),
     updateProductMedia: (productId, mediaId, data, variantId) => http.patch(s(`/media/product/${productId}/${mediaId}`), { ...data, variant_id: variantId ?? undefined }),
     detachFromProduct:  (productId, mediaId, variantId)   => http.delete(s(`/media/product/${productId}/${mediaId}`), { params: variantId != null ? { variant_id: variantId } : {} }),

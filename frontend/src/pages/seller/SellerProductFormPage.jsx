@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { ArrowLeft, Plus, Loader2, Save, Layers } from 'lucide-react'
+import { SellerProduct3DMediaManager } from '@/components/media/SellerProduct3DMediaManager'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
@@ -17,6 +18,7 @@ const EMPTY_FORM = {
   category_id: '',
   description: '',
   brand_id: '',
+  delivery_type_ids: [],
   is_active: true,
 }
 
@@ -87,6 +89,7 @@ export default function SellerProductFormPage() {
   const [form, setForm]             = useState(EMPTY_FORM)
   const [categories, setCategories] = useState([])
   const [brands, setBrands]         = useState([])
+  const [deliveryTypes, setDeliveryTypes] = useState([])
   const [variants, setVariants]     = useState([])
   const [loading, setLoading]       = useState(isEdit)
   const [saving, setSaving]         = useState(false)
@@ -94,6 +97,7 @@ export default function SellerProductFormPage() {
   useEffect(() => {
     SellerApi.categories.getAll().then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
     SellerApi.brands.getAll().then(({ data }) => setBrands(data.data ?? [])).catch(() => {})
+    SellerApi.deliveryTypes.getAll().then(({ data }) => setDeliveryTypes(data.data ?? [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -108,6 +112,7 @@ export default function SellerProductFormPage() {
           category_id: p.category_id ?? '',
           description: p.description ?? '',
           brand_id:    p.brand_id    ?? '',
+          delivery_type_ids: (p.deliveryTypes ?? []).map((dt) => dt.id),
           is_active:   p.is_active   ?? true,
         })
         setVariants(p.variants ?? [])
@@ -117,6 +122,15 @@ export default function SellerProductFormPage() {
   }, [id, isEdit, navigate])
 
   const set = (k, val) => setForm((f) => ({ ...f, [k]: val }))
+
+  function toggleDeliveryType(id) {
+    setForm((f) => ({
+      ...f,
+      delivery_type_ids: f.delivery_type_ids.includes(id)
+        ? f.delivery_type_ids.filter((x) => x !== id)
+        : [...f.delivery_type_ids, id],
+    }))
+  }
 
   async function handleSave(e) {
     e.preventDefault()
@@ -197,6 +211,24 @@ export default function SellerProductFormPage() {
               </div>
             )}
 
+            {deliveryTypes.length > 0 && (
+              <div>
+                <Label className="mb-1 block">Eltip bermek görnüşleri</Label>
+                <div className="flex flex-wrap gap-3">
+                  {deliveryTypes.map((dt) => (
+                    <label key={dt.id} className="flex items-center gap-1.5 text-sm cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={form.delivery_type_ids.includes(dt.id)}
+                        onChange={() => toggleDeliveryType(dt.id)}
+                      />
+                      <span className="dark:text-slate-300 text-slate-700">{dt.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <Label className="mb-1 block">Ady (TM) <span className="text-red-500">*</span></Label>
@@ -246,6 +278,16 @@ export default function SellerProductFormPage() {
               ) : (
                 variants.map((vr) => <VariantSummaryRow key={vr.id} productId={id} vr={vr} />)
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ── 3D Models (product-wide, edit mode only) ─────────────────────── */}
+        {isEdit && (
+          <Card>
+            <CardHeader><CardTitle>3D Modeller</CardTitle></CardHeader>
+            <CardContent>
+              <SellerProduct3DMediaManager productId={id} />
             </CardContent>
           </Card>
         )}

@@ -139,8 +139,12 @@ export function TopBar({ title }) {
             {shops.map((s) => (
               <DropdownMenuItem
                 key={s.id}
-                onClick={() => { setActiveShop(s.id); navigate(inSeller ? '/seller' : '/seller') }}
-                className="flex items-center gap-3 px-2.5 py-2 rounded-lg h-auto cursor-pointer"
+                disabled={!s.is_active}
+                onClick={() => { if (!s.is_active) return; setActiveShop(s.id); navigate(inSeller ? '/seller' : '/seller') }}
+                className={cn(
+                  'flex items-center gap-3 px-2.5 py-2 rounded-lg h-auto',
+                  s.is_active ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
+                )}
               >
                 <div className={cn('h-8 w-8 rounded-lg flex items-center justify-center shrink-0 text-white text-[11px] font-bold', shopColor(s.id))}>
                   {shopInitials(s.name)}

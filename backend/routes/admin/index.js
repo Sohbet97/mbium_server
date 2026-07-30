@@ -40,6 +40,7 @@ const suppliersModuleRouter   = require("../../__modules__/suppliers")
 const commentsModuleRouter    = require("../../__modules__/comments")
 const reelsModuleRouter         = require("../../__modules__/reels")
 const buyerRequestsModuleRouter = require("../../__modules__/buyer-requests")
+const deliveryTypesModuleRouter = require("../../__modules__/delivery-types")
 //#endregion
 
 //#region Routes
@@ -85,6 +86,7 @@ adminRouter.use(suppliersModuleRouter)
 adminRouter.use(commentsModuleRouter)
 adminRouter.use(reelsModuleRouter)
 adminRouter.use(buyerRequestsModuleRouter)
+adminRouter.use(deliveryTypesModuleRouter)
 //#endregion
 
 module.exports = adminRouter;

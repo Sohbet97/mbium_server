@@ -38,6 +38,8 @@ class ShopService {
         { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
         { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number", "email", "status"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
+        ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
+        ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
       ],
     });
   }
@@ -49,6 +51,8 @@ class ShopService {
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
+        ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
+        ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
       ],
     });
   }
@@ -95,6 +99,8 @@ class ShopService {
     });
 
     await this._syncCategories(model.id, req.body?.categories);
+    await this._syncDeliveryTypes(model.id, req.body?.delivery_type_ids);
+    await this._syncBrands(model.id, req.body?.brand_ids);
     return model;
   }
 
@@ -133,6 +139,12 @@ class ShopService {
 
     if (req.body?.categories !== undefined) {
       await this._syncCategories(id, req.body.categories);
+    }
+    if (req.body?.delivery_type_ids !== undefined) {
+      await this._syncDeliveryTypes(id, req.body.delivery_type_ids);
+    }
+    if (req.body?.brand_ids !== undefined) {
+      await this._syncBrands(id, req.body.brand_ids);
     }
   }
 
@@ -223,6 +235,40 @@ class ShopService {
     if (categories.length > 0) {
       await db.ShopCategory.bulkCreate(
         categories.map((category_id) => ({ shop_id: shopId, category_id })),
+        { ignoreDuplicates: true }
+      );
+    }
+  }
+
+  // Sync shop_delivery_types rows: destroy existing, re-insert
+  static async setDeliveryTypes(shopId, deliveryTypeIds) {
+    return this._syncDeliveryTypes(shopId, deliveryTypeIds);
+  }
+
+  static async _syncDeliveryTypes(shopId, deliveryTypeIds) {
+    if (!db.ShopDeliveryType) return;
+    if (!Array.isArray(deliveryTypeIds)) return;
+    await db.ShopDeliveryType.destroy({ where: { shop_id: shopId } });
+    if (deliveryTypeIds.length > 0) {
+      await db.ShopDeliveryType.bulkCreate(
+        deliveryTypeIds.map((delivery_type_id) => ({ shop_id: shopId, delivery_type_id })),
+        { ignoreDuplicates: true }
+      );
+    }
+  }
+
+  // Sync shop_brands rows: destroy existing, re-insert
+  static async setBrands(shopId, brandIds) {
+    return this._syncBrands(shopId, brandIds);
+  }
+
+  static async _syncBrands(shopId, brandIds) {
+    if (!db.ShopBrand) return;
+    if (!Array.isArray(brandIds)) return;
+    await db.ShopBrand.destroy({ where: { shop_id: shopId } });
+    if (brandIds.length > 0) {
+      await db.ShopBrand.bulkCreate(
+        brandIds.map((brand_id) => ({ shop_id: shopId, brand_id })),
         { ignoreDuplicates: true }
       );
     }

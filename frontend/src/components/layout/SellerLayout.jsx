@@ -120,6 +120,7 @@ export function SellerLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { open: aiOpen } = useAiAssistant()
   const { pathname } = useLocation()
+  const { user } = useAuth()
   const hideSidebar = pathname === '/seller/account'
 
   return (
@@ -128,7 +129,8 @@ export function SellerLayout() {
       <div className={`flex flex-col flex-1 overflow-hidden transition-[margin] duration-300 ${aiOpen ? 'mr-[380px]' : ''}`}>
         <TopBar title="Seller Panel" />
         <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
+          {/* key forces every seller page to remount (re-run its fetch effects) when the active shop changes */}
+          <Outlet key={user?.shop?.id} />
         </main>
       </div>
       <AiAssistant />
