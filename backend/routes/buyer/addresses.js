@@ -32,7 +32,13 @@ router.put('/:id', async (req, res, next) => {
     try {
         const existing = await DeliveryAddressService.getById(req.params.id);
         if (!existing || existing.user_id !== req.user.id) throw ApiError.NotFound('Adres tapylmady');
-        const model = await DeliveryAddressService.update(req.params.id, req.body);
+        // Only pass through editable fields — never let the client's body overwrite
+        // id/user_id (e.g. reassigning the address to another account).
+        const editable = {};
+        for (const key of ['label', 'region_id', 'city_id', 'district_id', 'street', 'apartment', 'postal_code', 'is_default']) {
+            if (req.body[key] !== undefined) editable[key] = req.body[key];
+        }
+        const model = await DeliveryAddressService.update(req.params.id, { ...editable, user_id: req.user.id });
         return res.status(200).json({ model });
     } catch (e) { next(e); }
 });

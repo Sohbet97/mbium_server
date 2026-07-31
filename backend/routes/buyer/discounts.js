@@ -4,27 +4,21 @@ const DiscountService = require('../../__modules__/discounts/services/discounts'
 
 // POST /buyer/discounts/validate  – validate a coupon code
 // Body: { code, shop_id? }
+// Body: { code, shop_id?, subtotal?, quantity? } — subtotal/quantity are optional and only
+// used to preview min-order/min-quantity eligibility before the buyer actually checks out.
 router.post('/validate', async (req, res, next) => {
     try {
-        const { code, shop_id } = req.body;
+        const { code, shop_id, subtotal, quantity } = req.body;
         if (!code) throw ApiError.BadRequest('Kupon kody hökman');
 
         const discount = await DiscountService.getByCode(code.trim().toUpperCase());
         if (!discount) throw ApiError.NotFound('Kupon kody tapylmady ýa-da işjeň däl');
 
-        // Optionally enforce shop scope
-        if (shop_id && discount.shop_id && discount.shop_id !== shop_id) {
-            throw ApiError.NotFound('Bu kupon bu dükana degişli däl');
-        }
-
-        // Check validity dates
-        const now = new Date();
-        if (discount.starts_at && new Date(discount.starts_at) > now) {
-            throw ApiError.NotAllowed('Kupon heniz işjeň däl');
-        }
-        if (discount.ends_at && new Date(discount.ends_at) < now) {
-            throw ApiError.NotAllowed('Kuponyň möhleti geçdi');
-        }
+        DiscountService.assertUsable(discount, {
+            shopId: shop_id,
+            subtotal: subtotal != null ? parseFloat(subtotal) : null,
+            quantity: quantity != null ? Number(quantity) : null,
+        });
 
         return res.status(200).json({ model: discount });
     } catch (e) { next(e); }

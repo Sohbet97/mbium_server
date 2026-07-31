@@ -1,6 +1,7 @@
 const { Op } = require("sequelize");
 const crypto = require("crypto");
 const db = require("../../../models");
+const ApiError = require("../../../exceptions/api-error");
 
 class DiscountService {
     static async get(filter = {}, limit, skip = 0, paranoid = true) {
@@ -33,6 +34,58 @@ class DiscountService {
 
     static async getByCode(code) {
         return db.Discount.findOne({ where: { code, is_active: true } });
+    }
+
+    // Shop scope + validity-window + usage-limit checks shared by the buyer "validate coupon"
+    // endpoint and actual checkout, so both make identical accept/reject decisions.
+    static assertUsable(discount, { shopId, subtotal, quantity } = {}) {
+        if (shopId != null && discount.shop_id != null && Number(discount.shop_id) !== Number(shopId)) {
+            throw ApiError.NotFound("Bu kupon bu dükana degişli däl");
+        }
+
+        const now = new Date();
+        if (discount.starts_at && new Date(discount.starts_at) > now) {
+            throw ApiError.NotAllowed("Kupon heniz işjeň däl");
+        }
+        if (discount.ends_at && new Date(discount.ends_at) < now) {
+            throw ApiError.NotAllowed("Kuponyň möhleti geçdi");
+        }
+        if (discount.max_uses != null && discount.used_count >= discount.max_uses) {
+            throw ApiError.NotAllowed("Kuponyň ulanylyş çägi doldy");
+        }
+        if (subtotal != null && discount.min_order_amount != null && subtotal < parseFloat(discount.min_order_amount)) {
+            throw ApiError.NotAllowed(`Bu kupon üçin iň az sargyt: ${discount.min_order_amount}`);
+        }
+        if (quantity != null && discount.min_quantity != null && quantity < discount.min_quantity) {
+            throw ApiError.NotAllowed(`Bu kupon üçin iň az mukdar: ${discount.min_quantity}`);
+        }
+        if (discount.category === "BUY_X_GET_Y") {
+            throw ApiError.BadRequest("Bu kupon görnüşi heniz goldanylmaýar");
+        }
+    }
+
+    // Splits order line items into the subset a discount actually applies to, based on
+    // applies_to_type/applies_to_ids (ALL | CATEGORIES | PRODUCTS). Each item needs
+    // { product: { id, category_id }, quantity, total_price }.
+    static getEligibleItems(discount, items) {
+        if (discount.applies_to_type === "CATEGORIES") {
+            const ids = (discount.applies_to_ids || []).map(Number);
+            return items.filter((i) => ids.includes(Number(i.product.category_id)));
+        }
+        if (discount.applies_to_type === "PRODUCTS") {
+            const ids = (discount.applies_to_ids || []).map(Number);
+            return items.filter((i) => ids.includes(Number(i.product.id)));
+        }
+        return items; // ALL
+    }
+
+    // Computes the money amount to knock off, clamped to the eligible subtotal.
+    static computeAmount(discount, eligibleSubtotal) {
+        if (discount.category === "FREE_SHIPPING" || discount.type === "FREE_SHIPPING") return 0;
+        if (eligibleSubtotal <= 0) return 0;
+        const value = parseFloat(discount.value);
+        const amount = discount.type === "PERCENTAGE" ? eligibleSubtotal * (value / 100) : value;
+        return parseFloat(Math.min(Math.max(amount, 0), eligibleSubtotal).toFixed(2));
     }
 
     static async create(body) {

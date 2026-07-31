@@ -28,7 +28,7 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // POST /buyer/orders  – place order
-// Body: { shop_id, items: [{product_id, variant_id?, quantity}], delivery_address?, delivery_address_id?, note? }
+// Body: { shop_id, items: [{product_id, variant_id?, quantity}], delivery_address?, delivery_address_id?, note?, discount_code? }
 router.post('/', async (req, res, next) => {
     try {
         const { shop_id, items } = req.body;
