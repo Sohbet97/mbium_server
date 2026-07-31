@@ -202,8 +202,16 @@ router.get('/products', async (req, res, next) => {
         if (req.query.category_id) filter.category_id = req.query.category_id;
         if (req.query.shop_id)     filter.shop_id     = req.query.shop_id;
         if (req.query.text) filter[Op.and] = [productTextFilter(req.query.text)]
-        if (req.query.min_price) filter.price = { ...filter.price, [Op.gte]: parseFloat(req.query.min_price) };
-        if (req.query.max_price) filter.price = { ...filter.price, [Op.lte]: parseFloat(req.query.max_price) };
+        if (req.query.min_price) {
+            const minPrice = parseFloat(req.query.min_price);
+            if (isNaN(minPrice)) throw ApiError.BadRequest('min_price nädogry');
+            filter.price = { ...filter.price, [Op.gte]: minPrice };
+        }
+        if (req.query.max_price) {
+            const maxPrice = parseFloat(req.query.max_price);
+            if (isNaN(maxPrice)) throw ApiError.BadRequest('max_price nädogry');
+            filter.price = { ...filter.price, [Op.lte]: maxPrice };
+        }
 
         const [data, count] = await Promise.all([
             ProductService.get(filter, limit, sort, skip),

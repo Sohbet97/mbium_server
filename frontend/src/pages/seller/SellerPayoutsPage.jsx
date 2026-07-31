@@ -25,9 +25,12 @@ export default function SellerPayoutsPage() {
     2: { label: t('seller.payoutPaid'),    color: STATUS_COLORS[2] },
     9: { label: t('seller.payoutRejected'), color: STATUS_COLORS[9] },
   }
+  const PAGE_SIZE = 20
   const [balance, setBalance]     = useState(null)
   const [history, setHistory]     = useState([])
+  const [count, setCount]         = useState(0)
   const [loading, setLoading]     = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [open, setOpen]           = useState(false)
   const [amount, setAmount]       = useState('')
   const [iban, setIban]           = useState('')
@@ -36,13 +39,22 @@ export default function SellerPayoutsPage() {
   useEffect(() => {
     Promise.all([
       SellerApi.payouts.getBalance(),
-      SellerApi.payouts.getHistory({ limit: 20 }),
+      SellerApi.payouts.getHistory({ limit: PAGE_SIZE, page: 1 }),
     ]).then(([balRes, histRes]) => {
       setBalance(balRes.data?.model ?? balRes.data)
       setHistory(histRes.data?.data ?? [])
+      setCount(histRes.data?.count ?? 0)
     }).catch(() => {})
       .finally(() => setLoading(false))
   }, [])
+
+  function loadMoreHistory() {
+    setLoadingMore(true)
+    const nextPage = Math.floor(history.length / PAGE_SIZE) + 1
+    SellerApi.payouts.getHistory({ limit: PAGE_SIZE, page: nextPage })
+      .then(({ data }) => setHistory((prev) => [...prev, ...(data?.data ?? [])]))
+      .finally(() => setLoadingMore(false))
+  }
 
   async function handleRequest() {
     if (!amount || parseFloat(amount) <= 0) { toast.error(t('seller.enterAmount')); return }
@@ -54,8 +66,9 @@ export default function SellerPayoutsPage() {
       setAmount('')
       setIban('')
       // refresh history
-      const { data } = await SellerApi.payouts.getHistory({ limit: 20 })
+      const { data } = await SellerApi.payouts.getHistory({ limit: PAGE_SIZE, page: 1 })
       setHistory(data?.data ?? [])
+      setCount(data?.count ?? 0)
     } catch (e) {
       toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally {
@@ -111,6 +124,13 @@ export default function SellerPayoutsPage() {
           </Card>
         )
       })}
+      {history.length > 0 && history.length < count && (
+        <div className="flex justify-center pt-1">
+          <Button size="sm" variant="outline" disabled={loadingMore} onClick={loadMoreHistory}>
+            {loadingMore ? t('common.loading') : t('common.loadMore', 'Load more')}
+          </Button>
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

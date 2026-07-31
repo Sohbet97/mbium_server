@@ -39,7 +39,8 @@ router.post('/requests', async (req, res, next) => {
             requested_by: req.user.id,
             amount:       requested,
             currency:     'TMT',
-            note:         req.body.note || null,
+            bank_details: req.body.bank_iban || null,
+            notes:        req.body.note || null,
             status:       0,
         });
         return res.status(201).json({ model });

@@ -397,9 +397,9 @@ export class SellerApi {
     deleteItem:     (id, itemId)                  => http.delete(s(`/orders/${id}/items/${itemId}`)),
   }
   static payouts = {
-    getBalance:  ()     => http.get(s('/payouts/balance')),
-    getHistory:  (params) => http.get(s('/payouts/history'), { params }),
-    request:     (data) => http.post(s('/payouts/request'), data),
+    getBalance:  ()       => http.get(s('/payouts/balance')),
+    getHistory:  (params) => http.get(s('/payouts/requests'), { params }),
+    request:     (data)   => http.post(s('/payouts/requests'), data),
   }
   static discounts = {
     getAll:  (params)       => http.get(s('/discounts'), { params }),

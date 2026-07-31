@@ -16,19 +16,30 @@ const EMPTY = {
 }
 
 // ── Inline media picker (uses seller's own media library) ────────────────────
+const MEDIA_PAGE_SIZE = 80
+
 function InlineMediaPicker({ open, onClose, onSelect }) {
   const [items, setItems]       = useState([])
+  const [count, setCount]       = useState(0)
   const [loading, setLoading]   = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef(null)
 
   useEffect(() => {
     if (!open) return
     setLoading(true)
-    SellerApi.media.list({ limit: 80, type: 'image' })
-      .then(({ data }) => setItems(data.data ?? []))
+    SellerApi.media.list({ limit: MEDIA_PAGE_SIZE, skip: 0, type: 'image' })
+      .then(({ data }) => { setItems(data.data ?? []); setCount(data.count ?? 0) })
       .finally(() => setLoading(false))
   }, [open])
+
+  function loadMore() {
+    setLoadingMore(true)
+    SellerApi.media.list({ limit: MEDIA_PAGE_SIZE, skip: items.length, type: 'image' })
+      .then(({ data }) => setItems((prev) => [...prev, ...(data.data ?? [])]))
+      .finally(() => setLoadingMore(false))
+  }
 
   async function handleUpload(e) {
     const files = Array.from(e.target.files ?? [])
@@ -41,8 +52,9 @@ function InlineMediaPicker({ open, onClose, onSelect }) {
         return SellerApi.media.upload(fd)
       }))
       setLoading(true)
-      const { data } = await SellerApi.media.list({ limit: 80, type: 'image' })
+      const { data } = await SellerApi.media.list({ limit: MEDIA_PAGE_SIZE, skip: 0, type: 'image' })
       setItems(data.data ?? [])
+      setCount(data.count ?? 0)
     } catch { toast.error('Ýükleme ýalňyşlygy') }
     finally {
       setUploading(false); setLoading(false)
@@ -96,6 +108,17 @@ function InlineMediaPicker({ open, onClose, onSelect }) {
                   </div>
                 )
               })}
+            </div>
+          )}
+          {!loading && items.length < count && (
+            <div className="flex justify-center pt-3">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-3 h-8 rounded-lg text-xs font-medium border dark:border-white/[0.12] text-slate-500 hover:bg-slate-50 dark:hover:bg-white/5 disabled:opacity-50"
+              >
+                {loadingMore ? 'Ýüklenýär…' : 'Ýene ýükle'}
+              </button>
             </div>
           )}
         </div>
