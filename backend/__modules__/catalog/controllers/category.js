@@ -52,6 +52,9 @@ class CategoryController {
             if (!model) throw ApiError.NotFound("Kategoriýa tapylmady");
             const { isError, errors } = await Validator.validate(categorySchema, req.body);
             if (isError) throw ApiError.BadRequest(null, errors);
+            if (req.body?.parent_id && await CategoryService.wouldCreateCycle(req.params.id, req.body.parent_id)) {
+                throw ApiError.BadRequest("Kategoriýany öz aşaky kategoriýasyna geçirip bolmaz");
+            }
             await CategoryService.update(req.params.id, req);
             return res.status(200).json({ ok: true });
         } catch (e) { next(e); }

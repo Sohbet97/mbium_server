@@ -34,19 +34,23 @@ class CategoryService {
     }
 
     static async getTree() {
-        return db.Category.findAll({
-            where: { parent_id: null, status: STATUSE_ACTIVE },
+        const categories = await db.Category.findAll({
+            where: { status: STATUSE_ACTIVE },
             order: CATALOG_CONSTANTS.CATEGORY_SORT,
-            include: [
-                {
-                    model: db.Category,
-                    as: "children",
-                    where: { status: STATUSE_ACTIVE },
-                    required: false,
-                    order: CATALOG_CONSTANTS.CATEGORY_SORT,
-                },
-            ],
         });
+
+        const byId = new Map(categories.map((c) => [c.id, { ...c.toJSON(), children: [] }]));
+        const roots = [];
+
+        for (const category of byId.values()) {
+            if (category.parent_id && byId.has(category.parent_id)) {
+                byId.get(category.parent_id).children.push(category);
+            } else {
+                roots.push(category);
+            }
+        }
+
+        return roots;
     }
 
     static async create(req) {
@@ -62,6 +66,21 @@ class CategoryService {
             status: req.body?.status ?? 1,
             createdBy: req.user?.id,
         });
+    }
+
+    // Walks up from candidateParentId toward the root; true if it ever reaches id (i.e. id is an ancestor of the candidate, which would create a cycle)
+    static async wouldCreateCycle(id, candidateParentId) {
+        if (!candidateParentId) return false;
+        if (Number(candidateParentId) === Number(id)) return true;
+        const seen = new Set();
+        let current = await db.Category.findOne({ where: { id: candidateParentId }, paranoid: false });
+        while (current?.parent_id) {
+            if (Number(current.parent_id) === Number(id)) return true;
+            if (seen.has(current.parent_id)) return false; // pre-existing cycle unrelated to this change
+            seen.add(current.parent_id);
+            current = await db.Category.findOne({ where: { id: current.parent_id }, paranoid: false });
+        }
+        return false;
     }
 
     static async update(id, req) {

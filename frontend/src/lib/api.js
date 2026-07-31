@@ -332,6 +332,9 @@ export class SellerApi {
     getAll: (params) => http.get(s('/brands'), { params }),
     getTree: () => http.get(s('/brands/tree')),
   }
+  static suppliers = {
+    getAll: (params) => http.get(s('/suppliers'), { params }),
+  }
   static sizes = {
     getAll: (params) => http.get(s('/sizes'), { params }),
     getTree: () => http.get(s('/sizes/tree')),

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { ArrowLeft, Plus, Loader2, Save, Layers } from 'lucide-react'
 import { SellerProduct3DMediaManager } from '@/components/media/SellerProduct3DMediaManager'
+import { SellerProductMediaManager } from '@/components/media/SellerProductMediaManager'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
@@ -18,8 +19,15 @@ const EMPTY_FORM = {
   category_id: '',
   description: '',
   brand_id: '',
+  supplier_id: '',
   delivery_type_ids: [],
+  price: '', compare_at_price: '', cost_price: '', currency: 'TMT',
+  is_physical: true, weight: '',
+  tags: '', handle: '',
+  seo_title: '', seo_description: '',
   is_active: true,
+  is_published: true,
+  scheduled_at: '',
 }
 
 // ── Variant summary row (read-only — editing happens on the variant's own page) ──
@@ -89,6 +97,7 @@ export default function SellerProductFormPage() {
   const [form, setForm]             = useState(EMPTY_FORM)
   const [categories, setCategories] = useState([])
   const [brands, setBrands]         = useState([])
+  const [suppliers, setSuppliers]   = useState([])
   const [deliveryTypes, setDeliveryTypes] = useState([])
   const [variants, setVariants]     = useState([])
   const [loading, setLoading]       = useState(isEdit)
@@ -97,6 +106,7 @@ export default function SellerProductFormPage() {
   useEffect(() => {
     SellerApi.categories.getAll().then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
     SellerApi.brands.getAll().then(({ data }) => setBrands(data.data ?? [])).catch(() => {})
+    SellerApi.suppliers.getAll().then(({ data }) => setSuppliers(data.data ?? [])).catch(() => {})
     SellerApi.deliveryTypes.getAll().then(({ data }) => setDeliveryTypes(data.data ?? [])).catch(() => {})
   }, [])
 
@@ -112,8 +122,23 @@ export default function SellerProductFormPage() {
           category_id: p.category_id ?? '',
           description: p.description ?? '',
           brand_id:    p.brand_id    ?? '',
+          supplier_id: p.supplier_id ?? '',
           delivery_type_ids: (p.deliveryTypes ?? []).map((dt) => dt.id),
+          price:            p.price            ?? '',
+          compare_at_price: p.compare_at_price ?? '',
+          cost_price:       p.cost_price       ?? '',
+          currency:         p.currency         ?? 'TMT',
+          is_physical:      p.is_physical      ?? true,
+          weight:           p.weight           ?? '',
+          tags:             (p.tags ?? []).join(', '),
+          handle:           p.handle           ?? '',
+          seo_title:        p.seo_title        ?? '',
+          seo_description:  p.seo_description  ?? '',
           is_active:   p.is_active   ?? true,
+          is_published: p.is_published ?? true,
+          scheduled_at: p.scheduled_at
+            ? new Date(p.scheduled_at).toISOString().slice(0, 16)
+            : '',
         })
         setVariants(p.variants ?? [])
       })
@@ -142,7 +167,14 @@ export default function SellerProductFormPage() {
       const payload = {
         ...form,
         category_id: Number(form.category_id),
-        brand_id:    form.brand_id ? Number(form.brand_id) : null,
+        brand_id:    form.brand_id    ? Number(form.brand_id)    : null,
+        supplier_id: form.supplier_id ? Number(form.supplier_id) : null,
+        price:            form.price            !== '' ? Number(form.price)            : null,
+        compare_at_price: form.compare_at_price !== '' ? Number(form.compare_at_price) : null,
+        cost_price:       form.cost_price       !== '' ? Number(form.cost_price)       : null,
+        weight:           form.weight           !== '' ? Number(form.weight)           : null,
+        tags:             form.tags ? form.tags.split(',').map((s) => s.trim()).filter(Boolean) : [],
+        scheduled_at:     form.scheduled_at || null,
       }
 
       if (isEdit) {
@@ -211,6 +243,20 @@ export default function SellerProductFormPage() {
               </div>
             )}
 
+            {suppliers.length > 0 && (
+              <div>
+                <Label className="mb-1 block">Üpjün ediji</Label>
+                <select
+                  value={form.supplier_id}
+                  onChange={(e) => set('supplier_id', e.target.value)}
+                  className="w-full h-9 border rounded-md px-3 text-sm bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">— Üpjün ediji ýok —</option>
+                  {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+            )}
+
             {deliveryTypes.length > 0 && (
               <div>
                 <Label className="mb-1 block">Eltip bermek görnüşleri</Label>
@@ -257,6 +303,114 @@ export default function SellerProductFormPage() {
             />
           </CardContent>
         </Card>
+
+        {/* ── Pricing (base — used only if a variant has no price of its own) ──── */}
+        <Card>
+          <CardHeader><CardTitle>Baha</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-xs text-slate-400 -mt-1">
+              Her görnüşiň (reňk, ölçeg) öz bahasy bar bolsa, şol ulanylýar — bu ýerdäki baha diňe görnüşsiz harytlar üçin ulanylýar.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Label className="mb-1 block">Baha</Label>
+                <Input type="number" min="0" step="0.01" value={form.price} onChange={(e) => set('price', e.target.value)} placeholder="0.00" />
+              </div>
+              <div>
+                <Label className="mb-1 block">Öňki baha</Label>
+                <Input type="number" min="0" step="0.01" value={form.compare_at_price} onChange={(e) => set('compare_at_price', e.target.value)} placeholder="0.00" />
+              </div>
+              <div>
+                <Label className="mb-1 block">Özüne düşýän baha</Label>
+                <Input type="number" min="0" step="0.01" value={form.cost_price} onChange={(e) => set('cost_price', e.target.value)} placeholder="0.00" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Shipping ───────────────────────────────────────────────────── */}
+        <Card>
+          <CardHeader><CardTitle>Eltip bermek</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <Toggle
+              label="Fiziki haryt"
+              desc="Eltip bermek talap edýär"
+              checked={form.is_physical}
+              onChange={(v) => set('is_physical', v)}
+            />
+            {form.is_physical && (
+              <div>
+                <Label className="mb-1 block">Agramy (gram)</Label>
+                <Input type="number" min="0" value={form.weight} onChange={(e) => set('weight', e.target.value)} placeholder="0" className="max-w-[160px]" />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* ── Tags & Handle ──────────────────────────────────────────────── */}
+        <Card>
+          <CardHeader><CardTitle>Bellikler we salgy</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="mb-1 block">Bellikler</Label>
+              <Input value={form.tags} onChange={(e) => set('tags', e.target.value)} placeholder="arzanladyş, täze, saýlanan" />
+            </div>
+            <div>
+              <Label className="mb-1 block">Salgy (URL slug)</Label>
+              <Input value={form.handle} onChange={(e) => set('handle', e.target.value)} placeholder="gyzyl-krossofka" />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── SEO ────────────────────────────────────────────────────────── */}
+        <Card>
+          <CardHeader><CardTitle>SEO</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label className="mb-1 block">SEO sözbaşysy</Label>
+              <Input value={form.seo_title} onChange={(e) => set('seo_title', e.target.value)} maxLength={70} />
+              <p className="text-xs text-slate-400 mt-0.5">{(form.seo_title || '').length}/70</p>
+            </div>
+            <div>
+              <Label className="mb-1 block">SEO beýany</Label>
+              <Textarea value={form.seo_description} onChange={(e) => set('seo_description', e.target.value)} rows={3} maxLength={160} />
+              <p className="text-xs text-slate-400 mt-0.5">{(form.seo_description || '').length}/160</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Publishing / scheduling ────────────────────────────────────── */}
+        <Card>
+          <CardHeader><CardTitle>Çap etmek</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <Toggle
+              label="Çap edilen"
+              desc="Öçürilen bolsa, harydy hiç kim görmeýär"
+              checked={form.is_published}
+              onChange={(v) => set('is_published', v)}
+            />
+            <div>
+              <Label className="mb-1 block">Meýilleşdirilen wagt</Label>
+              <input
+                type="datetime-local"
+                value={form.scheduled_at}
+                onChange={(e) => set('scheduled_at', e.target.value)}
+                className="w-full h-9 border rounded-md px-3 text-sm bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-slate-400 mt-0.5">Görkezilen wagtda çap ediler</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Images (product-wide, edit mode only) ─────────────────────── */}
+        {isEdit && (
+          <Card>
+            <CardHeader><CardTitle>Suratlar</CardTitle></CardHeader>
+            <CardContent>
+              <SellerProductMediaManager productId={id} variantId={null} />
+            </CardContent>
+          </Card>
+        )}
 
         {/* ── Variants (edit mode only) — media/spin/sizes/stock/sales all live on each variant's own page ── */}
         {isEdit && (
