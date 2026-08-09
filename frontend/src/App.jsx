@@ -6,7 +6,9 @@ import { ThemeProvider } from '@/store/theme'
 import { AiAssistantProvider } from '@/store/aiAssistant'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { SellerLayout } from '@/components/layout/SellerLayout'
-import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
+import { ProtectedRoute, AdminRoute, SellerRoute } from '@/components/layout/ProtectedRoute'
+import { PermGate } from '@/components/layout/PermGate'
+import { Permissions } from '@/lib/permissions'
 import LoginPage from '@/pages/auth/LoginPage'
 import PendingPage from '@/pages/auth/PendingPage'
 import ShopApplyPage from '@/pages/auth/ShopApplyPage'
@@ -34,6 +36,7 @@ import DeliveriesPage from '@/pages/admin/DeliveriesPage'
 import PlansPage from '@/pages/admin/PlansPage'
 import ShopApplicationsPage from '@/pages/admin/ShopApplicationsPage'
 import ShopTypeRequestsPage from '@/pages/admin/ShopTypeRequestsPage'
+import AdminPayoutsPage from '@/pages/admin/PayoutsPage'
 import AiRecommendationsPage from '@/pages/admin/AiRecommendationsPage'
 // Seller pages
 import SellerDashboardPage from '@/pages/seller/SellerDashboardPage'
@@ -61,65 +64,75 @@ import ProductTagsPage from '@/pages/admin/ProductTagsPage'
 import BrandsPage from '@/pages/admin/BrandsPage'
 import SizesPage from '@/pages/admin/SizesPage'
 import DeliveryTypesPage from '@/pages/admin/DeliveryTypesPage'
+import ShopTypesPage from '@/pages/admin/ShopTypesPage'
 import SuppliersPage from '@/pages/admin/SuppliersPage'
 import AdminCommentsPage from '@/pages/admin/AdminCommentsPage'
 import AdminKycPage from '@/pages/admin/AdminKycPage'
 
+const g = (perm, element) => <PermGate perm={perm}>{element}</PermGate>
+
 const router = createBrowserRouter([
   { path: '/login',   element: <LoginPage /> },
-  { path: '/pending', element: <PendingPage /> },
   { path: '/apply',   element: <ShopApplyPage /> },
   {
     element: <ProtectedRoute />,
     children: [
+      { path: '/pending', element: <PendingPage /> },
       // ── Platform admin panel ──────────────────────────────────────────────
       {
+        element: <AdminRoute />,
+        children: [{
         path: '/admin',
         element: <AdminLayout />,
         children: [
           { index: true, element: <DashboardPage />, handle: { titleKey: 'dashboard.title' } },
-          { path: 'users', element: <UsersPage />, handle: { titleKey: 'users.title' } },
-          { path: 'shops', element: <ShopsPage />, handle: { titleKey: 'shops.title' } },
-          { path: 'shops/:id', element: <ShopDetailPage />, handle: { titleKey: 'shops.title' } },
-          { path: 'catalog/categories', element: <CategoriesPage />, handle: { titleKey: 'categories.title' } },
-          { path: 'catalog/products', element: <ProductsPage />, handle: { titleKey: 'products.title' } },
-          { path: 'catalog/products/new', element: <ProductFormPage />, handle: { titleKey: 'products.title' } },
-          { path: 'catalog/products/:id', element: <ProductDetailPage />, handle: { titleKey: 'products.title' } },
-          { path: 'catalog/products/:id/edit', element: <ProductFormPage />, handle: { titleKey: 'products.title' } },
-          { path: 'catalog/collections', element: <CollectionsPage />, handle: { titleKey: 'collections.title' } },
-          { path: 'catalog/collections/new', element: <CollectionFormPage />, handle: { titleKey: 'collections.title' } },
-          { path: 'catalog/collections/:id/edit', element: <CollectionFormPage />, handle: { titleKey: 'collections.title' } },
-          { path: 'orders', element: <OrdersPage />, handle: { titleKey: 'orders.title' } },
-          { path: 'reviews', element: <ReviewsPage />, handle: { titleKey: 'reviews.title' } },
-          { path: 'discounts', element: <DiscountsPage />, handle: { titleKey: 'discounts.title' } },
-          { path: 'roles', element: <RolesPage />, handle: { titleKey: 'roles.title' } },
-          { path: 'locations', element: <LocationsPage />, handle: { titleKey: 'locations.title' } },
+          { path: 'users', element: g(Permissions.USER_GET, <UsersPage />), handle: { titleKey: 'users.title' } },
+          { path: 'shops', element: g(Permissions.SHOP_GET, <ShopsPage />), handle: { titleKey: 'shops.title' } },
+          { path: 'shops/:id', element: g(Permissions.SHOP_GET, <ShopDetailPage />), handle: { titleKey: 'shops.title' } },
+          { path: 'catalog/categories', element: g(Permissions.CATEGORY_GET, <CategoriesPage />), handle: { titleKey: 'categories.title' } },
+          { path: 'catalog/products', element: g(Permissions.PRODUCT_GET, <ProductsPage />), handle: { titleKey: 'products.title' } },
+          { path: 'catalog/products/new', element: g(Permissions.PRODUCT_GET, <ProductFormPage />), handle: { titleKey: 'products.title' } },
+          { path: 'catalog/products/:id', element: g(Permissions.PRODUCT_GET, <ProductDetailPage />), handle: { titleKey: 'products.title' } },
+          { path: 'catalog/products/:id/edit', element: g(Permissions.PRODUCT_GET, <ProductFormPage />), handle: { titleKey: 'products.title' } },
+          { path: 'catalog/collections', element: g(Permissions.COLLECTION_GET, <CollectionsPage />), handle: { titleKey: 'collections.title' } },
+          { path: 'catalog/collections/new', element: g(Permissions.COLLECTION_GET, <CollectionFormPage />), handle: { titleKey: 'collections.title' } },
+          { path: 'catalog/collections/:id/edit', element: g(Permissions.COLLECTION_GET, <CollectionFormPage />), handle: { titleKey: 'collections.title' } },
+          { path: 'orders', element: g(Permissions.ORDER_GET, <OrdersPage />), handle: { titleKey: 'orders.title' } },
+          { path: 'reviews', element: g(Permissions.REVIEW_GET, <ReviewsPage />), handle: { titleKey: 'reviews.title' } },
+          { path: 'discounts', element: g(Permissions.DISCOUNT_GET, <DiscountsPage />), handle: { titleKey: 'discounts.title' } },
+          { path: 'roles', element: g(Permissions.ROLE_GET, <RolesPage />), handle: { titleKey: 'roles.title' } },
+          { path: 'locations', element: g([Permissions.REGION_GET, Permissions.VILLAGE_GET, Permissions.COUNTRY_GET], <LocationsPage />), handle: { titleKey: 'locations.title' } },
           { path: 'settings', element: <SettingsPage />, handle: { titleKey: 'settings.title' } },
           { path: 'account', element: <AccountPage />, handle: { titleKey: 'account.title' } },
-          { path: 'media', element: <MediaPage />, handle: { titleKey: 'media.title' } },
-          { path: 'banners', element: <BannersPage />, handle: { titleKey: 'banners.title' } },
-          { path: 'delivers', element: <DeliveriesPage />, handle: { titleKey: 'delivers.title' } },
-          { path: 'plans', element: <PlansPage />, handle: { titleKey: 'plans.title' } },
-          { path: 'shop-applications', element: <ShopApplicationsPage />, handle: { titleKey: 'shopApplications.title' } },
+          { path: 'media', element: g(Permissions.MEDIA_GET, <MediaPage />), handle: { titleKey: 'media.title' } },
+          { path: 'banners', element: g(Permissions.BANNER_GET, <BannersPage />), handle: { titleKey: 'banners.title' } },
+          { path: 'delivers', element: g(Permissions.DELIVER_GET, <DeliveriesPage />), handle: { titleKey: 'delivers.title' } },
+          { path: 'plans', element: g(Permissions.PLAN_GET, <PlansPage />), handle: { titleKey: 'plans.title' } },
+          { path: 'shop-applications', element: g(Permissions.SHOP_GET, <ShopApplicationsPage />), handle: { titleKey: 'shopApplications.title' } },
           { path: 'shop-type-requests', element: <ShopTypeRequestsPage />, handle: { titleKey: 'nav.shopTypeRequests' } },
-          { path: 'ai-recommendations',  element: <AiRecommendationsPage />,      handle: { titleKey: 'aiRecommendations.title' } },
-          { path: 'push-notifications',  element: <AdminPushNotificationsPage />,  handle: { titleKey: 'adminPn.pageTitle' } },
-          { path: 'audit-logs',          element: <AdminAuditPage />,               handle: { titleKey: 'auditLogs.title' } },
-          { path: 'analytics',           element: <AdminAnalyticsPage />,           handle: { titleKey: 'analytics.title' } },
-          { path: 'warehouses',          element: <WarehousesPage />,               handle: { titleKey: 'warehouses.title' } },
-          { path: 'coins',              element: <AdminCoinsPage />,               handle: { titleKey: 'coins.title' } },
-          { path: 'favorites',          element: <AdminFavoritesPage />,           handle: { titleKey: 'favorites.title' } },
-          { path: 'catalog/tags',       element: <ProductTagsPage />,              handle: { titleKey: 'productTags.title' } },
-          { path: 'catalog/brands',    element: <BrandsPage />,                   handle: { titleKey: 'brands.title' } },
-          { path: 'catalog/sizes',     element: <SizesPage />,                    handle: { titleKey: 'sizes.title' } },
-          { path: 'catalog/delivery-types', element: <DeliveryTypesPage />,       handle: { titleKey: 'deliveryTypes.title' } },
-          { path: 'catalog/suppliers', element: <SuppliersPage />,                handle: { titleKey: 'suppliers.title' } },
-          { path: 'comments',         element: <AdminCommentsPage />,            handle: { titleKey: 'comments.title' } },
-          { path: 'kyc',             element: <AdminKycPage />,                 handle: { titleKey: 'kyc.title' } },
+          { path: 'shop-types', element: <ShopTypesPage />, handle: { titleKey: 'shopTypes.title' } },
+          { path: 'payouts', element: g(Permissions.PAYOUT_GET, <AdminPayoutsPage />), handle: { titleKey: 'nav.payouts' } },
+          { path: 'ai-recommendations',  element: g(Permissions.AI_GET, <AiRecommendationsPage />),      handle: { titleKey: 'aiRecommendations.title' } },
+          { path: 'push-notifications',  element: g(Permissions.PUSH_NOTIF_GET, <AdminPushNotificationsPage />),  handle: { titleKey: 'adminPn.pageTitle' } },
+          { path: 'audit-logs',          element: g(Permissions.AUDIT_GET, <AdminAuditPage />),               handle: { titleKey: 'auditLogs.title' } },
+          { path: 'analytics',           element: g(Permissions.ANALYTICS_GET, <AdminAnalyticsPage />),           handle: { titleKey: 'analytics.title' } },
+          { path: 'warehouses',          element: g(Permissions.WAREHOUSE_GET, <WarehousesPage />),               handle: { titleKey: 'warehouses.title' } },
+          { path: 'coins',              element: g(Permissions.COIN_GET, <AdminCoinsPage />),               handle: { titleKey: 'coins.title' } },
+          { path: 'favorites',          element: g(Permissions.PRODUCT_GET, <AdminFavoritesPage />),           handle: { titleKey: 'favorites.title' } },
+          { path: 'catalog/tags',       element: g(Permissions.PRODUCT_GET, <ProductTagsPage />),              handle: { titleKey: 'productTags.title' } },
+          { path: 'catalog/brands',    element: g(Permissions.BRAND_GET, <BrandsPage />),                   handle: { titleKey: 'brands.title' } },
+          { path: 'catalog/sizes',     element: g(Permissions.SIZE_GET, <SizesPage />),                    handle: { titleKey: 'sizes.title' } },
+          { path: 'catalog/delivery-types', element: g(Permissions.DELIVERY_TYPE_GET, <DeliveryTypesPage />),       handle: { titleKey: 'deliveryTypes.title' } },
+          { path: 'catalog/suppliers', element: g(Permissions.SUPPLIER_GET, <SuppliersPage />),                handle: { titleKey: 'suppliers.title' } },
+          { path: 'comments',         element: g(Permissions.COMMENT_GET, <AdminCommentsPage />),            handle: { titleKey: 'comments.title' } },
+          { path: 'kyc',             element: g(Permissions.KYC_GET, <AdminKycPage />),                 handle: { titleKey: 'kyc.title' } },
         ],
+      }],
       },
       // ── Seller panel ──────────────────────────────────────────────────────
       {
+        element: <SellerRoute />,
+        children: [{
         path: '/seller',
         element: <SellerLayout />,
         children: [
@@ -141,6 +154,7 @@ const router = createBrowserRouter([
           { path: 'analytics',          element: <SellerAnalyticsPage /> },
           { path: 'warehouses',         element: <SellerWarehousesPage /> },
         ],
+      }],
       },
     ],
   },

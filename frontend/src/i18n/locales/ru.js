@@ -38,6 +38,7 @@ export default {
     suppliers: 'Поставщики',
     comments: 'Комментарии',
     kyc: 'KYC Документы',
+    shopTypes: 'Типы магазинов',
   },
 
   login: {
@@ -154,6 +155,12 @@ export default {
     isPhysical: 'Физический товар', isPhysicalHint: 'Требует доставки — отключите для цифровых товаров',
     noVariantsHint: 'Вариантов пока нет. Добавьте опции, например размер или цвет.',
     manageVariants: 'Управление вариантами', moreVariants: 'ещё вариантов',
+    moderation: 'Модерация', moderationStatus: 'Статус модерации',
+    approveAction: 'Одобрить товар', rejectAction: 'Отклонить',
+    rejectNote: 'Причина отклонения', rejectNotePlaceholder: 'Причина отклонения…',
+    modStatusPending: 'На рассмотрении', modStatusApproved: 'Одобрено', modStatusRejected: 'Отклонено',
+    moderatedAt: 'Дата проверки', moderationNote: 'Причина отклонения',
+    filterModeration: 'Вся модерация',
   },
 
   collections: {
@@ -455,6 +462,8 @@ export default {
 
     allCategories: 'Все категории', allStatuses: 'Все статусы',
     statusActive: 'Активный', statusHidden: 'Скрытый',
+    modPending: 'На рассмотрении', modApproved: 'Одобрено', modRejected: 'Отклонено',
+    modRejectedHint: 'Причина отклонения',
     noProducts: 'Товары не найдены', addFirstProduct: 'Добавить первый товар',
     confirmDeleteProduct: 'Удалить этот товар?', productDeleted: 'Товар удалён',
     variantsCount: '{{count}} вариантов', hideProduct: 'Скрыть', activateProduct: 'Активировать',
@@ -525,6 +534,20 @@ export default {
     sending: 'Отправка…', send: 'Отправить', payoutRequestSent: 'Запрос на выплату отправлен',
     payoutPending: 'Ожидает', payoutApproved: 'Подтверждена', payoutPaid: 'Оплачена', payoutRejected: 'Отклонена',
     withdrawTitle: 'Запрос на вывод', enterAmount: 'Введите сумму',
+    availableBalance: 'Доступный баланс', pendingBalance: 'Ожидающий баланс',
+    pendingBalanceHint: 'Удерживается 24 часа после доставки, затем переходит в доступный баланс',
+    statsToday: 'Сегодня', statsWeek: 'На этой неделе', statsMonth: 'В этом месяце',
+    ordersCount: '{{count}} заказов',
+    transactionHistory: 'История операций', noTransactions: 'Операций пока нет',
+    txnOrderCredit: 'Оплата заказа', txnCommission: 'Комиссия Mbium', txnPayoutDebit: 'Выплата отправлена', txnPayoutReversal: 'Заказ отменён - средства возвращены',
+    payoutMethod: 'Способ выплаты', methodCard: 'Карта', methodCash: 'Наличные',
+    cardNumber: 'Номер карты', cardNumberPlaceholder: '9999 9999 9999 9999',
+    enterCardNumber: 'Введите номер карты',
+    minPayoutError: 'Минимальная сумма выплаты {{amount}} TMT',
+    payoutRequestsTitle: 'Запросы на вывод',
+    withdrawableHint: 'Можно вывести до {{amount}} (без учёта уже запрошенных сумм)',
+    insufficientBalance: 'Сумма превышает доступный для вывода баланс',
+    invalidCardNumber: 'Введите корректный номер карты (13-19 цифр)',
 
     subscriptionTitle: 'Подписка и планы',
     subscriptionSubtitle: 'Текущий статус подписки и доступные планы',
@@ -809,6 +832,14 @@ export default {
     code: 'Код', codeHint: 'например: courier, pickup, cargo',
     nameRequired: 'Название обязательно', codeRequired: 'Код обязателен',
     empty: 'Способов доставки пока нет',
+  },
+  shopTypes: {
+    title: 'Типы магазинов', totalCount: '{{count}} типов магазинов',
+    add: 'Добавить тип магазина', edit: 'Редактировать тип магазина',
+    name: 'Название (TK)', nameRu: 'Название (RU)', nameEn: 'Название (EN)',
+    order: 'Порядок',
+    nameRequired: 'Название обязательно',
+    empty: 'Типов магазинов пока нет',
   },
   suppliers: {
     title: 'Поставщики', totalCount: '{{count}} поставщиков',

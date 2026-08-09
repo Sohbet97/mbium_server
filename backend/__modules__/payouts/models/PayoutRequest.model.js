@@ -34,6 +34,14 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: PAYOUT_REQUEST_STATUSES.PENDING,
         },
+        method: {
+            type: DataTypes.STRING(10),
+            allowNull: true, // CARD | CASH
+        },
+        card_number: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+        },
         bank_details: {
             type: DataTypes.TEXT,
             allowNull: true,

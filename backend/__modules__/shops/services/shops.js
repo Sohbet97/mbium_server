@@ -15,7 +15,7 @@ class ShopService {
       limit,
       paranoid,
       include: [
-        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number"], required: false },
       ],
     });
@@ -35,7 +35,7 @@ class ShopService {
       where: { id },
       paranoid,
       include: [
-        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number", "email", "status"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
         ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
@@ -49,7 +49,7 @@ class ShopService {
     return db.Shop.findOne({
       where: { owner_id: userId },
       include: [
-        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
         ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
         ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
@@ -62,7 +62,7 @@ class ShopService {
     return db.Shop.findAll({
       where: { owner_id: userId },
       include: [
-        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
       ],
       order: [["is_active", "DESC"], ["createdAt", "ASC"]],
     });
@@ -108,7 +108,7 @@ class ShopService {
     if (!id) return;
     await db.Shop.update(
       {
-        ...(req.body?.owner_id  !== undefined && { owner_id:  FUNCTIONS.getNumber(req.body.owner_id)  || null }),
+        ...(req.body?.owner_id  !== undefined && { owner_id:  req.body.owner_id || null }),
         ...(req.body?.type_id   !== undefined && { type_id:   FUNCTIONS.getNumber(req.body.type_id)   || null }),
         ...(req.body?.city_id   !== undefined && { city_id:   FUNCTIONS.getNumber(req.body.city_id)   || null }),
         ...(req.body?.region_id !== undefined && { region_id: FUNCTIONS.getNumber(req.body.region_id) || null }),
@@ -148,6 +148,11 @@ class ShopService {
     }
   }
 
+  static async reassignOwner(id, ownerId) {
+    if (!id) return;
+    await db.Shop.update({ owner_id: ownerId }, { where: { id } });
+  }
+
   static async delete(id, force = false) {
     if (!id) return;
     await db.Shop.destroy({ where: { id }, force });
@@ -156,6 +161,15 @@ class ShopService {
   static async _log(shop_id, action, admin_id, note) {
     if (!db.ShopVerificationLog) return;
     await db.ShopVerificationLog.create({ shop_id, action, admin_id: admin_id || null, note: note || null }).catch(() => {});
+  }
+
+  static async getVerificationLog(shopId) {
+    if (!db.ShopVerificationLog || !shopId) return [];
+    return db.ShopVerificationLog.findAll({
+      where: { shop_id: shopId },
+      include: [{ model: db.User, as: 'admin', attributes: ['id', 'name', 'surname'], required: false }],
+      order: [['createdAt', 'DESC']],
+    });
   }
 
   static async submitForReview(id, userId) {
@@ -206,6 +220,16 @@ class ShopService {
       { where: { id } }
     );
     await this._log(id, 'reopened', userId);
+    return this.getById(id);
+  }
+
+  static async withdraw(id, userId) {
+    const note = 'Arza ulanyjy tarapyndan yzyna alyndy';
+    await db.Shop.update(
+      { verification_status: 3, is_verified: false, verified_by: userId, verified_at: new Date(), verification_note: note },
+      { where: { id } }
+    );
+    await this._log(id, 'withdrawn', userId, note);
     return this.getById(id);
   }
 

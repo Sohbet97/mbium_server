@@ -345,7 +345,7 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     let cancelled = false
-    const params = { limit: fetchLimit, skip: (page - 1) * fetchLimit }
+    const params = { limit: fetchLimit, page }
     if (search) params.text = search
 
     AdminApi.categories.getAll(params)

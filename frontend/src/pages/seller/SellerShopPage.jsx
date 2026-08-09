@@ -391,7 +391,10 @@ export default function SellerShopPage() {
   const [savingBrands, setSavingBrands]       = useState(false)
 
   const fetchCategories = ()=>{
-    SellerApi.categories.getAll()
+    // tree=1 also returns any deactivated ancestors needed to nest active categories
+    // correctly (marked selectable: false) — without it, an active category whose
+    // parent was deactivated gets silently misfiled as a top-level category.
+    SellerApi.categories.getAll({ limit: 0, tree: 1 })
       .then(({ data }) => {
         setAllCategories(data.data ?? [])
       })
@@ -978,7 +981,7 @@ function buildTree(flat) {
 }
 
 function getAllLeafIds(node) {
-  if (!node.children?.length) return [node.id]
+  if (!node.children?.length) return node.selectable === false ? [] : [node.id]
   return node.children.flatMap(getAllLeafIds)
 }
 
@@ -1007,6 +1010,9 @@ function TreeCheckbox({ checked, indeterminate }) {
 function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
   const [open, setOpen] = useState(depth === 0)
   const hasChildren = node.children?.length > 0
+  // Structural placeholder for a deactivated/deleted category kept only so its still-active
+  // descendants nest correctly — not a real pickable category for this shop.
+  const isStructural = node.selectable === false
 
   const leafIds = useMemo(() => getAllLeafIds(node), [node])
   const selCount = leafIds.filter((id) => selected.includes(id)).length
@@ -1015,6 +1021,7 @@ function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
 
   function handleRowClick(e) {
     e.preventDefault()
+    if (isStructural) { setOpen((v) => !v); return }
     onBulkToggle(leafIds, !isChecked)
   }
 
@@ -1022,8 +1029,8 @@ function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
     <div>
       <div
         className={cn(
-          'flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer select-none group',
-          'hover:bg-slate-50 dark:hover:bg-white/[0.04]',
+          'flex items-center gap-2 py-1.5 px-2 rounded-lg select-none group',
+          isStructural ? 'cursor-default' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.04]',
           depth > 0 && 'ml-5'
         )}
         onClick={handleRowClick}
@@ -1039,8 +1046,13 @@ function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
         ) : (
           <span className="w-4 shrink-0" />
         )}
-        <TreeCheckbox checked={isChecked} indeterminate={isIndeterminate} />
-        <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 leading-tight">{node.name}</span>
+        {!isStructural && <TreeCheckbox checked={isChecked} indeterminate={isIndeterminate} />}
+        <span className={cn(
+          'text-sm flex-1 leading-tight',
+          isStructural ? 'text-slate-400 dark:text-slate-500 italic' : 'text-slate-700 dark:text-slate-300'
+        )}>
+          {node.name}{isStructural ? ' (öçürilen)' : ''}
+        </span>
         {hasChildren && selCount > 0 && (
           <span className="text-[11px] text-slate-400 shrink-0 tabular-nums">{selCount}/{leafIds.length}</span>
         )}
@@ -1086,8 +1098,11 @@ function CategoryPicker({ categories, selected, onToggle }) {
   // Every category (root, mid-level, or leaf) is its own selectable chip.
   // Grouped under its top-level ancestor so deeply-nested categories are
   // never silently dropped (previously anything below depth 1 was invisible).
+  // Structural placeholders (deactivated ancestors, selectable: false) are only
+  // used to resolve the correct group header — they never get their own chip.
   const groups = {}
   categories.forEach((c) => {
+    if (c.selectable === false) return
     const root = topAncestor(c)
     ;(groups[root.id] ??= { root, items: [] }).items.push(c)
   })

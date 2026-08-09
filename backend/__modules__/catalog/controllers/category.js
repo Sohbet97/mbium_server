@@ -13,10 +13,37 @@ class CategoryController {
             const paranoid = !req.query?.paranoid;
             const filter = this.getFilter(req.query);
             const { limit, sort, skip } = FUNCTIONS.getQueryParams(req);
-            const [data, count] = await Promise.all([
+            const [rows, count] = await Promise.all([
                 CategoryService.get(filter, limit, sort, skip, paranoid),
                 CategoryService.getCount(filter, paranoid),
             ]);
+
+            if (!req.query?.tree) {
+                return res.status(200).json({ data: rows, count });
+            }
+
+            // ?tree=1 — flat list for tree-select pickers, backfilled with any soft-deleted
+            // ancestors so a category whose parent was removed doesn't get silently
+            // reparented to the root (mirrors backend/routes/seller/categories.js).
+            const data = rows.map((c) => ({ ...c.toJSON(), selectable: true }));
+            const seen = new Set(data.map((c) => c.id));
+            let missing = [...new Set(data.map((c) => c.parent_id).filter((id) => id && !seen.has(id)))];
+
+            while (missing.length) {
+                const ancestorRows = await db.Category.findAll({
+                    where: { id: { [Op.in]: missing } },
+                    attributes: ["id", "name", "parent_id"],
+                    paranoid: false,
+                });
+                missing = [];
+                for (const row of ancestorRows) {
+                    if (seen.has(row.id)) continue;
+                    seen.add(row.id);
+                    data.push({ ...row.toJSON(), selectable: false });
+                    if (row.parent_id && !seen.has(row.parent_id)) missing.push(row.parent_id);
+                }
+            }
+
             return res.status(200).json({ data, count });
         } catch (e) { next(e); }
     }

@@ -637,7 +637,7 @@ function ProductsTab({ shopId }) {
 
   useEffect(() => {
     let cancelled = false
-    const params = { shop_id: shopId, limit, skip: (page - 1) * limit }
+    const params = { shop_id: shopId, limit, page }
     if (search) params.text = search
 
     AdminApi.products.getAll(params)
@@ -840,7 +840,7 @@ function OrdersTab({ shopId }) {
 
   useEffect(() => {
     let cancelled = false
-    const params = { shop_id: shopId, limit, skip: (page - 1) * limit }
+    const params = { shop_id: shopId, limit, page }
     if (filterStatus !== '') params.status = filterStatus
 
     AdminApi.orders.getAll(params)

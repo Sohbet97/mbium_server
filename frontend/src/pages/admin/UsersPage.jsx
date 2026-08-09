@@ -194,7 +194,7 @@ export default function UsersPage() {
   // Fetch users — all setState calls are inside async callbacks, not synchronously
   useEffect(() => {
     let cancelled = false
-    const params = { limit, skip: (page - 1) * limit }
+    const params = { limit, page }
     if (search) params.text = search
     if (statusFilter !== '') params.status = statusFilter
     if (roleFilter !== '') params.role = roleFilter

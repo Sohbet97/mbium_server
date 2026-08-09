@@ -112,7 +112,7 @@ function AppliesToSection({ form, set }) {
     if (applyType === 'ALL') { setItems([]); return }
     setFetching(true)
     const req = applyType === 'CATEGORIES'
-      ? SellerApi.categories.getAll({ limit: 500 })
+      ? SellerApi.categories.getAll({ limit: 0 })
       : SellerApi.products.getAll({ limit: 50, ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}) })
     req
       .then(({ data }) => setItems(data.data ?? []))
@@ -548,7 +548,7 @@ export default function SellerDiscountsPage() {
 
   function load(p = 0) {
     setLoading(true)
-    SellerApi.discounts.getAll({ limit: PAGE, skip: p * PAGE })
+    SellerApi.discounts.getAll({ limit: PAGE, page: p + 1 })
       .then(({ data }) => { setDiscounts(data.data ?? []); setCount(data.count ?? 0) })
       .finally(() => setLoading(false))
   }

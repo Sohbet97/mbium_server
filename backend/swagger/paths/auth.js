@@ -186,7 +186,7 @@ module.exports = {
         get: {
             tags: [tag],
             summary: "Get current user profile",
-            description: "Returns the authenticated user plus their shop (if any). The `shop` field includes `verification_status`, `type.commission_rate`, and `categories`.",
+            description: "Returns the authenticated user plus their shop (if any). The `shop` field includes `verification_status`, `type`, and `categories`.",
             security: [{ BearerAuth: [] }],
             responses: {
                 200: {

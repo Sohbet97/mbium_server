@@ -5,6 +5,15 @@ const { payoutRequestSchema, payoutStatusSchema } = require("../validators/payou
 
 const VALID_STATUSES = ["PENDING", "APPROVED", "REJECTED", "PROCESSED"];
 
+// Which statuses a request may move to from its current status — prevents a
+// request being re-processed (double-debit) or resurrected after a terminal state.
+const ALLOWED_TRANSITIONS = {
+    PENDING: ["APPROVED", "REJECTED"],
+    APPROVED: ["PROCESSED", "REJECTED"],
+    REJECTED: [],
+    PROCESSED: [],
+};
+
 class PayoutRequestController {
     static async get(req, res, next) {
         try {
@@ -50,14 +59,17 @@ class PayoutRequestController {
             if (!VALID_STATUSES.includes(status)) {
                 throw ApiError.BadRequest("Status nädogry");
             }
+            if (!ALLOWED_TRANSITIONS[existing.status]?.includes(status)) {
+                throw ApiError.BadRequest(`"${existing.status}" statusyndan "${status}" statusyna geçip bolmaz`);
+            }
 
             const updateData = { status, notes: notes ?? existing.notes };
 
             if (status === "PROCESSED") {
                 updateData.processed_at = new Date();
                 updateData.processed_by = req.user?.id ?? null;
-                // Deduct from seller balance when payout is marked as processed
-                await PayoutService.debitBalance(existing.shop_id, existing.amount);
+                // Deduct from available balance and record a ledger entry when a payout is processed
+                await PayoutService.debitForPayout(existing);
             }
 
             const model = await PayoutService.updateRequest(req.params.id, updateData);

@@ -216,7 +216,7 @@ function CountriesTab() {
 
   const { items, total, loading, refresh } = useLocList(
     () => {
-      const p = { limit, skip: (page - 1) * limit }
+      const p = { limit, page }
       if (search)              p.text   = search
       if (statusFilter !== '') p.status = statusFilter
       return AdminApi.countries.getAll(p)
@@ -334,7 +334,7 @@ function RegionsTab() {
 
   const { items, total, loading, refresh } = useLocList(
     () => {
-      const p = { limit, skip: (page - 1) * limit }
+      const p = { limit, page }
       if (search)              p.text   = search
       if (statusFilter !== '') p.status = statusFilter
       return AdminApi.regions.getAll(p)
@@ -469,7 +469,7 @@ function CitiesTab() {
 
   const { items, total, loading, refresh } = useLocList(
     () => {
-      const p = { limit, skip: (page - 1) * limit }
+      const p = { limit, page }
       if (search)              p.text   = search
       if (statusFilter !== '') p.status = statusFilter
       if (regionFilter)        p.region = regionFilter
@@ -606,7 +606,7 @@ function DistrictsTab() {
 
   const { items, total, loading, refresh } = useLocList(
     () => {
-      const p = { limit, skip: (page - 1) * limit }
+      const p = { limit, page }
       if (search)              p.text   = search
       if (statusFilter !== '') p.status = statusFilter
       if (regionFilter)        p.region = regionFilter
@@ -743,7 +743,7 @@ function VillagesTab() {
 
   const { items, total, loading, refresh } = useLocList(
     () => {
-      const p = { limit, skip: (page - 1) * limit }
+      const p = { limit, page }
       if (search)               p.text     = search
       if (statusFilter !== '')  p.status   = statusFilter
       if (districtFilter)       p.district = districtFilter

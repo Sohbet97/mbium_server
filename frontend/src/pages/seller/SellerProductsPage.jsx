@@ -33,6 +33,23 @@ function StatusDot({ active, t }) {
   )
 }
 
+function ModerationDot({ status, note, t }) {
+  const cls = status === 1
+    ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400'
+    : status === 2
+      ? 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400'
+      : 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+  const label = status === 1 ? t('seller.modApproved') : status === 2 ? t('seller.modRejected') : t('seller.modPending')
+  return (
+    <span
+      className={cn('inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium', cls)}
+      title={status === 2 && note ? `${t('seller.modRejectedHint')}: ${note}` : undefined}
+    >
+      {label}
+    </span>
+  )
+}
+
 export default function SellerProductsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -48,14 +65,14 @@ export default function SellerProductsPage() {
   const [toggling, setToggling]   = useState(null)
 
   useEffect(() => {
-    SellerApi.categories.getAll().then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
+    SellerApi.categories.getAll({ limit: 0 }).then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
   }, [])
 
   const load = useCallback((p = 0) => {
     setLoading(true)
     const params = {
       limit: PAGE,
-      skip: p * PAGE,
+      page: p + 1,
       text: text.trim() || undefined,
       category_id: catFilter || undefined,
       is_active: statusFilter !== '' ? statusFilter : undefined,
@@ -220,8 +237,9 @@ export default function SellerProductsPage() {
                   </div>
 
                   {/* Status */}
-                  <div className="shrink-0">
+                  <div className="shrink-0 flex flex-col items-end gap-1">
                     <StatusDot active={p.is_active} t={t} />
+                    <ModerationDot status={p.moderation_status ?? 0} note={p.moderation_note} t={t} />
                   </div>
 
                   {/* Actions */}

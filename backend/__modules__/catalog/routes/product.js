@@ -6,6 +6,8 @@ router.get("/:id", ProductController.getById.bind(ProductController));
 router.post("/", ProductController.create.bind(ProductController));
 router.put("/:id", ProductController.update.bind(ProductController));
 router.patch("/:id/restore", ProductController.restore.bind(ProductController));
+router.patch("/:id/approve", ProductController.approve.bind(ProductController));
+router.patch("/:id/reject", ProductController.reject.bind(ProductController));
 router.delete("/:id", ProductController.delete.bind(ProductController));
 router.delete("/:id/force", ProductController.forceDelete.bind(ProductController));
 

@@ -20,7 +20,7 @@ router.get('/', async (req, res, next) => {
             db.Order.count({ where: { shop_id: shopId } }),
             db.Order.count({ where: { shop_id: shopId, status: { [Op.in]: [0, 1, 2] } } }),
             db.Order.count({ where: { shop_id: shopId, createdAt: { [Op.gte]: thirtyDaysAgo } } }),
-            db.SellerBalance.findOne({ where: { shop_id: shopId }, attributes: ['balance', 'currency'] }),
+            db.SellerBalance.findOne({ where: { shop_id: shopId }, attributes: ['available_balance', 'pending_balance', 'currency'] }),
             db.Order.findAll({
                 where: { shop_id: shopId },
                 limit: 5,
@@ -50,7 +50,8 @@ router.get('/', async (req, res, next) => {
                 pending_orders:    pendingOrders,
                 orders_this_month: ordersThisMonth,
                 revenue_this_month: parseFloat(revenueResult?.total ?? 0),
-                balance:           parseFloat(balance?.balance ?? 0),
+                balance:           parseFloat(balance?.available_balance ?? 0),
+                pending_balance:   parseFloat(balance?.pending_balance ?? 0),
                 currency:          balance?.currency ?? 'TMT',
             },
             recent_orders: recentOrders,

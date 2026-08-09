@@ -14,6 +14,8 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
+import { CategoryTreeSelect } from '@/components/common/CategoryTreeSelect'
+import { SearchSelect } from '@/components/common/SearchSelect'
 import { AdminApi } from '@/lib/api'
 import { ProductMediaManager } from '@/components/media/ProductMediaManager'
 import { toast } from 'sonner'
@@ -109,7 +111,7 @@ export default function ProductFormPage() {
   useEffect(() => {
     Promise.all([
       AdminApi.shops.getAll({ limit: 500 }),
-      AdminApi.categories.getAll({ limit: 500 }),
+      AdminApi.categories.getAll({ limit: 0, tree: 1 }),
       AdminApi.brands.getAll({ limit: 500, is_active: true }),
       AdminApi.suppliers.getAll({ limit: 500, is_active: true }),
     ]).then(([s, c, br, su]) => {
@@ -268,10 +270,12 @@ export default function ProductFormPage() {
               <CardTitle className="text-sm font-medium">{t('products.category')}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <Select value={form.category_id} onChange={(e) => set('category_id', e.target.value)}>
-                <option value="">{t('products.selectCategory')}</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </Select>
+              <CategoryTreeSelect
+                categories={categories}
+                value={form.category_id ? Number(form.category_id) : ''}
+                onChange={(idVal) => set('category_id', idVal)}
+                placeholder={t('products.selectCategory')}
+              />
             </CardContent>
           </Card>
 
@@ -482,10 +486,15 @@ export default function ProductFormPage() {
               </FormField>
               {brands.length > 0 && (
                 <FormField label={t('products.brand')}>
-                  <Select value={form.brand_id} onChange={(e) => set('brand_id', e.target.value)}>
-                    <option value="">{t('products.noBrand')}</option>
-                    {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                  </Select>
+                  <SearchSelect
+                    items={brands}
+                    value={form.brand_id ? Number(form.brand_id) : ''}
+                    onChange={(id) => set('brand_id', id ?? '')}
+                    placeholder={t('products.noBrand')}
+                    title={t('products.brand')}
+                    clearable
+                    clearLabel={t('products.noBrand')}
+                  />
                 </FormField>
               )}
               {suppliers.length > 0 && (

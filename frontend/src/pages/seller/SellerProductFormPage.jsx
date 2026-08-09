@@ -10,6 +10,10 @@ import { toast } from 'sonner'
 import { ArrowLeft, Plus, Loader2, Save, Layers } from 'lucide-react'
 import { SellerProduct3DMediaManager } from '@/components/media/SellerProduct3DMediaManager'
 import { SellerProductMediaManager } from '@/components/media/SellerProductMediaManager'
+import { CategoryTreeSelect } from '@/components/common/CategoryTreeSelect'
+import { SearchSelect } from '@/components/common/SearchSelect'
+import { useAuth } from '@/store/auth'
+import { isAdmin } from '@/lib/access'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
@@ -93,6 +97,7 @@ export default function SellerProductFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const isEdit = !!id
+  const { user } = useAuth()
 
   const [form, setForm]             = useState(EMPTY_FORM)
   const [categories, setCategories] = useState([])
@@ -102,12 +107,13 @@ export default function SellerProductFormPage() {
   const [variants, setVariants]     = useState([])
   const [loading, setLoading]       = useState(isEdit)
   const [saving, setSaving]         = useState(false)
+  const [moderation, setModeration] = useState(null)
 
   useEffect(() => {
-    SellerApi.categories.getAll().then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
-    SellerApi.brands.getAll().then(({ data }) => setBrands(data.data ?? [])).catch(() => {})
+    SellerApi.categories.getAll({ limit: 0, tree: 1, mine: 1 }).then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
+    SellerApi.brands.getAll({ mine: 1 }).then(({ data }) => setBrands(data.data ?? [])).catch(() => {})
     SellerApi.suppliers.getAll().then(({ data }) => setSuppliers(data.data ?? [])).catch(() => {})
-    SellerApi.deliveryTypes.getAll().then(({ data }) => setDeliveryTypes(data.data ?? [])).catch(() => {})
+    SellerApi.deliveryTypes.getAll({ mine: 1 }).then(({ data }) => setDeliveryTypes(data.data ?? [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -141,6 +147,7 @@ export default function SellerProductFormPage() {
             : '',
         })
         setVariants(p.variants ?? [])
+        setModeration({ status: p.moderation_status ?? 0, note: p.moderation_note })
       })
       .catch(() => { toast.error('Haryt tapylmady'); navigate('/seller/products') })
       .finally(() => setLoading(false))
@@ -210,6 +217,18 @@ export default function SellerProductFormPage() {
         </h1>
       </div>
 
+      {isEdit && moderation && moderation.status !== 1 && (
+        <div className={
+          moderation.status === 2
+            ? 'rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400'
+            : 'rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-400'
+        }>
+          {moderation.status === 2
+            ? `Moderator harydy ret etdi${moderation.note ? `: ${moderation.note}` : ''}`
+            : 'Haryt moderator tarapyndan barlanýar — tassyklanýança müşderilere görünmeýär.'}
+        </div>
+      )}
+
       <form onSubmit={handleSave} className="space-y-5">
 
         {/* ── Basic info ─────────────────────────────────────────────────── */}
@@ -218,28 +237,26 @@ export default function SellerProductFormPage() {
           <CardContent className="space-y-4">
             <div>
               <Label className="mb-1 block">Kategoriýa <span className="text-red-500">*</span></Label>
-              <select
-                value={form.category_id}
-                onChange={(e) => set('category_id', e.target.value)}
-                className="w-full h-9 border rounded-md px-3 text-sm bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              >
-                <option value="">— Saýlaň —</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <CategoryTreeSelect
+                categories={categories}
+                value={form.category_id ? Number(form.category_id) : ''}
+                onChange={(id) => set('category_id', id)}
+              />
             </div>
 
             {brands.length > 0 && (
               <div>
                 <Label className="mb-1 block">Brend</Label>
-                <select
-                  value={form.brand_id}
-                  onChange={(e) => set('brand_id', e.target.value)}
-                  className="w-full h-9 border rounded-md px-3 text-sm bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">— Brend ýok —</option>
-                  {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-                </select>
+                <SearchSelect
+                  items={brands}
+                  value={form.brand_id ? Number(form.brand_id) : ''}
+                  onChange={(id) => set('brand_id', id ?? '')}
+                  placeholder="— Brend ýok —"
+                  title="Brend saýlaň"
+                  searchPlaceholder="Brend gözle…"
+                  clearable
+                  clearLabel="— Brend ýok —"
+                />
               </div>
             )}
 
@@ -436,8 +453,8 @@ export default function SellerProductFormPage() {
           </Card>
         )}
 
-        {/* ── 3D Models (product-wide, edit mode only) ─────────────────────── */}
-        {isEdit && (
+        {/* ── 3D Models (product-wide, edit mode only, staff-only) ──────────── */}
+        {isEdit && isAdmin(user) && (
           <Card>
             <CardHeader><CardTitle>3D Modeller</CardTitle></CardHeader>
             <CardContent>

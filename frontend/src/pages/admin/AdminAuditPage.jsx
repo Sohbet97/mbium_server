@@ -98,7 +98,7 @@ export default function AdminAuditPage() {
     try {
       const params = {
         limit: PAGE_SIZE,
-        skip:  (pg - 1) * PAGE_SIZE,
+        page:  pg,
         ...(search     && { search }),
         ...(entityType && { entity_type: entityType }),
         ...(action     && { action }),

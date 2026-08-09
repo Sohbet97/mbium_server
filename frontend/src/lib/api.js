@@ -86,14 +86,19 @@ export class AdminApi {
     verify:          (id)       => http.patch(a(`${PATHS.SHOPS}/${id}/verify`)),
     reject:          (id, data) => http.patch(a(`${PATHS.SHOPS}/${id}/reject`), data),
     submitForReview: (id)       => http.patch(a(`${PATHS.SHOPS}/${id}/submit`)),
+    reassignOwner:   (id, ownerId) => http.patch(a(`${PATHS.SHOPS}/${id}/owner`), { owner_id: ownerId }),
   }
-  static shopTypes = { getAll: (params) => http.get(a(PATHS.SHOP_TYPES), { params }) }
+  static shopTypes = {
+    ...crud(PATHS.SHOP_TYPES),
+  }
   static categories = {
     ...crud(PATHS.CATEGORIES),
     tree: (params) => http.get(a(`${PATHS.CATEGORIES}/tree`), { params }),
   }
   static products = {
     ...crud(PATHS.PRODUCTS),
+    approve: (id)       => http.patch(a(`${PATHS.PRODUCTS}/${id}/approve`)),
+    reject:  (id, data) => http.patch(a(`${PATHS.PRODUCTS}/${id}/reject`), data),
     variants: {
       create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/variants`), data),
       update: (productId, variantId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`), data),
@@ -130,6 +135,12 @@ export class AdminApi {
     count:      ()       => http.get(a(`${PATHS.NOTIFICATIONS}/count`)),
     markAsRead: (id)     => http.patch(a(`${PATHS.NOTIFICATIONS}/${id}/read`)),
     markAllAsRead: ()    => http.patch(a(`${PATHS.NOTIFICATIONS}/read-all`)),
+  }
+  static payouts = {
+    getBalances:  (params)          => http.get(a('/payouts/balances'), { params }),
+    getRequests:  (params)          => http.get(a('/payouts/requests'), { params }),
+    getRequest:   (id)              => http.get(a(`/payouts/requests/${id}`)),
+    updateStatus: (id, data)        => http.patch(a(`/payouts/requests/${id}/status`), data),
   }
   static bannerTypes = {
     getAll: ()        => http.get(a(PATHS.BANNER_TYPES)),
@@ -397,9 +408,11 @@ export class SellerApi {
     deleteItem:     (id, itemId)                  => http.delete(s(`/orders/${id}/items/${itemId}`)),
   }
   static payouts = {
-    getBalance:  ()       => http.get(s('/payouts/balance')),
-    getHistory:  (params) => http.get(s('/payouts/requests'), { params }),
-    request:     (data)   => http.post(s('/payouts/requests'), data),
+    getSummary:      ()       => http.get(s('/payouts/summary')),
+    getStats:        ()       => http.get(s('/payouts/stats')),
+    getTransactions: (params) => http.get(s('/payouts/transactions'), { params }),
+    getHistory:      (params) => http.get(s('/payouts/requests'), { params }),
+    request:         (data)   => http.post(s('/payouts/requests'), data),
   }
   static discounts = {
     getAll:  (params)       => http.get(s('/discounts'), { params }),
@@ -482,6 +495,8 @@ export const AuthApi = {
   getShopTypes:     ()         => http.get(`${AUTH}/shop-types`),
   applyForShop:     (data)     => http.post(`${AUTH}/me/shop`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getMyShop:        ()         => http.get(`${AUTH}/me/shop`),
+  getMyShopHistory: ()         => http.get(`${AUTH}/me/shop/history`),
+  withdrawShop:     ()         => http.post(`${AUTH}/me/shop/withdraw`),
   getWebToken:      ()         => http.post(`${AUTH}/web-token`),
   consumeWebToken:  (token)    => http.post(`${AUTH}/consume-web-token`, { token }),
 }

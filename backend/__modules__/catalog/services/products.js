@@ -102,6 +102,7 @@ class ProductService {
             is_active:              req.body?.is_active ?? true,
             is_published:           req.body?.is_published ?? true,
             scheduled_at:           req.body?.scheduled_at ?? null,
+            moderation_status:      req.body?.moderation_status ?? 0,
             createdBy:              req.user?.id,
         });
         if (Array.isArray(req.body?.delivery_type_ids)) {
@@ -151,6 +152,34 @@ class ProductService {
 
     static async delete(id, force = false) {
         return db.Product.destroy({ where: { id }, force });
+    }
+
+    // ── Moderation ───────────────────────────────────────────────────────────────
+
+    static async approve(id, userId) {
+        await db.Product.update(
+            {
+                moderation_status: 1,
+                moderated_by: userId,
+                moderated_at: new Date(),
+                moderation_note: null,
+            },
+            { where: { id } }
+        );
+        return this.getById(id);
+    }
+
+    static async reject(id, userId, note) {
+        await db.Product.update(
+            {
+                moderation_status: 2,
+                moderated_by: userId,
+                moderated_at: new Date(),
+                moderation_note: note || null,
+            },
+            { where: { id } }
+        );
+        return this.getById(id);
     }
 
     // ── Variants ─────────────────────────────────────────────────────────────────

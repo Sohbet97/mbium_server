@@ -173,7 +173,7 @@ router.get('/shops/:id/products', async (req, res, next) => {
         const sort = resolveBuyerSort(req.query.sort);
         const now = new Date();
         const filter = {
-            shop_id: req.params.id, is_active: true, is_published: true,
+            shop_id: req.params.id, is_active: true, is_published: true, moderation_status: 1,
             [Op.or]: [{ scheduled_at: null }, { scheduled_at: { [Op.lte]: now } }],
         };
         if (req.query.category_id) filter.category_id = req.query.category_id;
@@ -196,7 +196,7 @@ router.get('/products', async (req, res, next) => {
         const sort = resolveBuyerSort(req.query.sort);
         const now = new Date();
         const filter = {
-            is_active: true, is_published: true,
+            is_active: true, is_published: true, moderation_status: 1,
             [Op.or]: [{ scheduled_at: null }, { scheduled_at: { [Op.lte]: now } }],
         };
         if (req.query.category_id) filter.category_id = req.query.category_id;
@@ -225,7 +225,9 @@ router.get('/products', async (req, res, next) => {
 router.get('/products/:id', async (req, res, next) => {
     try {
         const model = await ProductService.getById(req.params.id);
-        if (!model || !model.is_active) throw ApiError.NotFound('Haryt tapylmady');
+        if (!model || !model.is_active || !model.is_published || model.moderation_status !== 1) {
+            throw ApiError.NotFound('Haryt tapylmady');
+        }
         return res.status(200).json({ model });
     } catch (e) { next(e); }
 });

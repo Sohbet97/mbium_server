@@ -76,6 +76,23 @@ class ShopController {
         }
     }
 
+    static async reassignOwner(req, res, next) {
+        try {
+            const existing = await ShopService.getById(req?.params?.id);
+            if (!existing) throw ApiError.NotFound("Dükan tapylmady");
+
+            const ownerId = req.body?.owner_id;
+            if (!ownerId) throw ApiError.BadRequest("owner_id giriziň");
+
+            const owner = await db.User.findByPk(ownerId);
+            if (!owner) throw ApiError.NotFound("Ulanyjy tapylmady");
+
+            await ShopService.reassignOwner(req.params.id, ownerId);
+            const model = await ShopService.getById(req.params.id);
+            return res.status(200).json({ model });
+        } catch (e) { next(e); }
+    }
+
     static async delete(req, res, next) {
         try {
             await ShopService.delete(req.params.id);
@@ -164,6 +181,25 @@ class ShopController {
         try {
             const model = await ShopService.getByOwner(req.user.id);
             return res.status(200).json({ model: model || null });
+        } catch (e) { next(e); }
+    }
+
+    static async withdrawShop(req, res, next) {
+        try {
+            const shop = await ShopService.getByOwner(req.user.id);
+            if (!shop) throw ApiError.NotFound("Dükan arzasy tapylmady");
+            if (shop.verification_status !== 1) throw ApiError.BadRequest("Diňe garaşylýan arzany yzyna alyp bolýar");
+            const updated = await ShopService.withdraw(shop.id, req.user.id);
+            return res.status(200).json({ model: updated });
+        } catch (e) { next(e); }
+    }
+
+    static async getMyShopHistory(req, res, next) {
+        try {
+            const shop = await ShopService.getByOwner(req.user.id);
+            if (!shop) return res.status(200).json({ data: [] });
+            const data = await ShopService.getVerificationLog(shop.id);
+            return res.status(200).json({ data });
         } catch (e) { next(e); }
     }
 

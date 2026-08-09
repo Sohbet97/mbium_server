@@ -86,6 +86,14 @@ cron.schedule("5 0 * * *", () => {
     .catch((e) => console.error("[cron] notification cleanup failed:", e.message));
 });
 
+// Release seller order-credit holds whose 24h pending window has elapsed — runs every 15 minutes
+cron.schedule("*/15 * * * *", () => {
+  const PayoutService = require("../__modules__/payouts/services/payouts");
+  PayoutService.releaseDueHolds()
+    .then((n) => n > 0 && console.log(`[cron] released ${n} pending seller balance hold(s)`))
+    .catch((e) => console.error("[cron] release pending balances failed:", e.message));
+});
+
 // Delete temp background-removal files older than 1 hour — runs every 15 minutes
 cron.schedule("*/15 * * * *", () => {
   const fs      = require("fs");

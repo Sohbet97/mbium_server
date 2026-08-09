@@ -63,7 +63,7 @@ class CategoryService {
             icon: req.body?.icon,
             image: req.body?.image,
             order: req.body?.order ?? null,
-            status: req.body?.status ?? 1,
+            status: req.body?.status ?? 0,
             createdBy: req.user?.id,
         });
     }

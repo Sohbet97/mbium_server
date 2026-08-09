@@ -7,8 +7,10 @@ const CoinService   = require("../../coins/services/CoinService");
 const PushService   = require("../../../services/push");
 const DiscountService = require("../../discounts/services/discounts");
 
-const STATUS_CLOSED = 5;
 const STATUS_PROCESSING = 2;
+const STATUS_DELIVERED = 4;
+const STATUS_CANCELLED = 10;
+const STATUS_REFUNDED = 11;
 
 class OrderService {
     // Build where clause + optional customer include-where for search/date filters
@@ -221,10 +223,13 @@ class OrderService {
         // Fetch order once for both coin award and push notification
         const order = await db.Order.findOne({ where: { id: orderId }, attributes: ["id", "user_id", "shop_id", "total_price"] });
         if (order) {
-            if (status === STATUS_CLOSED) {
+            if (status === STATUS_DELIVERED) {
                 await this._applyCommission(orderId);
                 await CoinService.awardForOrder(order);
                 this._incrementSoldCount(orderId).catch(() => {});
+            }
+            if (status === STATUS_CANCELLED || status === STATUS_REFUNDED) {
+                await PayoutService.reverseOrderCredit(orderId).catch(() => {});
             }
             PushService.onOrderStatusChanged(orderId, order.user_id, order.shop_id, status).catch(() => {});
         }
@@ -335,7 +340,7 @@ class OrderService {
         const sellerAmount = parseFloat((parseFloat(order.total_price) - platformFee).toFixed(2));
 
         if (sellerAmount > 0) {
-            await PayoutService.creditBalance(order.shop_id, sellerAmount);
+            await PayoutService.creditOrderPending(order.shop_id, orderId, parseFloat(order.total_price), platformFee, sellerAmount);
         }
     }
 

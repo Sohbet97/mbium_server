@@ -7,6 +7,7 @@ shopRouter.get('/count', ShopController.getCount.bind(ShopController));
 shopRouter.get('/:id', ShopController.getById.bind(ShopController));
 shopRouter.post('/', ShopController.create.bind(ShopController));
 shopRouter.put('/:id', ShopController.update.bind(ShopController));
+shopRouter.patch('/:id/owner', ShopController.reassignOwner.bind(ShopController));
 shopRouter.patch('/:id/submit', ShopController.submitForReview.bind(ShopController));
 shopRouter.patch('/:id/verify', ShopController.verify.bind(ShopController));
 shopRouter.patch('/:id/reject', ShopController.reject.bind(ShopController));

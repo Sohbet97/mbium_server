@@ -222,7 +222,7 @@ module.exports = {
         get: {
             tags: [tag],
             summary: "Get own shop status",
-            description: "Returns the authenticated user's shop with verification_status, type (incl. commission_rate), and categories.",
+            description: "Returns the authenticated user's shop with verification_status, type, and categories.",
             security,
             responses: {
                 200: { description: "Shop or null", content: { "application/json": { schema: { type: "object", properties: { model: { oneOf: [{ $ref: "#/components/schemas/Shop" }, { type: "null" }] } } } } } },

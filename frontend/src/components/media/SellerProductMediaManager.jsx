@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ImagePlus, Trash2, Star, Loader2, Upload, X, GripVertical, CheckCircle, Scissors, RotateCw } from 'lucide-react'
+import { ImagePlus, Trash2, Star, Loader2, Upload, X, GripVertical, CheckCircle, Scissors, RotateCw, Search } from 'lucide-react'
 import { SellerApi } from '@/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -9,22 +9,55 @@ const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 const absUrl = (url) => (!url || url.startsWith('http') ? url : `${BASE}${url}`)
 
 const MAX_ITEMS = 20
+const PAGE_SIZE = 40
 
 function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS }) {
   const [items, setItems]       = useState([])
+  const [total, setTotal]       = useState(0)
+  const [page, setPage]         = useState(0)
   const [loading, setLoading]   = useState(false)
   const [uploading, setUploading] = useState(false)
   const [selected, setSelected] = useState([])
+  const [search, setSearch]     = useState('')
   const fileRef = useRef(null)
+
+  async function fetchItems(text, pageNum) {
+    setLoading(true)
+    try {
+      const { data } = await SellerApi.media.list({
+        limit: PAGE_SIZE,
+        skip: pageNum * PAGE_SIZE,
+        type: 'image',
+        search: text || undefined,
+      })
+      setItems(data.data ?? [])
+      setTotal(data.count ?? 0)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!open) return
     setSelected([])
-    setLoading(true)
-    SellerApi.media.list({ limit: 80, type: 'image' })
-      .then(({ data }) => setItems(data.data ?? []))
-      .finally(() => setLoading(false))
+    setSearch('')
+    setPage(0)
+    fetchItems('', 0)
   }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const t = setTimeout(() => { setPage(0); fetchItems(search, 0) }, 300)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
+
+  function goToPage(p) {
+    setPage(p)
+    fetchItems(search, p)
+  }
+
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   async function handleUpload(e) {
     const files = Array.from(e.target.files ?? [])
@@ -43,14 +76,12 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
         return SellerApi.media.upload(fd)
       }))
       toast.success(`${valid.length} faýl ýüklendi`)
-      setLoading(true)
-      const { data } = await SellerApi.media.list({ limit: 80, type: 'image' })
-      setItems(data.data ?? [])
+      setPage(0)
+      await fetchItems(search, 0)
     } catch {
       toast.error('Ýükleme ýalňyşlygy')
     } finally {
       setUploading(false)
-      setLoading(false)
       if (fileRef.current) fileRef.current.value = ''
     }
   }
@@ -93,7 +124,18 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
             Ýükle
           </button>
           <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={handleUpload} />
-          <span className="text-xs text-slate-400">{items.length} surat · iň köp {remaining} saýlap bilersiň</span>
+
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Ady boýunça gözle…"
+              className="w-full h-8 pl-8 pr-2 text-xs border rounded-lg bg-white dark:bg-slate-900 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <span className="text-xs text-slate-400 shrink-0">{total} surat · iň köp {remaining} saýlap bilersiň</span>
         </div>
 
         {/* Grid */}
@@ -105,7 +147,7 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2 text-slate-400 text-sm">
               <ImagePlus className="h-8 w-8" />
-              <p>Surat ýok — ilki ýükläň</p>
+              <p>{search ? 'Hiç zat tapylmady' : 'Surat ýok — ilki ýükläň'}</p>
             </div>
           ) : (
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
@@ -137,6 +179,27 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {!loading && pageCount > 1 && (
+          <div className="flex items-center justify-center gap-2 px-5 py-2 border-t dark:border-white/[0.08] shrink-0">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page <= 0}
+              className="px-2.5 h-7 text-xs rounded-lg border dark:border-white/[0.08] text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Öňki
+            </button>
+            <span className="text-xs text-slate-400">{page + 1} / {pageCount}</span>
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page >= pageCount - 1}
+              className="px-2.5 h-7 text-xs rounded-lg border dark:border-white/[0.08] text-slate-500 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Indiki
+            </button>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="flex items-center justify-between px-5 py-3 border-t dark:border-white/[0.08] shrink-0">
@@ -179,7 +242,7 @@ export function SellerProductMediaManager({ productId, variantId }) {
     setLoading(true)
     try {
       const { data } = await SellerApi.media.getProductMedia(productId, variantId)
-      setItems(data.data ?? [])
+      setItems((data.data ?? []).filter((pm) => pm.role !== '3d'))
     } catch { toast.error('Suratlar ýüklenip bolmady') }
     finally   { setLoading(false) }
   }

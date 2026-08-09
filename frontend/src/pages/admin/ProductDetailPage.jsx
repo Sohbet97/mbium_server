@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Trash2, Star, PlusCircle, Package,
-  Pencil, Save, X,
+  Pencil, Save, X, ShieldCheck, ShieldX,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,6 +23,122 @@ import { AdminApi } from '@/lib/api'
 import { absUrl } from '@/lib/utils'
 import { ProductMediaManager } from '@/components/media/ProductMediaManager'
 import { toast } from 'sonner'
+
+// ─── Moderation ────────────────────────────────────────────────────────────────
+
+const MOD = { PENDING: 0, APPROVED: 1, REJECTED: 2 }
+
+function ModerationBadge({ status }) {
+  const { t } = useTranslation()
+  if (status === MOD.APPROVED) return <Badge variant="success">{t('products.modStatusApproved')}</Badge>
+  if (status === MOD.REJECTED) return <Badge variant="destructive">{t('products.modStatusRejected')}</Badge>
+  return <Badge variant="warning">{t('products.modStatusPending')}</Badge>
+}
+
+function ModerationSection({ product, onRefresh }) {
+  const { t } = useTranslation()
+  const [rejectNote, setRejectNote] = useState('')
+  const [showRejectForm, setShowRejectForm] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const status = product.moderation_status ?? MOD.PENDING
+
+  async function handleApprove() {
+    setSaving(true)
+    try {
+      await AdminApi.products.approve(product.id)
+      toast.success(t('toast.updated'))
+      onRefresh()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    } finally { setSaving(false) }
+  }
+
+  async function handleReject() {
+    setSaving(true)
+    try {
+      await AdminApi.products.reject(product.id, { note: rejectNote })
+      setShowRejectForm(false)
+      setRejectNote('')
+      toast.success(t('toast.updated'))
+      onRefresh()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm">{t('products.moderation')}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-slate-500">{t('products.moderationStatus')}</span>
+          <ModerationBadge status={status} />
+        </div>
+
+        {product.moderated_at && status !== MOD.PENDING && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-500">{t('products.moderatedAt')}</span>
+            <span>{new Date(product.moderated_at).toLocaleDateString()}</span>
+          </div>
+        )}
+
+        {product.moderation_note && status === MOD.REJECTED && (
+          <div className="text-sm">
+            <p className="text-slate-500 mb-0.5">{t('products.moderationNote')}</p>
+            <p className="text-slate-700 bg-red-50 rounded p-2">{product.moderation_note}</p>
+          </div>
+        )}
+
+        {status !== MOD.APPROVED && !showRejectForm && (
+          <div className="flex gap-2 pt-2">
+            <Button size="sm" onClick={handleApprove} disabled={saving} className="gap-1">
+              <ShieldCheck className="h-3.5 w-3.5" /> {t('products.approveAction')}
+            </Button>
+            <Button
+              size="sm" variant="outline" className="gap-1 text-red-600 border-red-200"
+              onClick={() => setShowRejectForm(true)} disabled={saving}
+            >
+              <ShieldX className="h-3.5 w-3.5" /> {t('products.rejectAction')}
+            </Button>
+          </div>
+        )}
+
+        {status === MOD.APPROVED && !showRejectForm && (
+          <Button
+            size="sm" variant="outline" className="gap-1 text-red-600 border-red-200"
+            onClick={() => setShowRejectForm(true)} disabled={saving}
+          >
+            <ShieldX className="h-3.5 w-3.5" /> {t('products.rejectAction')}
+          </Button>
+        )}
+
+        {showRejectForm && (
+          <div className="space-y-2 border-t pt-3">
+            <FormField label={t('products.rejectNote')}>
+              <Textarea
+                rows={3}
+                value={rejectNote}
+                onChange={(e) => setRejectNote(e.target.value)}
+                placeholder={t('products.rejectNotePlaceholder')}
+              />
+            </FormField>
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={() => { setShowRejectForm(false); setRejectNote('') }}>
+                {t('common.cancel')}
+              </Button>
+              <Button size="sm" variant="destructive" onClick={handleReject} disabled={saving}>
+                {saving ? '…' : t('products.rejectAction')}
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
 
 // ─── Variants Tab ──────────────────────────────────────────────────────────────
 
@@ -458,6 +574,8 @@ function InfoTab({ product, shops, categories, onRefresh }) {
           </Card>
         </div>
 
+        <ModerationSection product={product} onRefresh={onRefresh} />
+
         {product.description && (
           <Card>
             <CardHeader><CardTitle className="text-sm">{t('common.description')}</CardTitle></CardHeader>
@@ -614,7 +732,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     Promise.all([
       AdminApi.shops.getAll({ limit: 500 }),
-      AdminApi.categories.getAll({ limit: 500 }),
+      AdminApi.categories.getAll({ limit: 0 }),
     ]).then(([s, c]) => {
       // GET /admin/shops and /admin/categories both return { data: [...], count: N }
       setShops(s.data?.data       ?? [])
@@ -654,9 +772,12 @@ export default function ProductDetailPage() {
             <p className="text-sm text-slate-400">ID #{product.id} · {product.shop?.name ?? '—'}</p>
           </div>
         </div>
-        <Badge variant={product.is_active ? 'success' : 'secondary'} className="mt-2">
-          {product.is_active ? t('common.active') : t('common.inactive')}
-        </Badge>
+        <div className="flex flex-col items-end gap-1 mt-2">
+          <Badge variant={product.is_active ? 'success' : 'secondary'}>
+            {product.is_active ? t('common.active') : t('common.inactive')}
+          </Badge>
+          <ModerationBadge status={product.moderation_status ?? MOD.PENDING} />
+        </div>
       </div>
 
       {/* Tabs */}

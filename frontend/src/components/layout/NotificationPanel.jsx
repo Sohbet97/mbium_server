@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Bell, ShoppingCart, Store, Star, AlertTriangle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Bell, ShoppingCart, Store, Star, AlertTriangle, Wallet } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +15,11 @@ const TYPE_ICON = {
   110: <Store className="h-4 w-4 text-violet-500" />,
   120: <Star className="h-4 w-4 text-yellow-500" />,
   130: <AlertTriangle className="h-4 w-4 text-red-500" />,
+  140: <Wallet className="h-4 w-4 text-emerald-500" />,
+}
+
+const TYPE_ROUTE = {
+  140: '/admin/payouts',
 }
 
 function timeAgo(dateStr) {
@@ -26,6 +32,7 @@ function timeAgo(dateStr) {
 
 export function NotificationPanel() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { notifications, unreadCount, fetchNotifications, markAsRead, markAllAsRead } = useNotifications()
   const [open, setOpen] = useState(false)
 
@@ -63,7 +70,10 @@ export function NotificationPanel() {
           notifications.map((n) => (
             <div
               key={n.id}
-              onClick={() => n.status === 0 && markAsRead(n.id)}
+              onClick={() => {
+                if (n.status === 0) markAsRead(n.id)
+                if (TYPE_ROUTE[n.type]) { setOpen(false); navigate(TYPE_ROUTE[n.type]) }
+              }}
               className={`flex items-start gap-3 px-3 py-2.5 cursor-pointer hover:bg-slate-50 transition-colors ${n.status === 0 ? 'bg-blue-50/60' : ''}`}
             >
               <div className="mt-0.5 shrink-0">{TYPE_ICON[n.type] ?? <Bell className="h-4 w-4 text-slate-400" />}</div>

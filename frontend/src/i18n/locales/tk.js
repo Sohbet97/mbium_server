@@ -38,6 +38,7 @@ export default {
     suppliers: 'Üpjünçiler',
     comments: 'Teswirler',
     kyc: 'KYC Resminamalar',
+    shopTypes: 'Dükan görnüşleri',
   },
 
   login: {
@@ -154,6 +155,12 @@ export default {
     isPhysical: 'Fiziki haryt', isPhysicalHint: 'Eltip bermegi talap edýär — sanly harytlar üçin öçür',
     noVariantsHint: 'Heniz görnüş ýok. Ölçeg ýa-da reňk ýaly opsiýalar goş.',
     manageVariants: 'Görnüşleri dolandyr', moreVariants: 'görnüş köpräk',
+    moderation: 'Moderasiýa', moderationStatus: 'Moderasiýa ýagdaýy',
+    approveAction: 'Haryty tassykla', rejectAction: 'Ret et',
+    rejectNote: 'Ret etme sebäbi', rejectNotePlaceholder: 'Ret etme sebäbini ýaz…',
+    modStatusPending: 'Garaşylýar', modStatusApproved: 'Tassyklandy', modStatusRejected: 'Ret edildi',
+    moderatedAt: 'Barlanan wagty', moderationNote: 'Ret etme sebäbi',
+    filterModeration: 'Ähli moderasiýa',
   },
 
   collections: {
@@ -455,6 +462,8 @@ export default {
 
     allCategories: 'Ähli kategoriýalar', allStatuses: 'Ähli ýagdaý',
     statusActive: 'Işjeň', statusHidden: 'Gizlin',
+    modPending: 'Garaşylýar', modApproved: 'Tassyklandy', modRejected: 'Ret edildi',
+    modRejectedHint: 'Ret etme sebäbi',
     noProducts: 'Haryt tapylmady', addFirstProduct: 'Ilkinji harydy goş',
     confirmDeleteProduct: 'Harydy pozmak isleýärsiňizmi?', productDeleted: 'Haryt pozuldy',
     variantsCount: '{{count}} görnüş', hideProduct: 'Gizle', activateProduct: 'Işjeňleşdir',
@@ -525,6 +534,20 @@ export default {
     sending: 'Ugradylýar…', send: 'Ugrat', payoutRequestSent: 'Töleg soragy ugradyldy',
     payoutPending: 'Garaşylýar', payoutApproved: 'Tassyklanan', payoutPaid: 'Tölendi', payoutRejected: 'Ret edildi',
     withdrawTitle: 'Pul çykarmak soragy', enterAmount: 'Möçberi giriziň',
+    availableBalance: 'Elýeterli balans', pendingBalance: 'Garaşylýan balans',
+    pendingBalanceHint: 'Gowşurylandan soň 24 sagat saklanýar, soň elýeterli balansa geçýär',
+    statsToday: 'Bugün', statsWeek: 'Şu hepde', statsMonth: 'Şu aý',
+    ordersCount: '{{count}} sargyt',
+    transactionHistory: 'Amallar taryhy', noTransactions: 'Entek amal ýok',
+    txnOrderCredit: 'Sargyt tölegi', txnCommission: 'Mbium komissiýasy', txnPayoutDebit: 'Pul geçirildi', txnPayoutReversal: 'Sargyt ýatyryldy - serişde yzyna alyndy',
+    payoutMethod: 'Töleg usuly', methodCard: 'Karta', methodCash: 'Nagt',
+    cardNumber: 'Karta belgisi', cardNumberPlaceholder: '9999 9999 9999 9999',
+    enterCardNumber: 'Karta belgisini giriziň',
+    minPayoutError: 'Iň az pul geçirim mukdary {{amount}} TMT',
+    payoutRequestsTitle: 'Pul çykarmak soraglary',
+    withdrawableHint: '{{amount}} çenli pul alyp bilersiňiz (öň soralan mukdarlar hasaba alynmaýar)',
+    insufficientBalance: 'Mukdar siziň alyp bilýän balansyňyzdan köp',
+    invalidCardNumber: 'Dogry karta belgisini giriziň (13-19 san)',
 
     subscriptionTitle: 'Abunalyk we Planlar',
     subscriptionSubtitle: 'Häzirki abunalyk ýagdaýy we elýeterli planlar',
@@ -809,6 +832,14 @@ export default {
     code: 'Kod', codeHint: 'mysal: courier, pickup, cargo',
     nameRequired: 'Ad hökmanydyr', codeRequired: 'Kod hökmanydyr',
     empty: 'Heniz eltip bermek görnüşi ýok',
+  },
+  shopTypes: {
+    title: 'Dükan görnüşleri', totalCount: '{{count}} görnüş',
+    add: 'Görnüş goş', edit: 'Görnüşi üýtget',
+    name: 'Ady (TK)', nameRu: 'Ady (RU)', nameEn: 'Ady (EN)',
+    order: 'Tertip',
+    nameRequired: 'Ad hökmanydyr',
+    empty: 'Heniz dükan görnüşi ýok',
   },
   suppliers: {
     title: 'Üpjünçiler', totalCount: '{{count}} üpjünçi',

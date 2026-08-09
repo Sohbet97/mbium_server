@@ -540,7 +540,7 @@ function SubscriptionsTab({ plans }) {
 
   const loadSubs = useCallback(() => {
     setLoading(true)
-    const params = { limit: PAGE, skip: page * PAGE }
+    const params = { limit: PAGE, page: page + 1 }
     if (statusFilter) params.status = statusFilter
     AdminApi.shopSubscriptions.getAll(params)
       .then(({ data }) => { setSubs(data.data ?? []); setCount(data.count ?? 0) })

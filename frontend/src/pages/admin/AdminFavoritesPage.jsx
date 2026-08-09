@@ -15,7 +15,7 @@ export default function AdminFavoritesPage() {
 
   const load = useCallback(() => {
     setLoading(true)
-    AdminApi.favorites.getAll({ limit: PAGE, skip: page * PAGE })
+    AdminApi.favorites.getAll({ limit: PAGE, page: page + 1 })
       .then(({ data }) => { setRows(data.data ?? []); setCount(data.count ?? 0) })
       .catch(() => toast.error(t('toast.error')))
       .finally(() => setLoading(false))

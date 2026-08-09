@@ -158,7 +158,7 @@ export function TopBar({ title }) {
             ))}
 
             {/* Create new shop — always visible */}
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               onClick={handleCreateShop}
               className="flex items-center gap-3 px-2.5 py-2 rounded-lg h-auto cursor-pointer text-slate-500 dark:text-slate-400"
             >
@@ -166,7 +166,7 @@ export function TopBar({ title }) {
                 <PlusCircle className="h-4 w-4" />
               </div>
               <span className="text-sm">Dükan döret</span>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
 
             <DropdownMenuSeparator className="my-1" />
 

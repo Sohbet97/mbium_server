@@ -39,6 +39,7 @@ export default {
     suppliers: 'Suppliers',
     comments: 'Comments',
     kyc: 'KYC Docs',
+    shopTypes: 'Shop Types',
   },
 
   login: {
@@ -155,6 +156,12 @@ export default {
     isPhysical: 'Physical product', isPhysicalHint: 'Requires shipping — disable for digital goods',
     noVariantsHint: 'No variants yet. Add options like size or color.',
     manageVariants: 'Manage variants', moreVariants: 'more variants',
+    moderation: 'Moderation', moderationStatus: 'Moderation Status',
+    approveAction: 'Approve Product', rejectAction: 'Reject',
+    rejectNote: 'Rejection Note', rejectNotePlaceholder: 'Reason for rejection…',
+    modStatusPending: 'Pending Review', modStatusApproved: 'Approved', modStatusRejected: 'Rejected',
+    moderatedAt: 'Reviewed At', moderationNote: 'Rejection Note',
+    filterModeration: 'All Moderation',
   },
 
   images: {
@@ -456,6 +463,8 @@ export default {
 
     allCategories: 'All categories', allStatuses: 'All statuses',
     statusActive: 'Active', statusHidden: 'Hidden',
+    modPending: 'Awaiting review', modApproved: 'Approved', modRejected: 'Rejected',
+    modRejectedHint: 'Rejection reason',
     noProducts: 'No products found', addFirstProduct: 'Add your first product',
     confirmDeleteProduct: 'Delete this product?', productDeleted: 'Product deleted',
     variantsCount: '{{count}} variants', hideProduct: 'Hide', activateProduct: 'Activate',
@@ -526,6 +535,20 @@ export default {
     sending: 'Sending…', send: 'Send', payoutRequestSent: 'Payout request sent',
     payoutPending: 'Pending', payoutApproved: 'Approved', payoutPaid: 'Paid', payoutRejected: 'Rejected',
     withdrawTitle: 'Withdrawal Request', enterAmount: 'Enter amount',
+    availableBalance: 'Available Balance', pendingBalance: 'Pending Balance',
+    pendingBalanceHint: 'Held for 24h after delivery, then moves to available balance',
+    statsToday: 'Today', statsWeek: 'This Week', statsMonth: 'This Month',
+    ordersCount: '{{count}} orders',
+    transactionHistory: 'Transaction History', noTransactions: 'No transactions yet',
+    txnOrderCredit: 'Order payment', txnCommission: 'Mbium commission', txnPayoutDebit: 'Payout sent', txnPayoutReversal: 'Order cancelled - refund reversed',
+    payoutMethod: 'Payout method', methodCard: 'Card', methodCash: 'Cash',
+    cardNumber: 'Card number', cardNumberPlaceholder: '9999 9999 9999 9999',
+    enterCardNumber: 'Enter card number',
+    minPayoutError: 'Minimum payout amount is {{amount}} TMT',
+    payoutRequestsTitle: 'Withdrawal Requests',
+    withdrawableHint: 'You can withdraw up to {{amount}} (excludes already-requested amounts)',
+    insufficientBalance: 'Amount exceeds your withdrawable balance',
+    invalidCardNumber: 'Enter a valid card number (13-19 digits)',
 
     subscriptionTitle: 'Subscription & Plans',
     subscriptionSubtitle: 'Current subscription status and available plans',
@@ -810,6 +833,14 @@ export default {
     code: 'Code', codeHint: 'e.g. courier, pickup, cargo',
     nameRequired: 'Name is required', codeRequired: 'Code is required',
     empty: 'No delivery types yet',
+  },
+  shopTypes: {
+    title: 'Shop Types', totalCount: '{{count}} shop types',
+    add: 'Add Shop Type', edit: 'Edit Shop Type',
+    name: 'Name (TK)', nameRu: 'Name (RU)', nameEn: 'Name (EN)',
+    order: 'Order',
+    nameRequired: 'Name is required',
+    empty: 'No shop types yet',
   },
   suppliers: {
     title: 'Suppliers', totalCount: '{{count}} suppliers',

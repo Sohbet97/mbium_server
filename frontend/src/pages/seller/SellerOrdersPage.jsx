@@ -641,7 +641,7 @@ export default function SellerOrdersPage() {
     setLoading(true)
     const query = {
       limit: PAGE,
-      skip:  params.page * PAGE,
+      page:  params.page + 1,
       ...(params.status   ? { status:    params.status }   : {}),
       ...(params.search.trim() ? { search: params.search.trim() } : {}),
       ...(params.dateFrom ? { from_date: params.dateFrom } : {}),

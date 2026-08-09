@@ -109,7 +109,7 @@ router.get('/payouts', async (req, res, next) => {
         const [balance, series] = await Promise.all([
             db.SellerBalance.findOne({
                 where: { shop_id: shopId },
-                attributes: ['balance', 'currency'],
+                attributes: ['available_balance', 'currency'],
             }),
             db.sequelize.query(
                 `SELECT DATE_TRUNC(:period, "createdAt") AS period,
@@ -131,7 +131,7 @@ router.get('/payouts', async (req, res, next) => {
         const totalPaid = series.reduce((sum, r) => sum + (r.amount ?? 0), 0);
 
         return res.status(200).json({
-            current_balance: parseFloat(balance?.balance ?? 0),
+            current_balance: parseFloat(balance?.available_balance ?? 0),
             currency: balance?.currency ?? 'TMT',
             total_paid: totalPaid,
             series,

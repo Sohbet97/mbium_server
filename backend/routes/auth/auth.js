@@ -42,6 +42,8 @@ authRouter.post('/me/avatar', authorizationMiddleware, avatarUpload.single('avat
 authRouter.get('/shop-types', authorizationMiddleware, ShopTypeController.get.bind(ShopTypeController));
 authRouter.post('/me/shop', authorizationMiddleware, KYC_FIELDS, ShopController.applyForShop.bind(ShopController));
 authRouter.get('/me/shop',  authorizationMiddleware, ShopController.getMyShop.bind(ShopController));
+authRouter.get('/me/shop/history', authorizationMiddleware, ShopController.getMyShopHistory.bind(ShopController));
+authRouter.post('/me/shop/withdraw', authorizationMiddleware, ShopController.withdrawShop.bind(ShopController));
 
 // ── FCM device token ──────────────────────────────────────────────────────────
 authRouter.patch('/me/device-token',  authorizationMiddleware, UserController.registerDeviceToken.bind(UserController));

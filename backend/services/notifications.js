@@ -110,6 +110,14 @@ class NotificationService {
         return this._broadcastToAdmins(STATUSES.NOT_DISPUTE, dispute?.id ?? dispute, content, io);
     }
 
+    static async createForPayoutRequest(payoutRequest, io) {
+        const shopName = payoutRequest?.shop_name ?? 'Dükan';
+        const amount = payoutRequest?.amount;
+        const detail = payoutRequest?.detail ? ` (${payoutRequest.detail})` : '';
+        const content = `"${shopName}" pul geçirim talap etdi: ${amount} TMT${detail}`;
+        return this._broadcastToAdmins(STATUSES.NOT_PAYOUT_REQUEST, payoutRequest?.id, content, io);
+    }
+
     static async createForShopRejected(shop, note, io) {
         const content = { message: note || 'Dükan arzaňyz ret edildi.' };
         const record = await this.create({
