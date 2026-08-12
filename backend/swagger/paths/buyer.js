@@ -647,6 +647,97 @@ module.exports = {
         },
     },
 
+    // ── Locations (public, read-only) ────────────────────────────────────────────
+
+    "/buyer/locations/regions": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "List regions (public)",
+            parameters: [
+                { in: "query", name: "text",   schema: { type: "string" } },
+                { in: "query", name: "limit",  schema: { type: "integer" } },
+                { in: "query", name: "skip",   schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Regions",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/Region" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+
+    "/buyer/locations/regions/{id}": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "Get a single region (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "Region", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Region" } } } } } },
+                404: { description: "Not found" },
+            },
+        },
+    },
+
+    "/buyer/locations/cities": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "List cities (public)",
+            parameters: [
+                { in: "query", name: "text",   schema: { type: "string" } },
+                { in: "query", name: "region", schema: { type: "integer" }, description: "Filter by region ID" },
+                { in: "query", name: "limit",  schema: { type: "integer" } },
+                { in: "query", name: "skip",   schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Cities",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/City" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+
+    "/buyer/locations/cities/{id}": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "Get a single city (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "City", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/City" } } } } } },
+                404: { description: "Not found" },
+            },
+        },
+    },
+
+    // ── Banners (public, read-only) ──────────────────────────────────────────────
+
+    "/buyer/banners": {
+        get: {
+            tags: ["Buyer — Banners"],
+            summary: "List active banners (public)",
+            description: "Returns banners where `is_active` is true and the current time falls within `starts_at`/`ends_at` (when set). Excludes soft-deleted banners.",
+            parameters: [
+                { in: "query", name: "shop_id",        schema: { type: "integer" }, description: "Filter by shop, or 'null' for platform-wide banners" },
+                { in: "query", name: "banner_type_id", schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Active banners",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/Banner" } },
+                    } } } },
+                },
+            },
+        },
+    },
+
     // ── Coins ─────────────────────────────────────────────────────────────────────
 
     "/buyer/coins/balance": {

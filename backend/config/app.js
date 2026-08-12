@@ -94,6 +94,17 @@ cron.schedule("*/15 * * * *", () => {
     .catch((e) => console.error("[cron] release pending balances failed:", e.message));
 });
 
+// Refresh due Turbo boosts' sort-priority timestamp and expire boosts past their 7-day
+// window — runs every 5 minutes so hourly-refresh tiers (Turbo 1) stay reasonably fresh
+cron.schedule("*/5 * * * *", () => {
+  const TurboService = require("../__modules__/turbo/services/TurboService");
+  TurboService.tick()
+    .then(({ refreshed, expired }) => {
+      if (refreshed > 0 || expired > 0) console.log(`[cron] turbo: refreshed ${refreshed}, expired ${expired}`);
+    })
+    .catch((e) => console.error("[cron] turbo tick failed:", e.message));
+});
+
 // Delete temp background-removal files older than 1 hour — runs every 15 minutes
 cron.schedule("*/15 * * * *", () => {
   const fs      = require("fs");

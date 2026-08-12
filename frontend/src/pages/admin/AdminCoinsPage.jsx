@@ -542,9 +542,98 @@ function TopupsTab() {
   )
 }
 
+// ── Tab: Transactions (all users) ──────────────────────────────────────────────
+
+const TX_TYPES = ['EARN', 'SPEND', 'GRANT', 'DEDUCT']
+
+function TransactionsTab() {
+  const { t } = useTranslation()
+  const [rows, setRows] = useState([])
+  const [count, setCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const [type, setType] = useState('')
+
+  const load = useCallback(() => {
+    setLoading(true)
+    const params = { limit: PAGE, skip: page * PAGE }
+    if (type) params.type = type
+    AdminApi.coins.getTransactions(params)
+      .then(({ data }) => { setRows(data.data ?? []); setCount(data.count ?? 0) })
+      .catch(() => toast.error(t('toast.error')))
+      .finally(() => setLoading(false))
+  }, [page, type, t])
+
+  useEffect(() => { load() }, [load])
+
+  const pages = Math.ceil(count / PAGE)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        {['', ...TX_TYPES].map((s) => (
+          <button key={s} onClick={() => { setType(s); setPage(0) }}
+            className={`px-3 py-1.5 text-xs rounded-full font-medium transition-colors ${type === s ? 'bg-indigo-600 text-white' : 'dark:hover:bg-white/10 hover:bg-black/5 opacity-60'}`}>
+            {s ? t(`coins.types.${s}`, s) : t('common.all', 'All')}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-10"><Loader2 className="animate-spin opacity-40" /></div>
+      ) : rows.length === 0 ? (
+        <p className="text-center text-sm opacity-40 py-10">{t('coins.noHistory')}</p>
+      ) : (
+        <div className="rounded-xl border dark:border-white/[0.06] border-black/[0.06] overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="text-xs opacity-50 border-b dark:border-white/[0.06] border-black/[0.06]">
+              <tr>
+                <th className="text-left px-4 py-2">User</th>
+                <th className="text-left px-4 py-2">Date</th>
+                <th className="text-left px-4 py-2">Type</th>
+                <th className="text-left px-4 py-2">Source</th>
+                <th className="text-right px-4 py-2">Amount</th>
+                <th className="text-right px-4 py-2">Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id} className="border-b dark:border-white/[0.04] border-black/[0.04] last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+                  <td className="px-4 py-3">
+                    <p className="font-medium dark:text-white">{r.user?.name} {r.user?.surname}</p>
+                    <p className="text-xs opacity-50">{r.user?.phone_number}</p>
+                  </td>
+                  <td className="px-4 py-3 text-xs opacity-60">{new Date(r.createdAt).toLocaleString()}</td>
+                  <td className="px-4 py-3"><TypeBadge type={r.type} /></td>
+                  <td className="px-4 py-3 text-xs opacity-70">{r.source}</td>
+                  <td className={`px-4 py-3 text-right font-mono text-sm font-semibold ${r.amount > 0 ? 'text-green-500' : 'text-red-400'}`}>
+                    {r.amount > 0 ? '+' : ''}{fmt(r.amount)}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-xs opacity-60">{fmt(r.balance_after)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {pages > 1 && (
+        <div className="flex justify-center gap-2">
+          {Array.from({ length: pages }, (_, i) => (
+            <button key={i} onClick={() => setPage(i)}
+              className={`w-8 h-8 rounded text-sm ${i === page ? 'bg-indigo-600 text-white' : 'dark:hover:bg-white/10 hover:bg-black/5'}`}>
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
-const TABS = ['tabWallets', 'tabConditions', 'tabTopups']
+const TABS = ['tabWallets', 'tabConditions', 'tabTopups', 'tabTransactions']
 
 export default function AdminCoinsPage() {
   const { t } = useTranslation()
@@ -576,6 +665,7 @@ export default function AdminCoinsPage() {
       {tab === 0 && <WalletsTab />}
       {tab === 1 && <ConditionsTab />}
       {tab === 2 && <TopupsTab />}
+      {tab === 3 && <TransactionsTab />}
     </div>
   )
 }

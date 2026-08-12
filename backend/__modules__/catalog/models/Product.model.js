@@ -169,7 +169,18 @@ module.exports = (sequelize) => {
             type: DataTypes.UUID,
             allowNull: true,
             references: { model: "users", key: "id" }
-        }
+        },
+        // Denormalized from product_turbo_boosts (Turbo module) — set only via
+        // TurboService, never through the generic product create/update whitelist.
+        turbo_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
+        turbo_boosted_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
     }, {
         timestamps: true,
         paranoid: true,
@@ -180,6 +191,7 @@ module.exports = (sequelize) => {
             { fields: ["is_active"] },
             { fields: ["price"] },
             { fields: ["moderation_status"] },
+            { fields: ["turbo_active", "turbo_boosted_at"] },
         ]
     });
 

@@ -243,6 +243,7 @@ export class AdminApi {
   static coins = {
     getBalances:       (params)   => http.get(a(`${PATHS.COINS}/balances`), { params }),
     getBalance:        (userId)   => http.get(a(`${PATHS.COINS}/balances/${userId}`)),
+    getTransactions:   (params)   => http.get(a(`${PATHS.COINS}/transactions`), { params }),
     grant:             (data)     => http.post(a(`${PATHS.COINS}/grant`), data),
     deduct:            (data)     => http.post(a(`${PATHS.COINS}/deduct`), data),
     getConditions:     (params)   => http.get(a(`${PATHS.COINS}/conditions`), { params }),
@@ -254,6 +255,14 @@ export class AdminApi {
   }
   static favorites = {
     getAll: (params) => http.get(a(`${PATHS.FAVORITES}`), { params }),
+  }
+  static turbo = {
+    getPackages: ()        => http.get(a('/turbo/packages')),
+    createPackage: (data)  => http.post(a('/turbo/packages'), data),
+    updatePackage: (id, data) => http.put(a(`/turbo/packages/${id}`), data),
+    deletePackage: (id)    => http.delete(a(`/turbo/packages/${id}`)),
+    getBoosts: (params)    => http.get(a('/turbo/boosts'), { params }),
+    cancelBoost: (id)      => http.post(a(`/turbo/boosts/${id}/cancel`)),
   }
   static catalog = {
     getTags:      (params)     => http.get(a(`${PATHS.PRODUCT_TAGS}`), { params }),
@@ -327,6 +336,14 @@ export class BuyerApi {
     getHistory: (params) => http.get(b(`${PATHS.COINS}/history`), { params }),
     submitTopup:(data)   => http.post(b(`${PATHS.COINS}/topup`), data),
     getTopups:  (params) => http.get(b(`${PATHS.COINS}/topup`), { params }),
+  }
+  static wallet = {
+    getTransactions: (params) => http.get(b('/wallet/transactions'), { params }),
+  }
+  static turbo = {
+    getPackages: ()                     => http.get(b('/turbo/packages')),
+    purchase:    (productId, data)      => http.post(b(`/turbo/products/${productId}/purchase`), data),
+    getStatus:   (productId)            => http.get(b(`/turbo/products/${productId}/status`)),
   }
 }
 

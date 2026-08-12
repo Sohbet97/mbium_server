@@ -41,6 +41,7 @@ const commentsModuleRouter    = require("../../__modules__/comments")
 const reelsModuleRouter         = require("../../__modules__/reels")
 const buyerRequestsModuleRouter = require("../../__modules__/buyer-requests")
 const deliveryTypesModuleRouter = require("../../__modules__/delivery-types")
+const turboModuleRouter         = require("../../__modules__/turbo")
 //#endregion
 
 //#region Routes
@@ -87,6 +88,7 @@ adminRouter.use(commentsModuleRouter)
 adminRouter.use(reelsModuleRouter)
 adminRouter.use(buyerRequestsModuleRouter)
 adminRouter.use(deliveryTypesModuleRouter)
+adminRouter.use(turboModuleRouter)
 //#endregion
 
 module.exports = adminRouter;

@@ -41,6 +41,24 @@ class BannerService {
         return db.Banner.findOne({ where: { id }, paranoid, include: this._include() })
     }
 
+    static async getActive({ shop_id, banner_type_id } = {}) {
+        const now = new Date()
+        const filter = {
+            is_active: true,
+            [Op.and]: [
+                { [Op.or]: [{ starts_at: null }, { starts_at: { [Op.lte]: now } }] },
+                { [Op.or]: [{ ends_at: null }, { ends_at: { [Op.gte]: now } }] },
+            ],
+        }
+        if (shop_id !== undefined) filter.shop_id = shop_id === 'null' ? null : shop_id
+        if (banner_type_id) filter.banner_type_id = banner_type_id
+        return db.Banner.findAll({
+            where: filter,
+            order: [['sort_order', 'ASC'], ['createdAt', 'DESC']],
+            include: this._include(),
+        })
+    }
+
     static async create(body) {
         return db.Banner.create(body)
     }

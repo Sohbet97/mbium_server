@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { SellerApi } from '@/lib/api'
+import { SellerApi, BuyerApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Search, RefreshCw, PackageX, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, Search, RefreshCw, PackageX, Eye, EyeOff, Zap, X, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
+import { CategoryTreeSelect } from '@/components/common/CategoryTreeSelect'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
@@ -50,6 +51,136 @@ function ModerationDot({ status, note, t }) {
   )
 }
 
+function fmtDate(s) {
+  if (!s) return ''
+  return new Date(s).toLocaleString()
+}
+
+function TurboModal({ product, onClose, onBoosted }) {
+  const { t } = useTranslation()
+  const [packages, setPackages] = useState([])
+  const [status, setStatus]     = useState(undefined) // undefined = loading, null = none, object = active
+  const [tier, setTier]         = useState(null)
+  const [currency, setCurrency] = useState('COIN')
+  const [purchasing, setPurchasing] = useState(false)
+  const [error, setError]       = useState('')
+
+  useEffect(() => {
+    Promise.all([
+      BuyerApi.turbo.getPackages(),
+      BuyerApi.turbo.getStatus(product.id),
+    ]).then(([pkgRes, statusRes]) => {
+      const pkgs = pkgRes.data?.data ?? []
+      setPackages(pkgs)
+      setStatus(statusRes.data ?? null)
+      if (pkgs.length) setTier(pkgs[0].tier_hours)
+    }).catch(() => { setPackages([]); setStatus(null) })
+  }, [product.id])
+
+  async function handlePurchase() {
+    if (!tier) return
+    setError(''); setPurchasing(true)
+    try {
+      await BuyerApi.turbo.purchase(product.id, { tier_hours: tier, currency })
+      toast.success(t('seller.turboBoosted', 'Turbo boost activated'))
+      onBoosted()
+    } catch (e) {
+      setError(e.response?.data?.message ?? t('toast.error'))
+    } finally { setPurchasing(false) }
+  }
+
+  const selectedPkg = packages.find((p) => p.tier_hours === tier)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md dark:bg-[#1a1a1f] bg-white rounded-xl shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-white/[0.08] border-black/[0.08]">
+          <h2 className="text-base font-semibold dark:text-white text-slate-900 flex items-center gap-2">
+            <Zap size={16} className="text-indigo-500" />
+            {t('seller.turboFor', 'Turbo boost')} — {product.name}
+          </h2>
+          <button onClick={onClose} className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10"><X size={16} /></button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {status === undefined ? (
+            <div className="flex justify-center py-6"><Loader2 className="animate-spin opacity-40" size={20} /></div>
+          ) : status ? (
+            <div className="rounded-lg border dark:border-indigo-500/20 border-indigo-200 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-2.5 text-sm">
+              <p className="font-medium text-indigo-700 dark:text-indigo-300">{t('seller.turboActiveTitle', 'Turbo is already active')}</p>
+              <p className="text-xs opacity-70 mt-1">
+                {t('seller.turboTier', 'Tier')}: Turbo {status.tier_hours} · {t('seller.turboExpires', 'Expires')}: {fmtDate(status.expires_at)}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-medium mb-1.5 dark:text-slate-300 text-slate-600">{t('turbo.tierHours', 'Refresh interval (hours)')}</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {packages.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setTier(p.tier_hours)}
+                      className={cn(
+                        'rounded-lg border px-2 py-2 text-xs text-center transition-colors',
+                        tier === p.tier_hours
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-400'
+                          : 'dark:border-white/10 border-slate-200 hover:border-indigo-300'
+                      )}
+                    >
+                      <div className="font-semibold dark:text-white">Turbo {p.tier_hours}</div>
+                      <div className="opacity-60 mt-0.5">{p.duration_days}d</div>
+                    </button>
+                  ))}
+                </div>
+                {packages.length === 0 && <p className="text-xs opacity-50">{t('turbo.noPackages', 'No Turbo packages')}</p>}
+              </div>
+
+              {selectedPkg && (
+                <div>
+                  <label className="block text-xs font-medium mb-1.5 dark:text-slate-300 text-slate-600">{t('seller.payWith', 'Pay with')}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setCurrency('COIN')}
+                      className={cn('rounded-lg border px-3 py-2 text-sm flex flex-col items-center', currency === 'COIN'
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-400'
+                        : 'dark:border-white/10 border-slate-200')}
+                    >
+                      <span className="font-semibold dark:text-white">{Number(selectedPkg.price_coin).toLocaleString()}</span>
+                      <span className="opacity-60 text-xs">{t('seller.coinBalance', 'Coin')}</span>
+                    </button>
+                    <button
+                      onClick={() => setCurrency('TMT')}
+                      className={cn('rounded-lg border px-3 py-2 text-sm flex flex-col items-center', currency === 'TMT'
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-400'
+                        : 'dark:border-white/10 border-slate-200')}
+                    >
+                      <span className="font-semibold dark:text-white">{Number(selectedPkg.price_tmt).toLocaleString()} TMT</span>
+                      <span className="opacity-60 text-xs">{t('seller.shopWallet', 'Shop wallet')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 px-5 py-4 border-t dark:border-white/[0.08] border-black/[0.08]">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg dark:hover:bg-white/5 hover:bg-black/5">{t('common.cancel')}</button>
+          {!status && (
+            <button onClick={handlePurchase} disabled={purchasing || !tier || packages.length === 0}
+              className="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 flex items-center gap-2">
+              {purchasing && <Loader2 size={14} className="animate-spin" />}{t('seller.boostNow', 'Boost now')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function SellerProductsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -63,9 +194,10 @@ export default function SellerProductsPage() {
   const [loading, setLoading]     = useState(true)
   const [deleting, setDeleting]   = useState(null)
   const [toggling, setToggling]   = useState(null)
+  const [turboProduct, setTurboProduct] = useState(null)
 
   useEffect(() => {
-    SellerApi.categories.getAll({ limit: 0 }).then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
+    SellerApi.categories.getAll({ limit: 0, tree: 1 }).then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
   }, [])
 
   const load = useCallback((p = 0) => {
@@ -139,14 +271,26 @@ export default function SellerProductsPage() {
           </Button>
         </div>
 
-        <select
-          value={catFilter}
-          onChange={(e) => setCatFilter(e.target.value)}
-          className="h-8 border rounded-md px-2.5 text-sm bg-white dark:bg-[#111114] dark:border-white/10 dark:text-white"
-        >
-          <option value="">{t('seller.allCategories')}</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <div className="flex items-center gap-1 w-56">
+          <div className="flex-1 min-w-0">
+            <CategoryTreeSelect
+              categories={categories}
+              value={catFilter || null}
+              onChange={(id) => setCatFilter(id ? String(id) : '')}
+              placeholder={t('seller.allCategories')}
+            />
+          </div>
+          {catFilter && (
+            <button
+              type="button"
+              onClick={() => setCatFilter('')}
+              title={t('seller.allCategories')}
+              className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
         <select
           value={statusFilter}
@@ -240,10 +384,25 @@ export default function SellerProductsPage() {
                   <div className="shrink-0 flex flex-col items-end gap-1">
                     <StatusDot active={p.is_active} t={t} />
                     <ModerationDot status={p.moderation_status ?? 0} note={p.moderation_note} t={t} />
+                    {p.turbo_active && (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                        <Zap className="h-3 w-3" />{t('seller.turboActive', 'Turbo')}
+                      </span>
+                    )}
                   </div>
 
                   {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => setTurboProduct(p)}
+                      title={t('seller.turboFor', 'Turbo boost')}
+                      className={cn(
+                        'p-1.5 rounded hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors',
+                        p.turbo_active ? 'text-indigo-500' : 'text-slate-400'
+                      )}
+                    >
+                      <Zap className="h-4 w-4" />
+                    </button>
                     <button
                       onClick={() => handleToggle(p)}
                       disabled={toggling === p.id}
@@ -286,6 +445,14 @@ export default function SellerProductsPage() {
             </Button>
           </div>
         </div>
+      )}
+
+      {turboProduct && (
+        <TurboModal
+          product={turboProduct}
+          onClose={() => setTurboProduct(null)}
+          onBoosted={() => { setTurboProduct(null); load(page) }}
+        />
       )}
     </div>
   )

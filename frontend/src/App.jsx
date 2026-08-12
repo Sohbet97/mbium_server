@@ -45,6 +45,7 @@ import SellerOrdersPage from '@/pages/seller/SellerOrdersPage'
 import SellerShopPage from '@/pages/seller/SellerShopPage'
 import SellerDiscountsPage from '@/pages/seller/SellerDiscountsPage'
 import SellerPayoutsPage from '@/pages/seller/SellerPayoutsPage'
+import SellerCoinsPage from '@/pages/seller/SellerCoinsPage'
 import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
 import SellerProductVariantPage from '@/pages/seller/SellerProductVariantPage'
 import SellerMediaPage from '@/pages/seller/SellerMediaPage'
@@ -59,6 +60,7 @@ import SellerAnalyticsPage from '@/pages/seller/SellerAnalyticsPage'
 import SellerWarehousesPage from '@/pages/seller/SellerWarehousesPage'
 import SellerAccountPage from '@/pages/admin/AccountPage'
 import AdminCoinsPage from '@/pages/admin/AdminCoinsPage'
+import AdminTurboPage from '@/pages/admin/AdminTurboPage'
 import AdminFavoritesPage from '@/pages/admin/AdminFavoritesPage'
 import ProductTagsPage from '@/pages/admin/ProductTagsPage'
 import BrandsPage from '@/pages/admin/BrandsPage'
@@ -118,6 +120,7 @@ const router = createBrowserRouter([
           { path: 'analytics',           element: g(Permissions.ANALYTICS_GET, <AdminAnalyticsPage />),           handle: { titleKey: 'analytics.title' } },
           { path: 'warehouses',          element: g(Permissions.WAREHOUSE_GET, <WarehousesPage />),               handle: { titleKey: 'warehouses.title' } },
           { path: 'coins',              element: g(Permissions.COIN_GET, <AdminCoinsPage />),               handle: { titleKey: 'coins.title' } },
+          { path: 'turbo',              element: g(Permissions.TURBO_GET, <AdminTurboPage />),              handle: { titleKey: 'turbo.title' } },
           { path: 'favorites',          element: g(Permissions.PRODUCT_GET, <AdminFavoritesPage />),           handle: { titleKey: 'favorites.title' } },
           { path: 'catalog/tags',       element: g(Permissions.PRODUCT_GET, <ProductTagsPage />),              handle: { titleKey: 'productTags.title' } },
           { path: 'catalog/brands',    element: g(Permissions.BRAND_GET, <BrandsPage />),                   handle: { titleKey: 'brands.title' } },
@@ -146,6 +149,7 @@ const router = createBrowserRouter([
           { path: 'shop',       element: <SellerShopPage /> },
           { path: 'discounts',  element: <SellerDiscountsPage /> },
           { path: 'payouts',    element: <SellerPayoutsPage /> },
+          { path: 'coins',      element: <SellerCoinsPage /> },
           { path: 'media',        element: <SellerMediaPage /> },
           { path: 'banners',      element: <SellerBannersPage /> },
           { path: 'subscription',       element: <SellerSubscriptionPage /> },

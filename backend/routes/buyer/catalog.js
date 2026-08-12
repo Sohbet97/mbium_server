@@ -28,8 +28,10 @@ const BUYER_SORT_MAP = {
     updated:    [['updatedAt',    'DESC']],
 };
 
+// Turbo-boosted products sort first regardless of the chosen sort, then fall back to it.
 function resolveBuyerSort(param) {
-    return BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
+    const base = BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
+    return [['turbo_active', 'DESC'], ['turbo_boosted_at', 'DESC'], ...base];
 }
 
 // ── FTS text-filter helpers ───────────────────────────────────────────────────

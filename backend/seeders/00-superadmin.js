@@ -49,6 +49,7 @@ const ALL_PERMISSIONS = [
     336, 337, 338, 339, // Reels
     340, 341, 342, 343, // Sizes
     344, 345, 346, 347, // Delivery Types
+    348, 349, 350, 351, // Turbo
 ];
 
 const ADMIN_PHONE    = '61000000';

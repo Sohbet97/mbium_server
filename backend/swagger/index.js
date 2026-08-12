@@ -88,6 +88,8 @@ const swaggerSpec = {
         { name: "Buyer — Addresses",  description: "Delivery address book — requires auth" },
         { name: "Buyer — Reviews",    description: "Product reviews — requires auth" },
         { name: "Buyer — AI",         description: "AI agent suggestion cards — public" },
+        { name: "Buyer — Locations",  description: "Public region/city lookup for address forms — no auth" },
+        { name: "Buyer — Banners",    description: "Public active banner feed — no auth" },
         // Admin — AI
         { name: "AI Recommendations", description: "Admin CRUD for AI agent suggestion cards" },
         { name: "AI Chat",            description: "Streaming AI chat (SSE) and persistent conversation history — admin and buyer" },

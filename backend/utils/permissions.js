@@ -166,6 +166,11 @@ class Permissions {
     static DELIVERY_TYPE_POST   = 345
     static DELIVERY_TYPE_PUT    = 346
     static DELIVERY_TYPE_DELETE = 347
+
+    static TURBO_GET    = 348
+    static TURBO_POST   = 349
+    static TURBO_PUT    = 350
+    static TURBO_DELETE = 351
 }
 
 module.exports = Permissions

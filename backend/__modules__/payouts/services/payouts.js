@@ -171,6 +171,28 @@ class PayoutService {
         return balance;
     }
 
+    // Debits available balance for a non-payout purchase (e.g. Turbo boost paid in TMT) and
+    // writes a PURCHASE_DEBIT ledger row. Same atomic conditional-decrement as debitForPayout,
+    // so concurrent purchases can't overdraw the balance.
+    static async debitForPurchase(shopId, amount, referenceId = null, note = null) {
+        const amt = parseFloat(amount);
+        const [affected] = await db.SellerBalance.update(
+            { available_balance: db.sequelize.literal(`available_balance - ${amt}`) },
+            { where: { shop_id: shopId, available_balance: { [Op.gte]: amt } } }
+        );
+        if (!affected) throw ApiError.BadRequest("Balans ýeterlik däl");
+
+        const balance = await this.getBalanceByShop(shopId);
+        return db.SellerTransaction.create({
+            shop_id: shopId,
+            type: SELLER_TRANSACTION_TYPES.PURCHASE_DEBIT,
+            amount: -amt,
+            status: SELLER_TRANSACTION_STATUSES.AVAILABLE,
+            balance_after: balance.available_balance,
+            note: note ?? `Purchase - ${referenceId ?? ""}`,
+        });
+    }
+
     static async getTransactions(shopId, limit, skip = 0) {
         return db.SellerTransaction.findAll({
             where: { shop_id: shopId },

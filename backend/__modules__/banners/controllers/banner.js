@@ -26,6 +26,14 @@ class BannerController {
         } catch (e) { next(e) }
     }
 
+    static async getActive(req, res, next) {
+        try {
+            const { shop_id, banner_type_id } = req.query
+            const data = await BannerService.getActive({ shop_id, banner_type_id })
+            return res.status(200).json({ data })
+        } catch (e) { next(e) }
+    }
+
     static async create(req, res, next) {
         try {
             const model = await BannerService.create(req.body)

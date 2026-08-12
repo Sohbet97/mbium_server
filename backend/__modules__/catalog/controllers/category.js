@@ -117,8 +117,8 @@ class CategoryController {
             if (q) {
                 filter[Op.and] = [literal(
                     `to_tsvector('simple',
-                       COALESCE(name,'') || ' ' || COALESCE(name_ru,'') || ' ' ||
-                       COALESCE(name_eng,'')
+                       COALESCE("categories"."name",'') || ' ' || COALESCE("categories"."name_ru",'') || ' ' ||
+                       COALESCE("categories"."name_eng",'')
                      ) @@ to_tsquery('simple', '${q.replace(/'/g, "''")}')`
                 )]
             } else {

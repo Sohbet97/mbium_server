@@ -29,6 +29,7 @@ export const Permissions = {
   KYC_GET: 332,
   SIZE_GET: 340,
   DELIVERY_TYPE_GET: 344,
+  TURBO_GET: 348,
 }
 
 // Required permission per /admin/* page. `null` = any logged-in admin.
@@ -60,6 +61,7 @@ export const ADMIN_PAGE_PERMISSIONS = {
   analytics: Permissions.ANALYTICS_GET,
   warehouses: Permissions.WAREHOUSE_GET,
   coins: Permissions.COIN_GET,
+  turbo: Permissions.TURBO_GET,
   favorites: Permissions.PRODUCT_GET,
   tags: Permissions.PRODUCT_GET,
   brands: Permissions.BRAND_GET,

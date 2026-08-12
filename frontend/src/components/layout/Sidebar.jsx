@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -32,6 +32,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2, perm: Permissions.ANALYTICS_GET },
     { to: '/admin/warehouses',         label: t('nav.warehouses', 'Warehouses'), icon: Building2, perm: Permissions.WAREHOUSE_GET },
     { to: '/admin/coins',              label: t('nav.coins', 'Coins'), icon: Coins, perm: Permissions.COIN_GET },
+    { to: '/admin/turbo',              label: t('nav.turbo', 'Turbo'), icon: Zap, perm: Permissions.TURBO_GET },
     { to: '/admin/favorites',          label: t('nav.favorites', 'Favorites'), icon: Heart, perm: Permissions.PRODUCT_GET },
     { to: '/admin/comments',           label: t('nav.comments', 'Comments'),   icon: MessageSquare, perm: Permissions.COMMENT_GET },
     { to: '/admin/kyc',                label: t('nav.kyc', 'KYC Docs'),        icon: FileCheck, perm: Permissions.KYC_GET },
