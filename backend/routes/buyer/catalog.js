@@ -28,8 +28,10 @@ const BUYER_SORT_MAP = {
     updated:    [['updatedAt',    'DESC']],
 };
 
+// Turbo-boosted products sort first regardless of the chosen sort, then fall back to it.
 function resolveBuyerSort(param) {
-    return BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
+    const base = BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
+    return [['turbo_active', 'DESC'], ['turbo_boosted_at', 'DESC'], ...base];
 }
 
 // ── FTS text-filter helpers ───────────────────────────────────────────────────
@@ -173,7 +175,7 @@ router.get('/shops/:id/products', async (req, res, next) => {
         const sort = resolveBuyerSort(req.query.sort);
         const now = new Date();
         const filter = {
-            shop_id: req.params.id, is_active: true, is_published: true,
+            shop_id: req.params.id, is_active: true, is_published: true, moderation_status: 1,
             [Op.or]: [{ scheduled_at: null }, { scheduled_at: { [Op.lte]: now } }],
         };
         if (req.query.category_id) filter.category_id = req.query.category_id;
@@ -196,14 +198,22 @@ router.get('/products', async (req, res, next) => {
         const sort = resolveBuyerSort(req.query.sort);
         const now = new Date();
         const filter = {
-            is_active: true, is_published: true,
+            is_active: true, is_published: true, moderation_status: 1,
             [Op.or]: [{ scheduled_at: null }, { scheduled_at: { [Op.lte]: now } }],
         };
         if (req.query.category_id) filter.category_id = req.query.category_id;
         if (req.query.shop_id)     filter.shop_id     = req.query.shop_id;
         if (req.query.text) filter[Op.and] = [productTextFilter(req.query.text)]
-        if (req.query.min_price) filter.price = { ...filter.price, [Op.gte]: parseFloat(req.query.min_price) };
-        if (req.query.max_price) filter.price = { ...filter.price, [Op.lte]: parseFloat(req.query.max_price) };
+        if (req.query.min_price) {
+            const minPrice = parseFloat(req.query.min_price);
+            if (isNaN(minPrice)) throw ApiError.BadRequest('min_price nädogry');
+            filter.price = { ...filter.price, [Op.gte]: minPrice };
+        }
+        if (req.query.max_price) {
+            const maxPrice = parseFloat(req.query.max_price);
+            if (isNaN(maxPrice)) throw ApiError.BadRequest('max_price nädogry');
+            filter.price = { ...filter.price, [Op.lte]: maxPrice };
+        }
 
         const [data, count] = await Promise.all([
             ProductService.get(filter, limit, sort, skip),
@@ -217,7 +227,9 @@ router.get('/products', async (req, res, next) => {
 router.get('/products/:id', async (req, res, next) => {
     try {
         const model = await ProductService.getById(req.params.id);
-        if (!model || !model.is_active) throw ApiError.NotFound('Haryt tapylmady');
+        if (!model || !model.is_active || !model.is_published || model.moderation_status !== 1) {
+            throw ApiError.NotFound('Haryt tapylmady');
+        }
         return res.status(200).json({ model });
     } catch (e) { next(e); }
 });

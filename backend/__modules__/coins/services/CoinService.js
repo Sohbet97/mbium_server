@@ -25,6 +25,22 @@ class CoinService {
         });
     }
 
+    // Admin-wide feed across all users, filterable by user_id/type/source/date range —
+    // getHistory above is single-user only and can't power an admin "all transactions" view.
+    static async getAllTransactions(filter = {}, limit = 20, skip = 0) {
+        return db.CoinTransaction.findAndCountAll({
+            where: filter,
+            order: [["createdAt", "DESC"]],
+            limit,
+            offset: skip,
+            include: [{
+                model: db.User,
+                as: "user",
+                attributes: ["id", "name", "surname", "phone_number"],
+            }],
+        });
+    }
+
     static async credit(userId, amount, source, referenceId = null, note = null, createdBy = null) {
         if (!Number.isInteger(amount) || amount < 1)
             throw ApiError.BadRequest("Coin amount must be a positive integer");

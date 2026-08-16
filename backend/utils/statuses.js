@@ -140,6 +140,7 @@ class STATUSES {
     static NOT_SHOP_APPROVED  = 112
     static NOT_REVIEW         = 120
     static NOT_DISPUTE        = 130
+    static NOT_PAYOUT_REQUEST = 140
 
     static USER_DOCTOR = 0
     static USER_CASHIER = 10

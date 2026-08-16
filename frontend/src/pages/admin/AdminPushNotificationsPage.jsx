@@ -320,8 +320,8 @@ export default function AdminPushNotificationsPage() {
   async function load() {
     try {
       const { data: res } = await AdminApi.pushNotifications.getAll({
-        limit:  PAGE_SIZE,
-        offset: page * PAGE_SIZE,
+        limit: PAGE_SIZE,
+        page:  page + 1,
       })
       setCampaigns(res.data)
       setTotal(res.total)

@@ -62,19 +62,28 @@ module.exports = {
         get: {
             tags: [tag],
             summary: "Get all media attached to a product",
+            description: "Pass `variant_id` to scope to one variant's media, or omit for shared product-level media only.",
             security,
-            parameters: [{ in: "path", name: "product_id", required: true, schema: { type: "integer" } }],
+            parameters: [
+                { in: "path", name: "product_id", required: true, schema: { type: "integer" } },
+                { in: "query", name: "variant_id", schema: { type: "integer" }, description: "Optional — scope to a specific variant's media" },
+            ],
             responses: { 200: { description: "Product media list", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/ProductMedia" } } } } } } } },
         },
         post: {
             tags: [tag],
-            summary: "Attach media to a product",
-            description: "Attaches an existing media item to the product. First attachment with no existing primary auto-becomes primary.",
+            summary: "Attach media to a product (optionally scoped to a variant)",
+            description: "Attaches an existing media item to the product, or to one of its variants when `variant_id` is set. First attachment with no existing primary auto-becomes primary.",
             security,
             parameters: [{ in: "path", name: "product_id", required: true, schema: { type: "integer" } }],
             requestBody: {
                 required: true,
-                content: { "application/json": { schema: { type: "object", required: ["media_id"], properties: { media_id: { type: "string", format: "uuid" }, role: { type: "string", enum: ["primary", "gallery", "video", "3d", "360"], default: "gallery" } } } } },
+                content: { "application/json": { schema: { type: "object", required: ["media_id"], properties: {
+                    media_id:   { type: "string", format: "uuid" },
+                    variant_id: { type: "integer", nullable: true, description: "Scope this media to a single variant (e.g. a color)" },
+                    role:       { type: "string", enum: ["primary", "gallery", "video", "3d", "360", "spin"], default: "gallery" },
+                    sort_order: { type: "integer" },
+                } } } },
             },
             responses: { 201: { description: "Attached" }, 409: { description: "Already attached" } },
         },
@@ -82,16 +91,20 @@ module.exports = {
     "/admin/media/product/{product_id}/{media_id}": {
         patch: {
             tags: [tag],
-            summary: "Update product–media record (role or sort_order)",
+            summary: "Update product–media record (role, sort_order, or variant scope)",
             description: "Setting role to `primary` automatically demotes any existing primary to `gallery`.",
             security,
             parameters: [
                 { in: "path", name: "product_id", required: true, schema: { type: "integer" } },
                 { in: "path", name: "media_id",   required: true, schema: { type: "string", format: "uuid" } },
+                { in: "query", name: "variant_id", schema: { type: "integer" }, description: "Identifies which variant-scoped row to update, if any" },
             ],
             requestBody: {
                 required: true,
-                content: { "application/json": { schema: { type: "object", properties: { role: { type: "string", enum: ["primary", "gallery", "video", "3d", "360"] }, sort_order: { type: "integer" } } } } },
+                content: { "application/json": { schema: { type: "object", properties: {
+                    role:       { type: "string", enum: ["primary", "gallery", "video", "3d", "360", "spin"] },
+                    sort_order: { type: "integer" },
+                } } } },
             },
             responses: { 200: { description: "Updated" } },
         },
@@ -102,6 +115,7 @@ module.exports = {
             parameters: [
                 { in: "path", name: "product_id", required: true, schema: { type: "integer" } },
                 { in: "path", name: "media_id",   required: true, schema: { type: "string", format: "uuid" } },
+                { in: "query", name: "variant_id", schema: { type: "integer" }, description: "Identifies which variant-scoped row to detach, if any" },
             ],
             responses: { 200: { description: "Detached" } },
         },

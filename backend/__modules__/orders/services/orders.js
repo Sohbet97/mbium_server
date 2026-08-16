@@ -5,9 +5,12 @@ const ApiError = require("../../../exceptions/api-error");
 const PayoutService = require("../../payouts/services/payouts");
 const CoinService   = require("../../coins/services/CoinService");
 const PushService   = require("../../../services/push");
+const DiscountService = require("../../discounts/services/discounts");
 
-const STATUS_CLOSED = 5;
 const STATUS_PROCESSING = 2;
+const STATUS_DELIVERED = 4;
+const STATUS_CANCELLED = 10;
+const STATUS_REFUNDED = 11;
 
 class OrderService {
     // Build where clause + optional customer include-where for search/date filters
@@ -103,13 +106,13 @@ class OrderService {
     }
 
     static async create(userId, body) {
-        const { shop_id, delivery_address, delivery_address_id, note, items } = body;
+        const { shop_id, delivery_address, delivery_address_id, note, items, discount_code } = body;
 
         // Resolve prices/stock from DB to prevent client-side price tampering, including
         // variants/sizes so line items can price and validate against the actual purchasable unit.
         const productIds = items.map((i) => i.product_id);
         const products = await db.Product.findAll({
-            where: { id: { [Op.in]: productIds } },
+            where: { id: { [Op.in]: productIds }, shop_id },
             include: [{
                 model: db.ProductVariant,
                 as: "variants",
@@ -164,20 +167,46 @@ class OrderService {
             };
         });
 
+        let discount = null;
+        let discount_amount = 0;
+        if (discount_code) {
+            discount = await DiscountService.getByCode(String(discount_code).trim().toUpperCase());
+            if (!discount) throw ApiError.NotFound("Kupon kody tapylmady ýa-da işjeň däl");
+
+            const totalQuantity = resolvedItems.reduce((sum, i) => sum + i.quantity, 0);
+            DiscountService.assertUsable(discount, { shopId: shop_id, subtotal: total_price, quantity: totalQuantity });
+
+            const itemsForDiscount = resolvedItems.map((i) => ({
+                product: { id: i.product_id, category_id: productMap[i.product_id]?.category_id },
+                quantity: i.quantity,
+                total_price: i.total_price,
+            }));
+            const eligibleItems = DiscountService.getEligibleItems(discount, itemsForDiscount);
+            const eligibleSubtotal = eligibleItems.reduce((sum, i) => sum + i.total_price, 0);
+            discount_amount = DiscountService.computeAmount(discount, eligibleSubtotal);
+        }
+
         const order = await db.Order.create(
             {
                 user_id: userId,
                 shop_id,
-                total_price,
+                total_price: parseFloat((total_price - discount_amount).toFixed(2)),
                 currency: products[0]?.currency || "TMT",
                 delivery_address,
                 delivery_address_id: delivery_address_id || null,
                 note,
                 status: 0,
+                discount_id: discount?.id ?? null,
+                discount_code: discount?.code ?? null,
+                discount_amount,
                 items: resolvedItems,
             },
             { include: [{ model: db.OrderItem, as: "items" }] }
         );
+
+        if (discount) {
+            await db.Discount.increment("used_count", { by: 1, where: { id: discount.id } });
+        }
 
         await db.OrderStatusHistory.create({ order_id: order.id, status: 0, changed_by: userId });
         PushService.onOrderCreated(order).catch(() => {});
@@ -194,10 +223,13 @@ class OrderService {
         // Fetch order once for both coin award and push notification
         const order = await db.Order.findOne({ where: { id: orderId }, attributes: ["id", "user_id", "shop_id", "total_price"] });
         if (order) {
-            if (status === STATUS_CLOSED) {
+            if (status === STATUS_DELIVERED) {
                 await this._applyCommission(orderId);
                 await CoinService.awardForOrder(order);
                 this._incrementSoldCount(orderId).catch(() => {});
+            }
+            if (status === STATUS_CANCELLED || status === STATUS_REFUNDED) {
+                await PayoutService.reverseOrderCredit(orderId).catch(() => {});
             }
             PushService.onOrderStatusChanged(orderId, order.user_id, order.shop_id, status).catch(() => {});
         }
@@ -308,7 +340,7 @@ class OrderService {
         const sellerAmount = parseFloat((parseFloat(order.total_price) - platformFee).toFixed(2));
 
         if (sellerAmount > 0) {
-            await PayoutService.creditBalance(order.shop_id, sellerAmount);
+            await PayoutService.creditOrderPending(order.shop_id, orderId, parseFloat(order.total_price), platformFee, sellerAmount);
         }
     }
 

@@ -57,6 +57,21 @@ module.exports = (sequelize) => {
         note: {
             type: DataTypes.TEXT,
             allowNull: true
+        },
+        discount_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "discounts", key: "id" },
+            onDelete: "SET NULL",
+        },
+        discount_code: {
+            type: DataTypes.STRING(64),
+            allowNull: true,
+        },
+        discount_amount: {
+            type: DataTypes.DECIMAL(12, 2),
+            allowNull: false,
+            defaultValue: 0,
         }
     }, {
         timestamps: true,
@@ -72,6 +87,9 @@ module.exports = (sequelize) => {
     Model.associate = (db) => {
         Model.belongsTo(db.User, { foreignKey: "user_id", as: "customer" });
         Model.belongsTo(db.Shop, { foreignKey: "shop_id", as: "shop" });
+        if (db.Discount) {
+            Model.belongsTo(db.Discount, { foreignKey: "discount_id", as: "discount" });
+        }
         Model.hasMany(db.OrderItem, { foreignKey: "order_id", as: "items" });
         Model.hasMany(db.OrderStatusHistory, { foreignKey: "order_id", as: "status_history" });
         Model.hasMany(db.PaymentTransaction, { foreignKey: "order_id", as: "payments" });

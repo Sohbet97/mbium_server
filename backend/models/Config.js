@@ -16,6 +16,11 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false,
             defaultValue: 0.05,
         },
+        min_payout_amount: {
+            type: DataTypes.DECIMAL(12, 2),
+            allowNull: false,
+            defaultValue: 100,
+        },
 
     }, {
         timestamps: true

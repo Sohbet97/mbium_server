@@ -217,4 +217,49 @@ module.exports = {
             responses: { 200: { description: "Deleted" } },
         },
     },
+
+    // ── Variant Sizes ────────────────────────────────────────────────────────
+    "/admin/products/{id}/variants/{variantId}/sizes": {
+        post: {
+            tags: [tag],
+            summary: "Add a per-size stock/price row to a variant",
+            description: "Nests structured size stock under a color/style variant (ProductVariantSize).",
+            security,
+            parameters: [
+                { in: "path", name: "id", required: true, schema: { type: "integer" } },
+                { in: "path", name: "variantId", required: true, schema: { type: "integer" } },
+            ],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductVariantSizeRequest" } } } },
+            responses: {
+                201: { description: "Variant size row created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/ProductVariantSize" } } } } } },
+                400: { description: "size_id required" },
+                404: { description: "Product or variant not found" },
+            },
+        },
+    },
+    "/admin/products/{id}/variants/{variantId}/sizes/{sizeRowId}": {
+        put: {
+            tags: [tag],
+            summary: "Update a variant size row",
+            security,
+            parameters: [
+                { in: "path", name: "id", required: true, schema: { type: "integer" } },
+                { in: "path", name: "variantId", required: true, schema: { type: "integer" } },
+                { in: "path", name: "sizeRowId", required: true, schema: { type: "integer" } },
+            ],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductVariantSizeRequest" } } } },
+            responses: { 200: { description: "Updated" }, 404: { description: "Not found" } },
+        },
+        delete: {
+            tags: [tag],
+            summary: "Delete a variant size row",
+            security,
+            parameters: [
+                { in: "path", name: "id", required: true, schema: { type: "integer" } },
+                { in: "path", name: "variantId", required: true, schema: { type: "integer" } },
+                { in: "path", name: "sizeRowId", required: true, schema: { type: "integer" } },
+            ],
+            responses: { 200: { description: "Deleted" }, 404: { description: "Not found" } },
+        },
+    },
 };

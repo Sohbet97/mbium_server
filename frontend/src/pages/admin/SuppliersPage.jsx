@@ -122,7 +122,7 @@ export default function SuppliersPage() {
 
   const load = useCallback(() => {
     setLoading(true)
-    AdminApi.suppliers.getAll({ limit: PAGE, skip: page * PAGE })
+    AdminApi.suppliers.getAll({ limit: PAGE, page: page + 1 })
       .then(({ data }) => { setRows(data.data ?? []); setCount(data.count ?? 0) })
       .catch(() => toast.error(t('toast.error')))
       .finally(() => setLoading(false))

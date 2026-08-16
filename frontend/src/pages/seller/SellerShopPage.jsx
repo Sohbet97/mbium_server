@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Camera, FileText, Upload, CheckCircle2, Clock, XCircle, Star, CreditCard, Video, FileImage, Loader2, Tag, RefreshCw, ChevronDown, ChevronRight, LayoutGrid, List, Eye, ExternalLink } from 'lucide-react'
+import { Camera, FileText, Upload, CheckCircle2, Clock, XCircle, Star, CreditCard, Video, FileImage, Loader2, Tag, RefreshCw, ChevronDown, ChevronRight, LayoutGrid, List, Eye, ExternalLink, Truck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 
@@ -383,15 +383,36 @@ export default function SellerShopPage() {
   const [selectedCatIds, setSelectedCatIds]   = useState([])
   const [savingCats, setSavingCats]           = useState(false)
   const [catView, setCatView]                 = useState('tree') // 'grid' | 'tree'
+  const [allDeliveryTypes, setAllDeliveryTypes]     = useState([])
+  const [selectedDeliveryTypeIds, setSelectedDeliveryTypeIds] = useState([])
+  const [savingDeliveryTypes, setSavingDeliveryTypes]         = useState(false)
+  const [allBrands, setAllBrands]             = useState([])
+  const [selectedBrandIds, setSelectedBrandIds] = useState([])
+  const [savingBrands, setSavingBrands]       = useState(false)
 
   const fetchCategories = ()=>{
-    SellerApi.categories.getAll()
+    // tree=1 also returns any deactivated ancestors needed to nest active categories
+    // correctly (marked selectable: false) — without it, an active category whose
+    // parent was deactivated gets silently misfiled as a top-level category.
+    SellerApi.categories.getAll({ limit: 0, tree: 1 })
       .then(({ data }) => {
         setAllCategories(data.data ?? [])
       })
       .catch(() => {})
   }
   useEffect(fetchCategories, [])
+
+  useEffect(() => {
+    SellerApi.deliveryTypes.getAll()
+      .then(({ data }) => setAllDeliveryTypes(data.data ?? []))
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    SellerApi.brands.getAll()
+      .then(({ data }) => setAllBrands(data.data ?? []))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     SellerApi.shop.get()
@@ -415,6 +436,8 @@ export default function SellerShopPage() {
           card_number: s.card_number ?? '',
         })
         setSelectedCatIds((s.categories ?? []).map((c) => c.id))
+        setSelectedDeliveryTypeIds((s.deliveryTypes ?? []).map((dt) => dt.id))
+        setSelectedBrandIds((s.brands ?? []).map((b) => b.id))
       })
       .finally(() => setLoading(false))
   }, [])
@@ -463,6 +486,46 @@ export default function SellerShopPage() {
       toast.error(err.response?.data?.message ?? t('toast.error'))
     } finally {
       setSavingCats(false)
+    }
+  }
+
+  function toggleDeliveryType(id) {
+    setSelectedDeliveryTypeIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
+  async function handleSaveDeliveryTypes() {
+    setSavingDeliveryTypes(true)
+    try {
+      const { data } = await SellerApi.shop.setDeliveryTypes(selectedDeliveryTypeIds)
+      setShop(data.model)
+      setSelectedDeliveryTypeIds((data.model.deliveryTypes ?? []).map((dt) => dt.id))
+      toast.success(t('toast.saved'))
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? t('toast.error'))
+    } finally {
+      setSavingDeliveryTypes(false)
+    }
+  }
+
+  function toggleBrand(id) {
+    setSelectedBrandIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
+
+  async function handleSaveBrands() {
+    setSavingBrands(true)
+    try {
+      const { data } = await SellerApi.shop.setBrands(selectedBrandIds)
+      setShop(data.model)
+      setSelectedBrandIds((data.model.brands ?? []).map((b) => b.id))
+      toast.success(t('toast.saved'))
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? t('toast.error'))
+    } finally {
+      setSavingBrands(false)
     }
   }
 
@@ -522,6 +585,9 @@ export default function SellerShopPage() {
                     {shop.type.name}
                   </span>
                 )}
+                <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                  {t('seller.followers', 'Yzarlaýjylar')}: {shop?.follower_count ?? 0}
+                </span>
               </div>
               {shop?.verification_note && shop?.verification_status === 3 && (
                 <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">
@@ -538,6 +604,8 @@ export default function SellerShopPage() {
         <TabsList>
           <TabsTrigger value="info">{t('shops.tabInfo')}</TabsTrigger>
           <TabsTrigger value="categories">{t('seller.categoriesTitle')}</TabsTrigger>
+          <TabsTrigger value="brands">{t('nav.brands', 'Brands')}</TabsTrigger>
+          <TabsTrigger value="delivery-types">{t('deliveryTypes.title')}</TabsTrigger>
           <TabsTrigger value="documents">Resminamalar</TabsTrigger>
         </TabsList>
 
@@ -689,6 +757,108 @@ export default function SellerShopPage() {
           </Card>
         </TabsContent>
 
+        {/* ── Brands tab ───────────────────────────────────────────────────── */}
+        <TabsContent value="brands">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('nav.brands', 'Brands')}</CardTitle>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Dükanyňyzda satylýan brendleri saýlaň.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {allBrands.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-6">{t('common.loading')}</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {allBrands.map((b) => {
+                    const active = selectedBrandIds.includes(b.id)
+                    return (
+                      <button
+                        key={b.id}
+                        type="button"
+                        onClick={() => toggleBrand(b.id)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all',
+                          active
+                            ? 'bg-blue-600 border-blue-600 text-white'
+                            : 'bg-transparent border-slate-200 dark:border-white/[0.10] text-slate-600 dark:text-slate-300 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400'
+                        )}
+                      >
+                        {active && <Tag className="h-3 w-3 shrink-0" />}
+                        {b.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                <span className="text-xs text-slate-400">
+                  {selectedBrandIds.length > 0
+                    ? `${selectedBrandIds.length} ${t('nav.brands', 'Brands').toLowerCase()}`
+                    : t('seller.notSelected')}
+                </span>
+                <Button size="sm" onClick={handleSaveBrands} disabled={savingBrands}>
+                  {savingBrands
+                    ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />{t('seller.saving')}</>
+                    : t('common.save')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ── Delivery types tab ───────────────────────────────────────────── */}
+        <TabsContent value="delivery-types">
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('deliveryTypes.title')}</CardTitle>
+              <p className="text-sm text-slate-500 mt-0.5">
+                Dükanyňyzyň hödürleýän eltip bermek görnüşlerini saýlaň.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {allDeliveryTypes.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-6">{t('common.loading')}</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {allDeliveryTypes.map((dt) => {
+                    const active = selectedDeliveryTypeIds.includes(dt.id)
+                    return (
+                      <button
+                        key={dt.id}
+                        type="button"
+                        onClick={() => toggleDeliveryType(dt.id)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border transition-all',
+                          active
+                            ? 'bg-blue-600 border-blue-600 text-white'
+                            : 'bg-transparent border-slate-200 dark:border-white/[0.10] text-slate-600 dark:text-slate-300 hover:border-blue-400 dark:hover:border-blue-500 hover:text-blue-600 dark:hover:text-blue-400'
+                        )}
+                      >
+                        {active && <Truck className="h-3 w-3 shrink-0" />}
+                        {dt.name}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                <span className="text-xs text-slate-400">
+                  {selectedDeliveryTypeIds.length > 0
+                    ? `${selectedDeliveryTypeIds.length} ${t('deliveryTypes.title').toLowerCase()}`
+                    : t('seller.notSelected')}
+                </span>
+                <Button size="sm" onClick={handleSaveDeliveryTypes} disabled={savingDeliveryTypes}>
+                  {savingDeliveryTypes
+                    ? <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />{t('seller.saving')}</>
+                    : t('common.save')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* ── Documents tab ────────────────────────────────────────────────── */}
         <TabsContent value="documents" className="space-y-5">
           {/* Shop type */}
@@ -814,7 +984,7 @@ function buildTree(flat) {
 }
 
 function getAllLeafIds(node) {
-  if (!node.children?.length) return [node.id]
+  if (!node.children?.length) return node.selectable === false ? [] : [node.id]
   return node.children.flatMap(getAllLeafIds)
 }
 
@@ -843,6 +1013,9 @@ function TreeCheckbox({ checked, indeterminate }) {
 function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
   const [open, setOpen] = useState(depth === 0)
   const hasChildren = node.children?.length > 0
+  // Structural placeholder for a deactivated/deleted category kept only so its still-active
+  // descendants nest correctly — not a real pickable category for this shop.
+  const isStructural = node.selectable === false
 
   const leafIds = useMemo(() => getAllLeafIds(node), [node])
   const selCount = leafIds.filter((id) => selected.includes(id)).length
@@ -851,6 +1024,7 @@ function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
 
   function handleRowClick(e) {
     e.preventDefault()
+    if (isStructural) { setOpen((v) => !v); return }
     onBulkToggle(leafIds, !isChecked)
   }
 
@@ -858,8 +1032,8 @@ function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
     <div>
       <div
         className={cn(
-          'flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer select-none group',
-          'hover:bg-slate-50 dark:hover:bg-white/[0.04]',
+          'flex items-center gap-2 py-1.5 px-2 rounded-lg select-none group',
+          isStructural ? 'cursor-default' : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.04]',
           depth > 0 && 'ml-5'
         )}
         onClick={handleRowClick}
@@ -875,8 +1049,13 @@ function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
         ) : (
           <span className="w-4 shrink-0" />
         )}
-        <TreeCheckbox checked={isChecked} indeterminate={isIndeterminate} />
-        <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 leading-tight">{node.name}</span>
+        {!isStructural && <TreeCheckbox checked={isChecked} indeterminate={isIndeterminate} />}
+        <span className={cn(
+          'text-sm flex-1 leading-tight',
+          isStructural ? 'text-slate-400 dark:text-slate-500 italic' : 'text-slate-700 dark:text-slate-300'
+        )}>
+          {node.name}{isStructural ? ' (öçürilen)' : ''}
+        </span>
         {hasChildren && selCount > 0 && (
           <span className="text-[11px] text-slate-400 shrink-0 tabular-nums">{selCount}/{leafIds.length}</span>
         )}
@@ -904,19 +1083,33 @@ function CategoryTree({ categories, selected, onBulkToggle }) {
   )
 }
 
-// ── Category picker — grouped by parent ──────────────────────────────────────
+// ── Category picker — grouped by top-level ancestor, any nesting depth ───────
 function CategoryPicker({ categories, selected, onToggle }) {
-  // Separate root and children
-  const roots    = categories.filter((c) => !c.parent_id)
-  const children = categories.filter((c) =>  c.parent_id)
-  const byParent = children.reduce((acc, c) => {
-    ;(acc[c.parent_id] ??= []).push(c)
-    return acc
-  }, {})
+  const byId = {}
+  categories.forEach((c) => { byId[c.id] = c })
 
-  // Categories with no children that are also roots — shown in a flat "Other" group
-  const standaloneRoots = roots.filter((r) => !byParent[r.id])
-  const parentRoots     = roots.filter((r) =>  byParent[r.id])
+  function topAncestor(c) {
+    const seen = new Set()
+    let cur = c
+    while (cur.parent_id && byId[cur.parent_id] && !seen.has(cur.id)) {
+      seen.add(cur.id)
+      cur = byId[cur.parent_id]
+    }
+    return cur
+  }
+
+  // Every category (root, mid-level, or leaf) is its own selectable chip.
+  // Grouped under its top-level ancestor so deeply-nested categories are
+  // never silently dropped (previously anything below depth 1 was invisible).
+  // Structural placeholders (deactivated ancestors, selectable: false) are only
+  // used to resolve the correct group header — they never get their own chip.
+  const groups = {}
+  categories.forEach((c) => {
+    if (c.selectable === false) return
+    const root = topAncestor(c)
+    ;(groups[root.id] ??= { root, items: [] }).items.push(c)
+  })
+  const groupList = Object.values(groups)
 
   function Chip({ cat }) {
     const active = selected.includes(cat.id)
@@ -939,24 +1132,14 @@ function CategoryPicker({ categories, selected, onToggle }) {
 
   return (
     <div className="space-y-4">
-      {parentRoots.map((root) => (
+      {groupList.map(({ root, items }) => (
         <div key={root.id}>
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{root.name}</p>
           <div className="flex flex-wrap gap-2">
-            {(byParent[root.id] ?? []).map((cat) => <Chip key={cat.id} cat={cat} />)}
+            {items.map((cat) => <Chip key={cat.id} cat={cat} />)}
           </div>
         </div>
       ))}
-      {standaloneRoots.length > 0 && (
-        <div>
-          {parentRoots.length > 0 && (
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Beýlekiler</p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {standaloneRoots.map((cat) => <Chip key={cat.id} cat={cat} />)}
-          </div>
-        </div>
-      )}
     </div>
   )
 }

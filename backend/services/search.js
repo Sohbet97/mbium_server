@@ -23,7 +23,7 @@ async function searchProducts(tsQuery, { limit = 20, shopId, categoryId } = {}) 
         `SELECT
             p.id, p.name, p.name_ru, p.name_eng, p.slug, p.price, p.currency,
             p.rating, p.review_count, p.is_active, p.shop_id, p.category_id,
-            p."createdAt",
+            p."createdAt", p.turbo_active AS is_turbo, p.turbo_boosted_at,
             ts_rank(
                 to_tsvector('simple',
                     COALESCE(p.name, '')     || ' ' || COALESCE(p.name_ru, '')  || ' ' ||
@@ -43,7 +43,7 @@ async function searchProducts(tsQuery, { limit = 20, shopId, categoryId } = {}) 
                 COALESCE(p.name_eng, '') || ' ' || COALESCE(p.sku, '')      || ' ' ||
                 COALESCE(p.description, '')
                ) @@ to_tsquery('simple', :q)
-         ORDER BY rank DESC, p."createdAt" DESC
+         ORDER BY p.turbo_active DESC, p.turbo_boosted_at DESC NULLS LAST, rank DESC, p."createdAt" DESC
          LIMIT :limit`,
         { replacements: { q: tsQuery, limit }, type: QueryTypes.SELECT }
     )

@@ -194,4 +194,47 @@ module.exports = {
             },
         },
     },
+
+    // ── Seller — own support conversation ────────────────────────────────────
+    "/seller/support/room": {
+        get: {
+            tags: ["Seller — Support"],
+            summary: "Get (or create) the seller's own support room",
+            security,
+            responses: { 200: { description: "Support room", content: { "application/json": { schema: { type: "object", properties: { data: roomItem } } } } } },
+        },
+    },
+    "/seller/support/messages": {
+        get: {
+            tags: ["Seller — Support"],
+            summary: "Get messages in own support room",
+            security,
+            parameters: [
+                { in: "query", name: "page",  schema: { type: "integer", default: 1 } },
+                { in: "query", name: "limit", schema: { type: "integer", default: 80 } },
+            ],
+            responses: {
+                200: {
+                    description: "Messages",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: messageItem },
+                        total: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+        post: {
+            tags: ["Seller — Support"],
+            summary: "Send a message in own support room",
+            description: "Emits a `support-message` socket event to admin participants.",
+            security,
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["text"], properties: {
+                    text: { type: "string" },
+                } } } },
+            },
+            responses: { 201: { description: "Sent", content: { "application/json": { schema: { type: "object", properties: { data: messageItem } } } } }, 400: { description: "text required" } },
+        },
+    },
 };

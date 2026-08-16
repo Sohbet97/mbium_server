@@ -159,18 +159,30 @@ function AdjustStockModal({ open, onClose, onSaved, warehouseId, levelRow }) {
   )
 }
 
+const PAGE_SIZE = 50
+
 function InventoryTab({ warehouseId }) {
   const { t } = useTranslation()
   const [data, setData] = useState([])
+  const [count, setCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [adjustModal, setAdjustModal] = useState({ open: false, row: null })
 
   const load = useCallback(() => {
     setLoading(true)
-    SellerApi.warehouses.getInventory(warehouseId, { limit: 100 })
-      .then(r => setData(r.data?.data ?? []))
+    SellerApi.warehouses.getInventory(warehouseId, { limit: PAGE_SIZE, page: 1 })
+      .then(r => { setData(r.data?.data ?? []); setCount(r.data?.count ?? 0) })
       .finally(() => setLoading(false))
   }, [warehouseId])
+
+  const loadMore = () => {
+    setLoadingMore(true)
+    const nextPage = Math.floor(data.length / PAGE_SIZE) + 1
+    SellerApi.warehouses.getInventory(warehouseId, { limit: PAGE_SIZE, page: nextPage })
+      .then(r => setData(prev => [...prev, ...(r.data?.data ?? [])]))
+      .finally(() => setLoadingMore(false))
+  }
 
   useEffect(() => { load() }, [load])
 
@@ -215,6 +227,13 @@ function InventoryTab({ warehouseId }) {
           </table>
         </div>
       )}
+      {data.length < count && (
+        <div className="flex justify-center mt-3">
+          <Button size="sm" variant="outline" disabled={loadingMore} onClick={loadMore}>
+            {loadingMore ? t('common.loading') : t('common.loadMore', 'Load more')}
+          </Button>
+        </div>
+      )}
       <AdjustStockModal
         open={adjustModal.open}
         onClose={() => setAdjustModal({ open: false, row: null })}
@@ -229,14 +248,24 @@ function InventoryTab({ warehouseId }) {
 function MovementsTab({ warehouseId }) {
   const { t } = useTranslation()
   const [data, setData] = useState([])
+  const [count, setCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
-    SellerApi.warehouses.getMovements(warehouseId, { limit: 100 })
-      .then(r => setData(r.data?.data ?? []))
+    SellerApi.warehouses.getMovements(warehouseId, { limit: PAGE_SIZE, page: 1 })
+      .then(r => { setData(r.data?.data ?? []); setCount(r.data?.count ?? 0) })
       .finally(() => setLoading(false))
   }, [warehouseId])
+
+  const loadMore = () => {
+    setLoadingMore(true)
+    const nextPage = Math.floor(data.length / PAGE_SIZE) + 1
+    SellerApi.warehouses.getMovements(warehouseId, { limit: PAGE_SIZE, page: nextPage })
+      .then(r => setData(prev => [...prev, ...(r.data?.data ?? [])]))
+      .finally(() => setLoadingMore(false))
+  }
 
   useEffect(() => { load() }, [load])
 
@@ -245,35 +274,44 @@ function MovementsTab({ warehouseId }) {
   ) : !data.length ? (
     <div className="text-center py-8 text-slate-400 text-sm">{t('warehouses.noMovements')}</div>
   ) : (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="text-xs text-slate-500 border-b dark:border-white/10">
-            <th className="text-left py-2 pr-4">{t('warehouses.colDate')}</th>
-            <th className="text-left py-2 pr-4">{t('warehouses.colType')}</th>
-            <th className="text-left py-2 pr-4">{t('warehouses.colProduct')}</th>
-            <th className="text-right py-2 pr-4">{t('warehouses.colBefore')}</th>
-            <th className="text-right py-2 pr-4">{t('warehouses.colQuantity')}</th>
-            <th className="text-right py-2 pr-4">{t('warehouses.colAfter')}</th>
-            <th className="text-left py-2">{t('warehouses.colNote')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map(m => (
-            <tr key={m.id} className="border-b dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
-              <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">{new Date(m.createdAt).toLocaleString()}</td>
-              <td className="py-2 pr-4">
-                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${TYPE_COLORS[m.type] ?? 'bg-slate-100'}`}>{m.type}</span>
-              </td>
-              <td className="py-2 pr-4 dark:text-white">{m.product?.name ?? `#${m.product_id}`}{m.variant ? ` / ${m.variant.name}` : ''}</td>
-              <td className="py-2 pr-4 text-right font-mono text-slate-400">{m.quantity_before}</td>
-              <td className="py-2 pr-4 text-right font-mono font-semibold dark:text-white">{m.quantity}</td>
-              <td className="py-2 pr-4 text-right font-mono">{m.quantity_after}</td>
-              <td className="py-2 text-slate-500 text-xs">{m.note ?? '—'}</td>
+    <div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-xs text-slate-500 border-b dark:border-white/10">
+              <th className="text-left py-2 pr-4">{t('warehouses.colDate')}</th>
+              <th className="text-left py-2 pr-4">{t('warehouses.colType')}</th>
+              <th className="text-left py-2 pr-4">{t('warehouses.colProduct')}</th>
+              <th className="text-right py-2 pr-4">{t('warehouses.colBefore')}</th>
+              <th className="text-right py-2 pr-4">{t('warehouses.colQuantity')}</th>
+              <th className="text-right py-2 pr-4">{t('warehouses.colAfter')}</th>
+              <th className="text-left py-2">{t('warehouses.colNote')}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {data.map(m => (
+              <tr key={m.id} className="border-b dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
+                <td className="py-2 pr-4 text-slate-500 whitespace-nowrap">{new Date(m.createdAt).toLocaleString()}</td>
+                <td className="py-2 pr-4">
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${TYPE_COLORS[m.type] ?? 'bg-slate-100'}`}>{m.type}</span>
+                </td>
+                <td className="py-2 pr-4 dark:text-white">{m.product?.name ?? `#${m.product_id}`}{m.variant ? ` / ${m.variant.name}` : ''}</td>
+                <td className="py-2 pr-4 text-right font-mono text-slate-400">{m.quantity_before}</td>
+                <td className="py-2 pr-4 text-right font-mono font-semibold dark:text-white">{m.quantity}</td>
+                <td className="py-2 pr-4 text-right font-mono">{m.quantity_after}</td>
+                <td className="py-2 text-slate-500 text-xs">{m.note ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {data.length < count && (
+        <div className="flex justify-center mt-3">
+          <Button size="sm" variant="outline" disabled={loadingMore} onClick={loadMore}>
+            {loadingMore ? t('common.loading') : t('common.loadMore', 'Load more')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
@@ -314,16 +352,26 @@ function WarehouseDetail({ warehouse, onClose }) {
 export default function SellerWarehousesPage() {
   const { t } = useTranslation()
   const [warehouses, setWarehouses] = useState([])
+  const [count, setCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [formModal, setFormModal] = useState({ open: false, item: null })
   const [selected, setSelected] = useState(null)
 
   const load = useCallback(() => {
     setLoading(true)
-    SellerApi.warehouses.getAll({ limit: 100 })
-      .then(r => setWarehouses(r.data?.data ?? []))
+    SellerApi.warehouses.getAll({ limit: PAGE_SIZE, page: 1 })
+      .then(r => { setWarehouses(r.data?.data ?? []); setCount(r.data?.count ?? 0) })
       .finally(() => setLoading(false))
   }, [])
+
+  const loadMore = () => {
+    setLoadingMore(true)
+    const nextPage = Math.floor(warehouses.length / PAGE_SIZE) + 1
+    SellerApi.warehouses.getAll({ limit: PAGE_SIZE, page: nextPage })
+      .then(r => setWarehouses(prev => [...prev, ...(r.data?.data ?? [])]))
+      .finally(() => setLoadingMore(false))
+  }
 
   useEffect(() => { load() }, [load])
 
@@ -388,6 +436,14 @@ export default function SellerWarehousesPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {!loading && warehouses.length < count && (
+        <div className="flex justify-center">
+          <Button size="sm" variant="outline" disabled={loadingMore} onClick={loadMore}>
+            {loadingMore ? t('common.loading') : t('common.loadMore', 'Load more')}
+          </Button>
         </div>
       )}
 

@@ -161,6 +161,26 @@ class Permissions {
     static SIZE_POST   = 341
     static SIZE_PUT    = 342
     static SIZE_DELETE = 343
+
+    static DELIVERY_TYPE_GET    = 344
+    static DELIVERY_TYPE_POST   = 345
+    static DELIVERY_TYPE_PUT    = 346
+    static DELIVERY_TYPE_DELETE = 347
+
+    static TURBO_GET    = 348
+    static TURBO_POST   = 349
+    static TURBO_PUT    = 350
+    static TURBO_DELETE = 351
+
+    static GIFT_CREATOR_GET    = 352
+    static GIFT_CREATOR_POST   = 353
+    static GIFT_CREATOR_PUT    = 354
+    static GIFT_CREATOR_DELETE = 355
+
+    static GIFT_TYPE_GET    = 356
+    static GIFT_TYPE_POST   = 357
+    static GIFT_TYPE_PUT    = 358
+    static GIFT_TYPE_DELETE = 359
 }
 
 module.exports = Permissions

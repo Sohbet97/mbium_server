@@ -199,7 +199,7 @@ export default function DeliveriesPage() {
 
   useEffect(() => {
     let cancelled = false
-    const params = { limit, skip: (page - 1) * limit }
+    const params = { limit, page }
     if (search) params.text = search
     if (statusFilter !== '') params.status = statusFilter
     if (cityFilter !== '') params.city_id = cityFilter

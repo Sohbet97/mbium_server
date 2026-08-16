@@ -5,6 +5,7 @@ const { CONSTANTS } = require("../../../config/constants");
 const SHOP_CONSTANTS = require("../utils/constants");
 const NotificationService = require("../../../services/notifications");
 const PushService         = require("../../../services/push");
+const ApiError             = require("../../../exceptions/api-error");
 
 class ShopService {
   static async get(filter = {}, limit = undefined, order = SHOP_CONSTANTS.DEFAULT_SORT, offset = 0, paranoid = true) {
@@ -15,7 +16,7 @@ class ShopService {
       limit,
       paranoid,
       include: [
-        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number"], required: false },
       ],
     });
@@ -35,9 +36,11 @@ class ShopService {
       where: { id },
       paranoid,
       include: [
-        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number", "email", "status"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
+        ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
+        ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
       ],
     });
   }
@@ -47,8 +50,10 @@ class ShopService {
     return db.Shop.findOne({
       where: { owner_id: userId },
       include: [
-        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
+        ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
+        ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
       ],
     });
   }
@@ -58,7 +63,7 @@ class ShopService {
     return db.Shop.findAll({
       where: { owner_id: userId },
       include: [
-        { model: db.ShopType, as: "type", attributes: ["id", "name", "commission_rate"] },
+        { model: db.ShopType, as: "type", attributes: ["id", "name"] },
       ],
       order: [["is_active", "DESC"], ["createdAt", "ASC"]],
     });
@@ -95,6 +100,8 @@ class ShopService {
     });
 
     await this._syncCategories(model.id, req.body?.categories);
+    await this._syncDeliveryTypes(model.id, req.body?.delivery_type_ids);
+    await this._syncBrands(model.id, req.body?.brand_ids);
     return model;
   }
 
@@ -102,7 +109,7 @@ class ShopService {
     if (!id) return;
     await db.Shop.update(
       {
-        ...(req.body?.owner_id  !== undefined && { owner_id:  FUNCTIONS.getNumber(req.body.owner_id)  || null }),
+        ...(req.body?.owner_id  !== undefined && { owner_id:  req.body.owner_id || null }),
         ...(req.body?.type_id   !== undefined && { type_id:   FUNCTIONS.getNumber(req.body.type_id)   || null }),
         ...(req.body?.city_id   !== undefined && { city_id:   FUNCTIONS.getNumber(req.body.city_id)   || null }),
         ...(req.body?.region_id !== undefined && { region_id: FUNCTIONS.getNumber(req.body.region_id) || null }),
@@ -134,6 +141,17 @@ class ShopService {
     if (req.body?.categories !== undefined) {
       await this._syncCategories(id, req.body.categories);
     }
+    if (req.body?.delivery_type_ids !== undefined) {
+      await this._syncDeliveryTypes(id, req.body.delivery_type_ids);
+    }
+    if (req.body?.brand_ids !== undefined) {
+      await this._syncBrands(id, req.body.brand_ids);
+    }
+  }
+
+  static async reassignOwner(id, ownerId) {
+    if (!id) return;
+    await db.Shop.update({ owner_id: ownerId }, { where: { id } });
   }
 
   static async delete(id, force = false) {
@@ -144,6 +162,15 @@ class ShopService {
   static async _log(shop_id, action, admin_id, note) {
     if (!db.ShopVerificationLog) return;
     await db.ShopVerificationLog.create({ shop_id, action, admin_id: admin_id || null, note: note || null }).catch(() => {});
+  }
+
+  static async getVerificationLog(shopId) {
+    if (!db.ShopVerificationLog || !shopId) return [];
+    return db.ShopVerificationLog.findAll({
+      where: { shop_id: shopId },
+      include: [{ model: db.User, as: 'admin', attributes: ['id', 'name', 'surname'], required: false }],
+      order: [['createdAt', 'DESC']],
+    });
   }
 
   static async submitForReview(id, userId) {
@@ -197,6 +224,16 @@ class ShopService {
     return this.getById(id);
   }
 
+  static async withdraw(id, userId) {
+    const note = 'Arza ulanyjy tarapyndan yzyna alyndy';
+    await db.Shop.update(
+      { verification_status: 3, is_verified: false, verified_by: userId, verified_at: new Date(), verification_note: note },
+      { where: { id } }
+    );
+    await this._log(id, 'withdrawn', userId, note);
+    return this.getById(id);
+  }
+
   static async reject(id, userId, note, io) {
     await db.Shop.update(
       { verification_status: 3, is_verified: false, verified_by: userId, verified_at: new Date(), verification_note: note || null },
@@ -226,6 +263,71 @@ class ShopService {
         { ignoreDuplicates: true }
       );
     }
+  }
+
+  // Sync shop_delivery_types rows: destroy existing, re-insert
+  static async setDeliveryTypes(shopId, deliveryTypeIds) {
+    return this._syncDeliveryTypes(shopId, deliveryTypeIds);
+  }
+
+  static async _syncDeliveryTypes(shopId, deliveryTypeIds) {
+    if (!db.ShopDeliveryType) return;
+    if (!Array.isArray(deliveryTypeIds)) return;
+    await db.ShopDeliveryType.destroy({ where: { shop_id: shopId } });
+    if (deliveryTypeIds.length > 0) {
+      await db.ShopDeliveryType.bulkCreate(
+        deliveryTypeIds.map((delivery_type_id) => ({ shop_id: shopId, delivery_type_id })),
+        { ignoreDuplicates: true }
+      );
+    }
+  }
+
+  // Sync shop_brands rows: destroy existing, re-insert
+  static async setBrands(shopId, brandIds) {
+    return this._syncBrands(shopId, brandIds);
+  }
+
+  static async _syncBrands(shopId, brandIds) {
+    if (!db.ShopBrand) return;
+    if (!Array.isArray(brandIds)) return;
+    await db.ShopBrand.destroy({ where: { shop_id: shopId } });
+    if (brandIds.length > 0) {
+      await db.ShopBrand.bulkCreate(
+        brandIds.map((brand_id) => ({ shop_id: shopId, brand_id })),
+        { ignoreDuplicates: true }
+      );
+    }
+  }
+
+  // ── Follows ────────────────────────────────────────────────────────────────
+
+  static async follow(userId, shopId) {
+    const shop = await db.Shop.findOne({ where: { id: shopId, is_active: true } });
+    if (!shop) throw ApiError.NotFound("Dükan tapylmady");
+
+    const [, created] = await db.ShopFollow.findOrCreate({
+      where: { user_id: userId, shop_id: shopId },
+      defaults: { user_id: userId, shop_id: shopId },
+    });
+    if (created) await db.Shop.increment("follower_count", { where: { id: shopId } });
+    return { created };
+  }
+
+  static async unfollow(userId, shopId) {
+    const deleted = await db.ShopFollow.destroy({ where: { user_id: userId, shop_id: shopId } });
+    if (!deleted) throw ApiError.NotFound("Yzarlama tapylmady");
+    await db.Shop.decrement("follower_count", { where: { id: shopId } });
+    return { deleted: true };
+  }
+
+  static async getFollowedShops(userId, limit, offset) {
+    return db.Shop.findAndCountAll({
+      include: [{ model: db.ShopFollow, as: "follows", where: { user_id: userId }, attributes: [] }],
+      where: { is_active: true },
+      limit,
+      offset,
+      order: [["id", "DESC"]],
+    });
   }
 }
 

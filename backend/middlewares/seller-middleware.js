@@ -13,24 +13,23 @@ module.exports = async (req, res, next) => {
             { model: db.ShopType, as: 'type', attributes: ['id', 'name'], required: false },
         ];
 
-        let shop = null;
+        const where = { owner_id: req.user.id, is_active: true };
+        if (requestedId) where.id = requestedId;
 
-        if (requestedId) {
-            shop = await db.Shop.findOne({
-                where: { id: requestedId, owner_id: req.user.id, is_active: true },
-                include,
-            });
-        }
+        const shop = await db.Shop.findOne({ where, include });
 
         if (!shop) {
-            shop = await db.Shop.findOne({
-                where: { owner_id: req.user.id, is_active: true },
-                include,
-            });
-        }
+            // Distinguish "no such shop / not yours" from "shop exists but isn't active yet",
+            // so the client can tell a real permission error apart from a pending-approval state.
+            const ownedWhere = requestedId
+                ? { id: requestedId, owner_id: req.user.id }
+                : { owner_id: req.user.id };
+            const ownedShop = await db.Shop.findOne({ where: ownedWhere, attributes: ['id', 'is_active'] });
 
-        if (!shop) {
-            throw ApiError.NotAllowed('Aktiwleşdirilen dükaňyz ýok');
+            if (ownedShop) {
+                throw ApiError.NotAllowed('Aktiwleşdirilen dükaňyz ýok', 'SHOP_NOT_ACTIVE');
+            }
+            throw ApiError.NotAllowed('Dükan tapylmady', 'SHOP_NOT_FOUND');
         }
 
         req.shop = shop;

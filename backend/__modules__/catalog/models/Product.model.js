@@ -150,7 +150,37 @@ module.exports = (sequelize) => {
             type: DataTypes.UUID,
             allowNull: true,
             references: { model: "users", key: "id" }
-        }
+        },
+        moderation_status: {
+            type: DataTypes.SMALLINT,
+            allowNull: false,
+            defaultValue: 0,
+            comment: "0=PENDING, 1=APPROVED, 2=REJECTED"
+        },
+        moderation_note: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        moderated_at: {
+            type: DataTypes.DATE,
+            allowNull: true
+        },
+        moderated_by: {
+            type: DataTypes.UUID,
+            allowNull: true,
+            references: { model: "users", key: "id" }
+        },
+        // Denormalized from product_turbo_boosts (Turbo module) — set only via
+        // TurboService, never through the generic product create/update whitelist.
+        turbo_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+        },
+        turbo_boosted_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
     }, {
         timestamps: true,
         paranoid: true,
@@ -160,6 +190,8 @@ module.exports = (sequelize) => {
             { fields: ["status"] },
             { fields: ["is_active"] },
             { fields: ["price"] },
+            { fields: ["moderation_status"] },
+            { fields: ["turbo_active", "turbo_boosted_at"] },
         ]
     });
 
@@ -168,6 +200,7 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.Category, { foreignKey: "category_id", as: "category" });
         Model.hasMany(db.ProductVariant, { foreignKey: "product_id", as: "variants" });
         if (db.ProductMedia) Model.hasMany(db.ProductMedia, { foreignKey: "product_id", as: "productMedia" });
+        if (db.ProductMedia) Model.hasMany(db.ProductMedia, { foreignKey: "product_id", as: "models3d" });
         Model.hasMany(db.Review, { foreignKey: "product_id", as: "reviews" });
         Model.belongsToMany(db.Collection, {
             through: db.CollectionProduct,
@@ -197,6 +230,14 @@ module.exports = (sequelize) => {
         }
         if (db.Supplier) {
             Model.belongsTo(db.Supplier, { foreignKey: "supplier_id", as: "supplier" });
+        }
+        if (db.DeliveryType && db.ProductDeliveryType) {
+            Model.belongsToMany(db.DeliveryType, {
+                through: db.ProductDeliveryType,
+                foreignKey: "product_id",
+                otherKey: "delivery_type_id",
+                as: "deliveryTypes",
+            });
         }
     };
 

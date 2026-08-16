@@ -121,6 +121,11 @@ module.exports = (sequelize) => {
             type: DataTypes.DECIMAL(3, 2),
             defaultValue: 0
         },
+        follower_count: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
         plan_id: {
             type: DataTypes.INTEGER,
             allowNull: true,
@@ -167,6 +172,9 @@ module.exports = (sequelize) => {
         if (db.ShopSubscription) {
             Model.hasMany(db.ShopSubscription, { foreignKey: "shop_id", as: "subscriptions" });
         }
+        if (db.ShopFollow) {
+            Model.hasMany(db.ShopFollow, { foreignKey: "shop_id", as: "follows" });
+        }
         if (db.ShopCategory && db.Category) {
             Model.belongsToMany(db.Category, {
                 through: db.ShopCategory,
@@ -183,6 +191,22 @@ module.exports = (sequelize) => {
         }
         if (db.KycDocument) {
             Model.hasMany(db.KycDocument, { foreignKey: "shop_id", as: "kycDocuments" });
+        }
+        if (db.ShopDeliveryType && db.DeliveryType) {
+            Model.belongsToMany(db.DeliveryType, {
+                through: db.ShopDeliveryType,
+                foreignKey: "shop_id",
+                otherKey: "delivery_type_id",
+                as: "deliveryTypes",
+            });
+        }
+        if (db.ShopBrand && db.Brand) {
+            Model.belongsToMany(db.Brand, {
+                through: db.ShopBrand,
+                foreignKey: "shop_id",
+                otherKey: "brand_id",
+                as: "brands",
+            });
         }
     };
 

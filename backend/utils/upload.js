@@ -8,8 +8,8 @@ const { CONSTANTS } = require("../config/constants");
 const MEDIA_BASE = path.resolve(process.cwd(), 'storage', 'media')
 const ALLOWED_IMAGE = ['image/jpeg','image/jpg','image/png','image/webp','image/gif','image/avif','image/svg+xml']
 const ALLOWED_VIDEO = ['video/mp4','video/quicktime','video/webm']
-const ALLOWED_3D    = ['model/gltf-binary','model/gltf+json']
-const EXT_3D        = ['.glb','.gltf']
+const ALLOWED_3D    = ['model/gltf-binary','model/gltf+json','model/obj','model/vnd.usdz+zip']
+const EXT_3D        = ['.glb','.gltf','.obj','.usdz']
 
 function ensureMediaDirs() {
     ['images','videos','3d','360','thumbs'].forEach((s) =>

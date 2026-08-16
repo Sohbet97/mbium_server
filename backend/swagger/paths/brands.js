@@ -89,4 +89,53 @@ module.exports = {
             },
         },
     },
+
+    // ── Seller — Brands (read-only picker) ───────────────────────────────────
+    "/seller/brands": {
+        get: {
+            tags: [tag],
+            summary: "List active brands (flat, for the product form's brand picker)",
+            security,
+            responses: {
+                200: {
+                    description: "Active brands",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/Brand" } },
+                        count: { type: "integer" },
+                    }}}},
+                },
+            },
+        },
+    },
+    "/seller/brands/tree": {
+        get: {
+            tags: [tag],
+            summary: "Brand tree (nested children)",
+            security,
+            responses: {
+                200: {
+                    description: "Nested brand tree — root brands with `children` arrays",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/BrandTree" } },
+                    }}}},
+                },
+            },
+        },
+    },
+    "/seller/shop/brands": {
+        put: {
+            tags: [tag],
+            summary: "Set the seller's shop brands (full replace)",
+            security,
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", properties: {
+                    brand_ids: { type: "array", items: { type: "integer" } },
+                }}}},
+            },
+            responses: {
+                200: { description: "Updated shop", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Shop" } } } } } },
+            },
+        },
+    },
 };

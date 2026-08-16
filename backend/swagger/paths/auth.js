@@ -186,7 +186,7 @@ module.exports = {
         get: {
             tags: [tag],
             summary: "Get current user profile",
-            description: "Returns the authenticated user plus their shop (if any). The `shop` field includes `verification_status`, `type.commission_rate`, and `categories`.",
+            description: "Returns the authenticated user plus their shop (if any). The `shop` field includes `verification_status`, `type`, and `categories`.",
             security: [{ BearerAuth: [] }],
             responses: {
                 200: {
@@ -397,6 +397,49 @@ module.exports = {
                 },
                 400: { description: "token field missing" },
                 401: { description: "Token invalid or expired" },
+                404: { description: "User not found" },
+            },
+        },
+    },
+
+    "/auth/shop-types": {
+        get: {
+            tags: [tag],
+            summary: "List active shop types (for shop applicants, authenticated)",
+            security: [{ BearerAuth: [] }],
+            responses: {
+                200: {
+                    description: "Active shop types",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/ShopType" } },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/auth/me/google": {
+        delete: {
+            tags: [tag],
+            summary: "Disconnect linked Google account",
+            security: [{ BearerAuth: [] }],
+            responses: { 200: { description: "Disconnected" }, 400: { description: "No linked Google account, or no password set to fall back on" } },
+        },
+    },
+    "/auth/force-login": {
+        post: {
+            tags: [tag],
+            summary: "Admin impersonation login (login-as-user)",
+            description: "Requires `USER_LOGIN_AS` permission. Issues tokens for the target user without their password.",
+            security: [{ BearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["phone_number"], properties: {
+                    phone_number: { type: "string", example: "61123456" },
+                } } } },
+            },
+            responses: {
+                200: { description: "Tokens issued for the target user", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthResponse" } } } },
+                403: { description: "Missing USER_LOGIN_AS permission" },
                 404: { description: "User not found" },
             },
         },

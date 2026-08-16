@@ -188,10 +188,13 @@ module.exports = {
     "/seller/products/{id}": {
         get: {
             tags: ["Seller"],
-            summary: "Get own product by ID (includes variants)",
+            summary: "Get own product by ID (includes variants, shared media, and shared 3D models)",
             security,
             parameters: [idParam, shopHeader],
-            responses: { 200: { description: "Product" }, 404: { description: "Not found or not owned by seller" } },
+            responses: {
+                200: { description: "Product", content: { "application/json": { schema: { $ref: "#/components/schemas/Product" } } } },
+                404: { description: "Not found or not owned by seller" },
+            },
         },
         put: {
             tags: ["Seller"],
@@ -261,6 +264,50 @@ module.exports = {
         },
     },
 
+    // ── Variant Sizes ─────────────────────────────────────────────────────────────
+    "/seller/products/{id}/variants/{variantId}/sizes": {
+        post: {
+            tags: ["Seller"],
+            summary: "Add a per-size stock/price row to own variant",
+            description: "Nests structured size stock under a color/style variant (ProductVariantSize).",
+            security,
+            parameters: [idParam, { in: "path", name: "variantId", required: true, schema: { type: "integer" } }, shopHeader],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductVariantSizeRequest" } } } },
+            responses: {
+                201: { description: "Variant size row created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/ProductVariantSize" } } } } } },
+                400: { description: "size_id required" },
+                404: { description: "Not found or not owned by seller" },
+            },
+        },
+    },
+    "/seller/products/{id}/variants/{variantId}/sizes/{sizeRowId}": {
+        put: {
+            tags: ["Seller"],
+            summary: "Update a variant size row",
+            security,
+            parameters: [
+                idParam,
+                { in: "path", name: "variantId", required: true, schema: { type: "integer" } },
+                { in: "path", name: "sizeRowId", required: true, schema: { type: "integer" } },
+                shopHeader,
+            ],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductVariantSizeRequest" } } } },
+            responses: { 200: { description: "Updated" }, 404: { description: "Not found" } },
+        },
+        delete: {
+            tags: ["Seller"],
+            summary: "Delete a variant size row",
+            security,
+            parameters: [
+                idParam,
+                { in: "path", name: "variantId", required: true, schema: { type: "integer" } },
+                { in: "path", name: "sizeRowId", required: true, schema: { type: "integer" } },
+                shopHeader,
+            ],
+            responses: { 200: { description: "Deleted" }, 404: { description: "Not found" } },
+        },
+    },
+
     // ── 360° Spin View (AI-generated) ───────────────────────────────────────────────
     "/seller/products/{id}/spin/generate": {
         post: {
@@ -316,6 +363,110 @@ module.exports = {
                 400: { description: "No files uploaded, invalid frame count, or generation failed" },
                 404: { description: "Not found or not owned by seller" },
             },
+        },
+    },
+    "/seller/products/{id}/variants/{variantId}/spin/generate": {
+        post: {
+            tags: ["Seller"],
+            summary: "AI-generate a 360° spin frame sequence scoped to one variant",
+            description: "Same as `POST /seller/products/{id}/spin/generate` but the generated frames are attached to the given variant only.",
+            security,
+            parameters: [idParam, { in: "path", name: "variantId", required: true, schema: { type: "integer" } }, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["media_ids"], properties: {
+                    media_ids:   { type: "array", items: { type: "string", format: "uuid" }, minItems: 1, maxItems: 4 },
+                    frame_count: { type: "integer", enum: [12, 24, 36], default: 12 },
+                } } } },
+            },
+            responses: {
+                200: { description: "Generated spin frame sequence (variant media list)", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/ProductMedia" } } } } } } },
+                400: { description: "Invalid reference count/frame count, or generation failed" },
+                404: { description: "Not found or not owned by seller" },
+            },
+        },
+    },
+    "/seller/products/{id}/variants/{variantId}/spin/generate-from-upload": {
+        post: {
+            tags: ["Seller"],
+            summary: "Upload reference photos and AI-generate a 360° spin frame sequence scoped to one variant",
+            security,
+            parameters: [idParam, { in: "path", name: "variantId", required: true, schema: { type: "integer" } }, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "multipart/form-data": { schema: { type: "object", required: ["files"], properties: {
+                    files:       { type: "array", items: { type: "string", format: "binary" }, minItems: 1, maxItems: 4 },
+                    frame_count: { type: "integer", enum: [12, 24, 36], default: 12 },
+                } } } },
+            },
+            responses: {
+                200: { description: "Generated spin frame sequence (variant media list)", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/ProductMedia" } } } } } } },
+                400: { description: "No files uploaded, invalid frame count, or generation failed" },
+                404: { description: "Not found or not owned by seller" },
+            },
+        },
+    },
+
+    // ── Media editing (background removal, rotation) ───────────────────────────────
+    "/seller/products/{id}/media/{mediaId}/remove-bg": {
+        post: {
+            tags: ["Seller"],
+            summary: "Start AI background removal for a product/variant media item",
+            security,
+            parameters: [idParam, { in: "path", name: "mediaId", required: true, schema: { type: "string", format: "uuid" } }, shopHeader],
+            requestBody: {
+                required: false,
+                content: { "application/json": { schema: { type: "object", properties: {
+                    variant_id: { type: "integer", nullable: true },
+                } } } },
+            },
+            responses: {
+                200: { description: "Removal preview token + result" },
+                404: { description: "Media not attached to this product/variant" },
+            },
+        },
+    },
+    "/seller/products/{id}/media/{mediaId}/remove-bg/confirm": {
+        post: {
+            tags: ["Seller"],
+            summary: "Confirm a background-removal preview (save as new media or replace original)",
+            security,
+            parameters: [idParam, { in: "path", name: "mediaId", required: true, schema: { type: "string", format: "uuid" } }, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["token", "action"], properties: {
+                    token:      { type: "string" },
+                    action:     { type: "string", enum: ["save_new", "replace"] },
+                    variant:    { type: "string", default: "transparent" },
+                    variant_id: { type: "integer", nullable: true },
+                } } } },
+            },
+            responses: { 200: { description: "Media saved/replaced", content: { "application/json": { schema: { type: "object", properties: { media: { $ref: "#/components/schemas/Media" } } } } } }, 400: { description: "token and action required" } },
+        },
+    },
+    "/seller/products/{id}/media/{mediaId}/remove-bg/reject": {
+        post: {
+            tags: ["Seller"],
+            summary: "Reject/discard a background-removal preview",
+            security,
+            parameters: [idParam, { in: "path", name: "mediaId", required: true, schema: { type: "string", format: "uuid" } }, shopHeader],
+            requestBody: { required: false, content: { "application/json": { schema: { type: "object", properties: { token: { type: "string" } } } } } },
+            responses: { 200: { description: "Discarded" } },
+        },
+    },
+    "/seller/products/{id}/media/{mediaId}/rotate": {
+        post: {
+            tags: ["Seller"],
+            summary: "Rotate a media image in place (90/180/270°)",
+            security,
+            parameters: [idParam, { in: "path", name: "mediaId", required: true, schema: { type: "string", format: "uuid" } }, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["degrees"], properties: {
+                    degrees: { type: "integer", enum: [90, 180, 270] },
+                } } } },
+            },
+            responses: { 200: { description: "Rotated, returns updated Media", content: { "application/json": { schema: { $ref: "#/components/schemas/Media" } } } }, 400: { description: "Invalid degrees or missing sharp module" }, 404: { description: "Not found" } },
         },
     },
 
@@ -389,6 +540,51 @@ module.exports = {
             responses: { 201: { description: "Shipment added" } },
         },
     },
+    "/seller/orders/{id}/items/{itemId}": {
+        patch: {
+            tags: ["Seller"],
+            summary: "Update order item quantity (pending/confirmed orders only)",
+            security,
+            parameters: [idParam, { in: "path", name: "itemId", required: true, schema: { type: "integer" } }, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", required: ["quantity"], properties: {
+                    quantity: { type: "integer", minimum: 1 },
+                } } } },
+            },
+            responses: { 200: { description: "Updated order" }, 403: { description: "Order status does not allow item edits" } },
+        },
+        delete: {
+            tags: ["Seller"],
+            summary: "Remove an order item (pending/confirmed orders only)",
+            security,
+            parameters: [idParam, { in: "path", name: "itemId", required: true, schema: { type: "integer" } }, shopHeader],
+            responses: { 200: { description: "Updated order" }, 403: { description: "Order status does not allow item removal" } },
+        },
+    },
+    "/seller/orders/{id}/shipments/{shipmentId}": {
+        patch: {
+            tags: ["Seller"],
+            summary: "Update shipment carrier/tracking number",
+            security,
+            parameters: [idParam, { in: "path", name: "shipmentId", required: true, schema: { type: "integer" } }, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", properties: {
+                    carrier:         { type: "string" },
+                    tracking_number: { type: "string" },
+                } } } },
+            },
+            responses: { 200: { description: "Updated shipment" }, 404: { description: "Not found" } },
+        },
+        delete: {
+            tags: ["Seller"],
+            summary: "Delete shipment",
+            security,
+            parameters: [idParam, { in: "path", name: "shipmentId", required: true, schema: { type: "integer" } }, shopHeader],
+            responses: { 200: { description: "Deleted" } },
+        },
+    },
 
     // ── Discounts ─────────────────────────────────────────────────────────────────
     "/seller/discounts": {
@@ -454,34 +650,42 @@ module.exports = {
             },
         },
     },
-    "/seller/payouts/history": {
+    "/seller/payouts/requests": {
         get: {
             tags: ["Seller"],
-            summary: "Payout request history",
+            summary: "Payout request history for own shop",
             security,
             parameters: [
                 shopHeader,
                 { in: "query", name: "limit", schema: { type: "integer" } },
                 { in: "query", name: "skip",  schema: { type: "integer" } },
             ],
-            responses: { 200: { description: "Payout history" } },
+            responses: {
+                200: {
+                    description: "Payout requests",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/PayoutRequest" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
         },
-    },
-    "/seller/payouts/request": {
         post: {
             tags: ["Seller"],
-            summary: "Request a payout",
+            summary: "Request a payout (withdrawal against own shop balance)",
             security,
             parameters: [shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", required: ["amount"], properties: {
-                    amount:   { type: "number" },
-                    currency: { type: "string", default: "TMT" },
-                    note:     { type: "string" },
+                    amount: { type: "number" },
+                    note:   { type: "string" },
                 } } } },
             },
-            responses: { 201: { description: "Payout request submitted" } },
+            responses: {
+                201: { description: "Payout request submitted" },
+                400: { description: "Invalid amount or balance not sufficient" },
+            },
         },
     },
 
@@ -508,7 +712,7 @@ module.exports = {
             security,
             parameters: [
                 shopHeader,
-                { in: "query", name: "media_type", schema: { type: "string" }, description: "image or video" },
+                { in: "query", name: "media_type", schema: { type: "string" }, description: "Override auto-detected type, e.g. '360' to mark an image as a spin frame. Type is otherwise inferred from the file (image/video/3d) — .glb/.gltf/.obj/.usdz uploads are detected as type '3d' automatically." },
             ],
             requestBody: {
                 required: true,
@@ -520,11 +724,24 @@ module.exports = {
         },
     },
     "/seller/media/{id}": {
+        patch: {
+            tags: ["Seller"],
+            summary: "Rename own media file",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } }, shopHeader],
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: { type: "object", properties: {
+                    alt_text: { type: "string", nullable: true },
+                } } } },
+            },
+            responses: { 200: { description: "Updated", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Media" } } } } } }, 403: { description: "Not owner" } },
+        },
         delete: {
             tags: ["Seller"],
             summary: "Delete own media file",
             security,
-            parameters: [idParam, shopHeader],
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "string", format: "uuid" } }, shopHeader],
             responses: { 200: { description: "Deleted" }, 403: { description: "Not owner" } },
         },
     },
@@ -532,24 +749,30 @@ module.exports = {
         get: {
             tags: ["Seller"],
             summary: "Get media attached to a product",
+            description: "Pass `variant_id` to scope to one variant's media, or `variant_id=null` for shared product-level media only. Omit for everything (product-level + all variants).",
             security,
-            parameters: [{ in: "path", name: "productId", required: true, schema: { type: "integer" } }, shopHeader],
-            responses: { 200: { description: "Product media list" } },
+            parameters: [
+                { in: "path", name: "productId", required: true, schema: { type: "integer" } },
+                { in: "query", name: "variant_id", schema: { type: "integer" }, description: "Optional — scope to a specific variant's media" },
+                shopHeader,
+            ],
+            responses: { 200: { description: "Product media list", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/ProductMedia" } } } } } } } },
         },
         post: {
             tags: ["Seller"],
-            summary: "Attach media to a product",
+            summary: "Attach media to a product (optionally scoped to a variant)",
             security,
             parameters: [{ in: "path", name: "productId", required: true, schema: { type: "integer" } }, shopHeader],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", required: ["media_id"], properties: {
-                    media_id:   { type: "integer" },
-                    role:       { type: "string", enum: ["primary", "gallery"] },
-                    sort_order: { type: "integer" },
+                    media_id:   { type: "string", format: "uuid" },
+                    variant_id: { type: "integer", nullable: true, description: "Scope this media to a single variant (e.g. a color)" },
+                    role:       { type: "string", enum: ["primary", "gallery", "video", "3d", "360", "spin"] },
+                    sort_order: { type: "integer", default: 0 },
                 } } } },
             },
-            responses: { 201: { description: "Attached" } },
+            responses: { 200: { description: "Attached", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/ProductMedia" } } } } } } },
         },
     },
     "/seller/media/product/{productId}/{mediaId}": {
@@ -559,17 +782,18 @@ module.exports = {
             security,
             parameters: [
                 { in: "path", name: "productId", required: true, schema: { type: "integer" } },
-                { in: "path", name: "mediaId",   required: true, schema: { type: "integer" } },
+                { in: "path", name: "mediaId",   required: true, schema: { type: "string", format: "uuid" } },
+                { in: "query", name: "variant_id", schema: { type: "integer" }, description: "Identifies which variant-scoped row to update, if any" },
                 shopHeader,
             ],
             requestBody: {
                 required: true,
                 content: { "application/json": { schema: { type: "object", properties: {
-                    role:       { type: "string", enum: ["primary", "gallery"] },
+                    role:       { type: "string", enum: ["primary", "gallery", "video", "3d", "360", "spin"] },
                     sort_order: { type: "integer" },
                 } } } },
             },
-            responses: { 200: { description: "Updated" } },
+            responses: { 200: { description: "Updated", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/ProductMedia" } } } } } } },
         },
         delete: {
             tags: ["Seller"],
@@ -577,7 +801,8 @@ module.exports = {
             security,
             parameters: [
                 { in: "path", name: "productId", required: true, schema: { type: "integer" } },
-                { in: "path", name: "mediaId",   required: true, schema: { type: "integer" } },
+                { in: "path", name: "mediaId",   required: true, schema: { type: "string", format: "uuid" } },
+                { in: "query", name: "variant_id", schema: { type: "integer" }, description: "Identifies which variant-scoped row to detach, if any" },
                 shopHeader,
             ],
             responses: { 200: { description: "Detached" } },

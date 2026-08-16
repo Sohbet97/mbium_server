@@ -26,6 +26,8 @@ router.use('/discounts',   require('./discounts'));
 router.use('/ai',          require('./ai'));
 router.use('/shop-types',  require('./shop-types'));
 router.use('/reels',       require('./reels'));
+router.use('/locations',   require('./locations'));
+router.use('/banners',     require('./banners'));
 
 // Authenticated buyer actions
 router.use('/notifications', authorizationMiddleware, require('./notifications'));
@@ -35,7 +37,10 @@ router.use('/orders',    authorizationMiddleware, require('./orders'));
 router.use('/addresses', authorizationMiddleware, require('./addresses'));
 router.use('/reviews',   authorizationMiddleware, require('./reviews'));
 router.use('/coins',     authorizationMiddleware, require('../../__modules__/coins/routes/coin.buyer.routes'));
+router.use('/wallet',    authorizationMiddleware, require('../../__modules__/wallet/routes/wallet.buyer.routes'));
+router.use('/turbo',     authorizationMiddleware, require('../../__modules__/turbo/routes/turbo.buyer.routes'));
 router.use('/favorites', authorizationMiddleware, require('../../__modules__/favorites/routes/favorite.routes'));
+router.use('/shops',     authorizationMiddleware, require('./shops'));
 
 // Comments: read public, write requires auth
 const CommentController = require('../../__modules__/comments/controllers/comment.controller')

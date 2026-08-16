@@ -132,4 +132,22 @@ module.exports = {
             responses: { 200: { description: "Removed" } },
         },
     },
+
+    // ── Seller — Subscription History ────────────────────────────────────────
+    "/seller/subscription/history": {
+        get: {
+            tags: ["Seller"],
+            summary: "List all subscriptions (past and current) for own shop",
+            security,
+            parameters: [{ $ref: "#/components/parameters/XShopId" }],
+            responses: {
+                200: {
+                    description: "Subscription history",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/ShopSubscription" } },
+                    } } } },
+                },
+            },
+        },
+    },
 };

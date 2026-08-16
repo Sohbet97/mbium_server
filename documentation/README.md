@@ -31,6 +31,8 @@ Platform: Multi-vendor marketplace for the Turkmenistan market
 |-------|-------------|-----|
 | Patterns | Module structure, conventions, utilities | [development/patterns.md](development/patterns.md) |
 | Roadmap | Gap analysis vs platform docs, prioritized backlog | [development/roadmap.md](development/roadmap.md) |
+| Coins | Coin economy: earn/spend events, schema, admin | [development/coins-implementation.md](development/coins-implementation.md) |
+| Turbo Boost | Paid product-boost feature + unified wallet/transactions plan | [development/turbo-boost-implementation.md](development/turbo-boost-implementation.md) |
 
 ---
 

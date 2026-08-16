@@ -130,7 +130,23 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
     }
   }
 
-  const eligible = allCategories.filter((c) => !category || c.id !== category.id)
+  // Exclude the category itself and all of its descendants — picking one of them as
+  // the new parent would create a cycle that silently vanishes from tree views.
+  const excludedIds = new Set()
+  if (category) {
+    excludedIds.add(category.id)
+    let added = true
+    while (added) {
+      added = false
+      for (const c of allCategories) {
+        if (c.parent_id != null && excludedIds.has(c.parent_id) && !excludedIds.has(c.id)) {
+          excludedIds.add(c.id)
+          added = true
+        }
+      }
+    }
+  }
+  const eligible = allCategories.filter((c) => !excludedIds.has(c.id))
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -223,8 +239,12 @@ function CategoryModal({ open, category, allCategories, onClose, onSaved }) {
 
 function CategoryTreeRow({ cat, depth = 0, forceExpand, onEdit, onDelete }) {
   const { t } = useTranslation()
-  const [localExpanded, setLocalExpanded] = useState(true)
-  const expanded = forceExpand != null ? forceExpand : localExpanded
+  const [expanded, setExpanded] = useState(true)
+  // Only re-sync from the bulk expand/collapse-all action when it actually fires again;
+  // afterwards individual row clicks are free to diverge from it.
+  useEffect(() => {
+    if (forceExpand?.value != null) setExpanded(forceExpand.value)
+  }, [forceExpand])
   const hasChildren = cat._children?.length > 0
 
   return (
@@ -234,7 +254,7 @@ function CategoryTreeRow({ cat, depth = 0, forceExpand, onEdit, onDelete }) {
           <div className="flex items-center gap-1" style={{ paddingLeft: `${depth * 22}px` }}>
             {hasChildren ? (
               <button
-                onClick={() => setLocalExpanded((v) => !v)}
+                onClick={() => setExpanded((v) => !v)}
                 className="p-0.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex-shrink-0"
               >
                 <ChevronRight className={`h-3.5 w-3.5 transition-transform ${expanded ? 'rotate-90' : ''}`} />
@@ -318,13 +338,14 @@ export default function CategoriesPage() {
   const [modal,        setModal]        = useState({ open: false, category: null })
   const [forceExpand,  setForceExpand]  = useState(null)
 
-  // Tree fetches all at once; list paginates
+  // Tree fetches all categories at once (no pagination makes sense for a tree); list paginates
   const listLimit = 50
-  const fetchLimit = viewMode === 'tree' ? 500 : listLimit
+  const TREE_FETCH_LIMIT = 100000 // effectively "all" — well above any realistic category count
+  const fetchLimit = viewMode === 'tree' ? TREE_FETCH_LIMIT : listLimit
 
   useEffect(() => {
     let cancelled = false
-    const params = { limit: fetchLimit, skip: (page - 1) * fetchLimit }
+    const params = { limit: fetchLimit, page }
     if (search) params.text = search
 
     AdminApi.categories.getAll(params)
@@ -409,10 +430,10 @@ export default function CategoriesPage() {
 
           {viewMode === 'tree' && (
             <>
-              <Button variant="ghost" size="sm" className="gap-1 h-9 text-xs" onClick={() => setForceExpand(true)}>
+              <Button variant="ghost" size="sm" className="gap-1 h-9 text-xs" onClick={() => setForceExpand({ value: true, tick: Date.now() })}>
                 <ChevronDown className="h-3.5 w-3.5" />{t('common.expandAll', 'Expand all')}
               </Button>
-              <Button variant="ghost" size="sm" className="gap-1 h-9 text-xs" onClick={() => setForceExpand(false)}>
+              <Button variant="ghost" size="sm" className="gap-1 h-9 text-xs" onClick={() => setForceExpand({ value: false, tick: Date.now() })}>
                 <ChevronRight className="h-3.5 w-3.5" />{t('common.collapseAll', 'Collapse all')}
               </Button>
             </>

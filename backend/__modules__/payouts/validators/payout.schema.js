@@ -9,6 +9,8 @@ const payoutRequestSchema = yup.object().shape({
         .positive("Mukdar 0-dan uly bolmaly")
         .required("Mukdary giriziň"),
     currency: yup.string().max(10).optional(),
+    method: yup.string().oneOf(["CARD", "CASH"], "Töleg usulyny saýlaň").optional(),
+    card_number: yup.string().nullable().optional(),
     bank_details: yup.string().nullable().optional(),
     notes: yup.string().nullable().optional(),
 });

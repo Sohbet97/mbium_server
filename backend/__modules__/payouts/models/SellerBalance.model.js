@@ -14,7 +14,12 @@ module.exports = (sequelize) => {
             references: { model: "shops", key: "id" },
             onDelete: "RESTRICT",
         },
-        balance: {
+        available_balance: {
+            type: DataTypes.DECIMAL(12, 2),
+            allowNull: false,
+            defaultValue: 0.00,
+        },
+        pending_balance: {
             type: DataTypes.DECIMAL(12, 2),
             allowNull: false,
             defaultValue: 0.00,

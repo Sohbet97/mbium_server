@@ -55,6 +55,12 @@ router.post('/', async (req, res, next) => {
         }
         // Force shop_id to seller's own shop
         req.body.shop_id = req.shop.id;
+        // New seller products always start pending moderator review — a seller
+        // can't self-approve by passing moderation_status in the request body
+        req.body.moderation_status = 0;
+        delete req.body.moderation_note;
+        delete req.body.moderated_at;
+        delete req.body.moderated_by;
         const model = await ProductService.create(req);
         return res.status(201).json({ model });
     } catch (e) { next(e); }

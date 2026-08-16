@@ -275,11 +275,83 @@ module.exports = {
     "/buyer/catalog/products/{id}": {
         get: {
             tags: ["Buyer — Catalog"],
-            summary: "Get a single active product (includes variants + media)",
+            summary: "Get a single active product (includes variants, shared media, and shared 3D models)",
             parameters: [idParam],
             responses: {
                 200: { description: "Product", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Product" } } } } } },
                 404: { description: "Not found" },
+            },
+        },
+    },
+
+    // ── Catalog — Brands (public, read-only) ─────────────────────────────────────
+    "/buyer/catalog/brands": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Get brand tree (nested children, public)",
+            responses: {
+                200: {
+                    description: "Nested brand tree",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/BrandTree" } },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/buyer/catalog/brands/{id}": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Get active brand by ID (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "Brand", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Brand" } } } } } },
+                404: { description: "Not found or inactive" },
+            },
+        },
+    },
+
+    // ── Catalog — Sizes (public, read-only) ──────────────────────────────────────
+    "/buyer/catalog/sizes": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Get size tree (nested children, public)",
+            responses: {
+                200: {
+                    description: "Nested size tree",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/SizeTree" } },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/buyer/catalog/sizes/{id}": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Get active size by ID (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "Size", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Size" } } } } } },
+                404: { description: "Not found or inactive" },
+            },
+        },
+    },
+
+    // ── Suppliers (public, read-only) ────────────────────────────────────────────
+    "/buyer/catalog/suppliers": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "List active suppliers (public)",
+            parameters: paginationParams,
+            responses: {
+                200: {
+                    description: "Suppliers",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/Supplier" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
             },
         },
     },
@@ -332,6 +404,7 @@ module.exports = {
                 content: { "application/json": { schema: { type: "object", required: ["product_id"], properties: {
                     product_id: { type: "integer" },
                     variant_id: { type: "integer", nullable: true },
+                    variant_size_id: { type: "integer", nullable: true, description: "Resolves price/stock at the per-size level when set" },
                     quantity:   { type: "integer", default: 1 },
                 } } } },
             },
@@ -568,6 +641,97 @@ module.exports = {
                     description: "Active AI recommendations",
                     content: { "application/json": { schema: { type: "object", properties: {
                         data: { type: "array", items: { $ref: "#/components/schemas/AiRecommendation" } },
+                    } } } },
+                },
+            },
+        },
+    },
+
+    // ── Locations (public, read-only) ────────────────────────────────────────────
+
+    "/buyer/locations/regions": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "List regions (public)",
+            parameters: [
+                { in: "query", name: "text",   schema: { type: "string" } },
+                { in: "query", name: "limit",  schema: { type: "integer" } },
+                { in: "query", name: "skip",   schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Regions",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/Region" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+
+    "/buyer/locations/regions/{id}": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "Get a single region (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "Region", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Region" } } } } } },
+                404: { description: "Not found" },
+            },
+        },
+    },
+
+    "/buyer/locations/cities": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "List cities (public)",
+            parameters: [
+                { in: "query", name: "text",   schema: { type: "string" } },
+                { in: "query", name: "region", schema: { type: "integer" }, description: "Filter by region ID" },
+                { in: "query", name: "limit",  schema: { type: "integer" } },
+                { in: "query", name: "skip",   schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Cities",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/City" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+
+    "/buyer/locations/cities/{id}": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "Get a single city (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "City", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/City" } } } } } },
+                404: { description: "Not found" },
+            },
+        },
+    },
+
+    // ── Banners (public, read-only) ──────────────────────────────────────────────
+
+    "/buyer/banners": {
+        get: {
+            tags: ["Buyer — Banners"],
+            summary: "List active banners (public)",
+            description: "Returns banners where `is_active` is true and the current time falls within `starts_at`/`ends_at` (when set). Excludes soft-deleted banners.",
+            parameters: [
+                { in: "query", name: "shop_id",        schema: { type: "integer" }, description: "Filter by shop, or 'null' for platform-wide banners" },
+                { in: "query", name: "banner_type_id", schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Active banners",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/Banner" } },
                     } } } },
                 },
             },

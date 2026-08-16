@@ -38,6 +38,16 @@ class ReviewService {
 
     static async create(userId, body) {
         const { product_id, order_id, rating, comment } = body;
+
+        // order_id backs the "verified purchase" marker — must actually be this user's
+        // order and actually contain this product, or anyone could fake the badge.
+        if (order_id) {
+            const order = await db.Order.findOne({ where: { id: order_id, user_id: userId } });
+            if (!order) throw ApiError.BadRequest("Sargyt tapylmady");
+            const item = await db.OrderItem.findOne({ where: { order_id, product_id } });
+            if (!item) throw ApiError.BadRequest("Bu sargytda bu haryt ýok");
+        }
+
         const existing = await db.Review.findOne({ where: { user_id: userId, product_id, order_id: order_id || null } });
         if (existing) throw ApiError.BadRequest("Bu haryt üçin siz eýýäm baha berdiňiz");
 

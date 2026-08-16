@@ -320,7 +320,7 @@ export default function OrdersPage() {
   const fetchOrders = useCallback(async () => {
     setLoading(true)
     try {
-      const params = { limit: PAGE_SIZE, skip: (page - 1) * PAGE_SIZE }
+      const params = { limit: PAGE_SIZE, page }
       if (filterStatus !== '') params.status = filterStatus
       if (filterShop) params.shop_id = filterShop
       const { data } = await AdminApi.orders.getAll(params)

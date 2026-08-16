@@ -22,6 +22,12 @@ http.interceptors.response.use(
   (res) => res,
   async (err) => {
     const original = err.config
+    const errCode = err.response?.data?.code
+    if (err.response?.status === 403 && (errCode === 'SHOP_NOT_ACTIVE' || errCode === 'SHOP_NOT_FOUND')) {
+      // Selected shop is stale (deactivated/deleted) — clear it so the app falls back
+      // to the user's actual active shop on next profile fetch, instead of looping 403s.
+      localStorage.removeItem('activeShopId')
+    }
     if (err.response?.status === 401 && !original._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -80,14 +86,19 @@ export class AdminApi {
     verify:          (id)       => http.patch(a(`${PATHS.SHOPS}/${id}/verify`)),
     reject:          (id, data) => http.patch(a(`${PATHS.SHOPS}/${id}/reject`), data),
     submitForReview: (id)       => http.patch(a(`${PATHS.SHOPS}/${id}/submit`)),
+    reassignOwner:   (id, ownerId) => http.patch(a(`${PATHS.SHOPS}/${id}/owner`), { owner_id: ownerId }),
   }
-  static shopTypes = { getAll: (params) => http.get(a(PATHS.SHOP_TYPES), { params }) }
+  static shopTypes = {
+    ...crud(PATHS.SHOP_TYPES),
+  }
   static categories = {
     ...crud(PATHS.CATEGORIES),
     tree: (params) => http.get(a(`${PATHS.CATEGORIES}/tree`), { params }),
   }
   static products = {
     ...crud(PATHS.PRODUCTS),
+    approve: (id)       => http.patch(a(`${PATHS.PRODUCTS}/${id}/approve`)),
+    reject:  (id, data) => http.patch(a(`${PATHS.PRODUCTS}/${id}/reject`), data),
     variants: {
       create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/variants`), data),
       update: (productId, variantId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`), data),
@@ -124,6 +135,12 @@ export class AdminApi {
     count:      ()       => http.get(a(`${PATHS.NOTIFICATIONS}/count`)),
     markAsRead: (id)     => http.patch(a(`${PATHS.NOTIFICATIONS}/${id}/read`)),
     markAllAsRead: ()    => http.patch(a(`${PATHS.NOTIFICATIONS}/read-all`)),
+  }
+  static payouts = {
+    getBalances:  (params)          => http.get(a('/payouts/balances'), { params }),
+    getRequests:  (params)          => http.get(a('/payouts/requests'), { params }),
+    getRequest:   (id)              => http.get(a(`/payouts/requests/${id}`)),
+    updateStatus: (id, data)        => http.patch(a(`/payouts/requests/${id}/status`), data),
   }
   static bannerTypes = {
     getAll: ()        => http.get(a(PATHS.BANNER_TYPES)),
@@ -226,6 +243,7 @@ export class AdminApi {
   static coins = {
     getBalances:       (params)   => http.get(a(`${PATHS.COINS}/balances`), { params }),
     getBalance:        (userId)   => http.get(a(`${PATHS.COINS}/balances/${userId}`)),
+    getTransactions:   (params)   => http.get(a(`${PATHS.COINS}/transactions`), { params }),
     grant:             (data)     => http.post(a(`${PATHS.COINS}/grant`), data),
     deduct:            (data)     => http.post(a(`${PATHS.COINS}/deduct`), data),
     getConditions:     (params)   => http.get(a(`${PATHS.COINS}/conditions`), { params }),
@@ -237,6 +255,14 @@ export class AdminApi {
   }
   static favorites = {
     getAll: (params) => http.get(a(`${PATHS.FAVORITES}`), { params }),
+  }
+  static turbo = {
+    getPackages: ()        => http.get(a('/turbo/packages')),
+    createPackage: (data)  => http.post(a('/turbo/packages'), data),
+    updatePackage: (id, data) => http.put(a(`/turbo/packages/${id}`), data),
+    deletePackage: (id)    => http.delete(a(`/turbo/packages/${id}`)),
+    getBoosts: (params)    => http.get(a('/turbo/boosts'), { params }),
+    cancelBoost: (id)      => http.post(a(`/turbo/boosts/${id}/cancel`)),
   }
   static catalog = {
     getTags:      (params)     => http.get(a(`${PATHS.PRODUCT_TAGS}`), { params }),
@@ -262,6 +288,13 @@ export class AdminApi {
     update:  (id, data)   => http.put(a(`${PATHS.SIZES}/${id}`), data),
     delete:  (id)         => http.delete(a(`${PATHS.SIZES}/${id}`)),
   }
+  static deliveryTypes = {
+    getAll:  (params)     => http.get(a(`${PATHS.DELIVERY_TYPES}`), { params }),
+    getOne:  (id)         => http.get(a(`${PATHS.DELIVERY_TYPES}/${id}`)),
+    create:  (data)       => http.post(a(`${PATHS.DELIVERY_TYPES}`), data),
+    update:  (id, data)   => http.put(a(`${PATHS.DELIVERY_TYPES}/${id}`), data),
+    delete:  (id)         => http.delete(a(`${PATHS.DELIVERY_TYPES}/${id}`)),
+  }
   static suppliers = {
     getAll:  (params)     => http.get(a(`${PATHS.SUPPLIERS}`), { params }),
     getOne:  (id)         => http.get(a(`${PATHS.SUPPLIERS}/${id}`)),
@@ -281,6 +314,23 @@ export class AdminApi {
     upload:    (shopId, fd)     => http.post(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}/upload`), fd, { headers: { 'Content-Type': 'multipart/form-data' } }),
     setStatus: (shopId, docId, status) => http.patch(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}/${docId}/status`), { status }),
     delete:    (shopId, docId)  => http.delete(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}/${docId}`)),
+  }
+  static reels = {
+    getAll:  (params)   => http.get(a(PATHS.REELS), { params }),
+    getOne:  (id)       => http.get(a(`${PATHS.REELS}/${id}`)),
+    create:  (data)     => http.post(a(PATHS.REELS), data),
+    update:  (id, data) => http.put(a(`${PATHS.REELS}/${id}`), data),
+    delete:  (id)       => http.delete(a(`${PATHS.REELS}/${id}`)),
+    approve: (id)       => http.patch(a(`${PATHS.REELS}/${id}/approve`)),
+    reject:  (id, data) => http.patch(a(`${PATHS.REELS}/${id}/reject`), data),
+  }
+  static giftCreators = {
+    ...crud(PATHS.GIFT_CREATORS),
+    getTransactions: (id, params) => http.get(a(`${PATHS.GIFT_CREATORS}/${id}/transactions`), { params }),
+  }
+  static giftTypes = crud(PATHS.GIFT_TYPES)
+  static reelGifts = {
+    getAll: (params) => http.get(a('/reel-gifts'), { params }),
   }
 }
 
@@ -304,6 +354,14 @@ export class BuyerApi {
     submitTopup:(data)   => http.post(b(`${PATHS.COINS}/topup`), data),
     getTopups:  (params) => http.get(b(`${PATHS.COINS}/topup`), { params }),
   }
+  static wallet = {
+    getTransactions: (params) => http.get(b('/wallet/transactions'), { params }),
+  }
+  static turbo = {
+    getPackages: ()                     => http.get(b('/turbo/packages')),
+    purchase:    (productId, data)      => http.post(b(`/turbo/products/${productId}/purchase`), data),
+    getStatus:   (productId)            => http.get(b(`/turbo/products/${productId}/status`)),
+  }
 }
 
 const s = (path) => `${SELLER}${path}`
@@ -319,14 +377,22 @@ export class SellerApi {
     getAll: (params) => http.get(s('/brands'), { params }),
     getTree: () => http.get(s('/brands/tree')),
   }
+  static suppliers = {
+    getAll: (params) => http.get(s('/suppliers'), { params }),
+  }
   static sizes = {
     getAll: (params) => http.get(s('/sizes'), { params }),
     getTree: () => http.get(s('/sizes/tree')),
+  }
+  static deliveryTypes = {
+    getAll: (params) => http.get(s('/delivery-types'), { params }),
   }
   static shop = {
     get:           ()             => http.get(s('/shop')),
     update:        (data)         => http.patch(s('/shop'), data),
     setCategories: (category_ids) => http.put(s('/shop/categories'), { category_ids }),
+    setDeliveryTypes: (delivery_type_ids) => http.put(s('/shop/delivery-types'), { delivery_type_ids }),
+    setBrands: (brand_ids) => http.put(s('/shop/brands'), { brand_ids }),
     uploadLogo:    (formData)     => http.post(s('/shop/logo'), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
     uploadDocs:    (formData)     => http.post(s('/shop/docs'), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
     getTypes:                ()       => http.get(s('/shop/types')),
@@ -376,9 +442,11 @@ export class SellerApi {
     deleteItem:     (id, itemId)                  => http.delete(s(`/orders/${id}/items/${itemId}`)),
   }
   static payouts = {
-    getBalance:  ()     => http.get(s('/payouts/balance')),
-    getHistory:  (params) => http.get(s('/payouts/history'), { params }),
-    request:     (data) => http.post(s('/payouts/request'), data),
+    getSummary:      ()       => http.get(s('/payouts/summary')),
+    getStats:        ()       => http.get(s('/payouts/stats')),
+    getTransactions: (params) => http.get(s('/payouts/transactions'), { params }),
+    getHistory:      (params) => http.get(s('/payouts/requests'), { params }),
+    request:         (data)   => http.post(s('/payouts/requests'), data),
   }
   static discounts = {
     getAll:  (params)       => http.get(s('/discounts'), { params }),
@@ -415,7 +483,8 @@ export class SellerApi {
         headers: { 'Content-Type': 'multipart/form-data' },
       }),
     delete: (id)                  => http.delete(s(`/media/${id}`)),
-    getProductMedia:    (productId, variantId)   => http.get(s(`/media/product/${productId}`), { params: variantId != null ? { variant_id: variantId } : {} }),
+    update: (id, data)            => http.patch(s(`/media/${id}`), data),
+    getProductMedia:    (productId, variantId)   => http.get(s(`/media/product/${productId}`), { params: variantId === undefined ? {} : { variant_id: variantId ?? '' } }),
     attachToProduct:    (productId, data, variantId) => http.post(s(`/media/product/${productId}`), { ...data, variant_id: variantId ?? undefined }),
     updateProductMedia: (productId, mediaId, data, variantId) => http.patch(s(`/media/product/${productId}/${mediaId}`), { ...data, variant_id: variantId ?? undefined }),
     detachFromProduct:  (productId, mediaId, variantId)   => http.delete(s(`/media/product/${productId}/${mediaId}`), { params: variantId != null ? { variant_id: variantId } : {} }),
@@ -441,6 +510,13 @@ export class SellerApi {
     adjustInventory: (id, data)   => http.post(s(`/warehouses/${id}/inventory/adjust`), data),
     getMovements:    (id, params) => http.get(s(`/warehouses/${id}/movements`), { params }),
   }
+  static reels = {
+    getAll: (params)   => http.get(s('/reels'), { params }),
+    getOne: (id)       => http.get(s(`/reels/${id}`)),
+    create: (data)     => http.post(s('/reels'), data),
+    update: (id, data) => http.put(s(`/reels/${id}`), data),
+    delete: (id)       => http.delete(s(`/reels/${id}`)),
+  }
 }
 
 export const AuthApi = {
@@ -460,6 +536,8 @@ export const AuthApi = {
   getShopTypes:     ()         => http.get(`${AUTH}/shop-types`),
   applyForShop:     (data)     => http.post(`${AUTH}/me/shop`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getMyShop:        ()         => http.get(`${AUTH}/me/shop`),
+  getMyShopHistory: ()         => http.get(`${AUTH}/me/shop/history`),
+  withdrawShop:     ()         => http.post(`${AUTH}/me/shop/withdraw`),
   getWebToken:      ()         => http.post(`${AUTH}/web-token`),
   consumeWebToken:  (token)    => http.post(`${AUTH}/consume-web-token`, { token }),
 }

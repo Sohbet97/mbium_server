@@ -2,12 +2,13 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
+import { Permissions, hasPerm } from '@/lib/permissions'
 
 export function Sidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth()
@@ -15,44 +16,50 @@ export function Sidebar({ collapsed, onToggle }) {
   const [catalogOpen, setCatalogOpen] = useState(true)
 
   const topNav = [
-    { to: '/admin', label: t('nav.dashboard'), icon: LayoutDashboard, end: true },
-    { to: '/admin/users', label: t('nav.users'), icon: Users },
-    { to: '/admin/shops', label: t('nav.shops'), icon: Store },
-    { to: '/admin/shop-applications', label: t('nav.shopApplications', 'Dükan arzalary'), icon: ClipboardList },
-    { to: '/admin/shop-type-requests', label: t('nav.shopTypeRequests'), icon: Tag },
-    { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart },
-    { to: '/admin/reviews', label: t('nav.reviews'), icon: Star },
-    { to: '/admin/discounts', label: t('nav.discounts'), icon: Percent },
-    { to: '/admin/banners', label: t('nav.banners'), icon: LayoutTemplate },
-    { to: '/admin/ai-recommendations', label: t('nav.aiRecommendations'),   icon: Bot },
-    { to: '/admin/push-notifications', label: t('nav.pushNotifications'),   icon: Bell },
-    { to: '/admin/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2 },
-    { to: '/admin/warehouses',         label: t('nav.warehouses', 'Warehouses'), icon: Building2 },
-    { to: '/admin/coins',              label: t('nav.coins', 'Coins'), icon: Coins },
-    { to: '/admin/favorites',          label: t('nav.favorites', 'Favorites'), icon: Heart },
-    { to: '/admin/comments',           label: t('nav.comments', 'Comments'),   icon: MessageSquare },
-    { to: '/admin/kyc',                label: t('nav.kyc', 'KYC Docs'),        icon: FileCheck },
-  ]
-  
+    { to: '/admin', label: t('nav.dashboard'), icon: LayoutDashboard, end: true, perm: null },
+    { to: '/admin/users', label: t('nav.users'), icon: Users, perm: Permissions.USER_GET },
+    { to: '/admin/shops', label: t('nav.shops'), icon: Store, perm: Permissions.SHOP_GET },
+    { to: '/admin/shop-applications', label: t('nav.shopApplications', 'Dükan arzalary'), icon: ClipboardList, perm: Permissions.SHOP_GET },
+    { to: '/admin/shop-type-requests', label: t('nav.shopTypeRequests'), icon: Tag, perm: null },
+    { to: '/admin/shop-types', label: t('nav.shopTypes'), icon: Store, perm: null },
+    { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart, perm: Permissions.ORDER_GET },
+    { to: '/admin/reviews', label: t('nav.reviews'), icon: Star, perm: Permissions.REVIEW_GET },
+    { to: '/admin/discounts', label: t('nav.discounts'), icon: Percent, perm: Permissions.DISCOUNT_GET },
+    { to: '/admin/payouts', label: t('nav.payouts'), icon: CreditCard, perm: Permissions.PAYOUT_GET },
+    { to: '/admin/banners', label: t('nav.banners'), icon: LayoutTemplate, perm: Permissions.BANNER_GET },
+    { to: '/admin/ai-recommendations', label: t('nav.aiRecommendations'),   icon: Bot, perm: Permissions.AI_GET },
+    { to: '/admin/push-notifications', label: t('nav.pushNotifications'),   icon: Bell, perm: Permissions.PUSH_NOTIF_GET },
+    { to: '/admin/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2, perm: Permissions.ANALYTICS_GET },
+    { to: '/admin/warehouses',         label: t('nav.warehouses', 'Warehouses'), icon: Building2, perm: Permissions.WAREHOUSE_GET },
+    { to: '/admin/coins',              label: t('nav.coins', 'Coins'), icon: Coins, perm: Permissions.COIN_GET },
+    { to: '/admin/turbo',              label: t('nav.turbo', 'Turbo'), icon: Zap, perm: Permissions.TURBO_GET },
+    { to: '/admin/gifts',              label: t('nav.gifts', 'Gifts'), icon: Gift, perm: Permissions.GIFT_TYPE_GET },
+    { to: '/admin/favorites',          label: t('nav.favorites', 'Favorites'), icon: Heart, perm: Permissions.PRODUCT_GET },
+    { to: '/admin/comments',           label: t('nav.comments', 'Comments'),   icon: MessageSquare, perm: Permissions.COMMENT_GET },
+    { to: '/admin/kyc',                label: t('nav.kyc', 'KYC Docs'),        icon: FileCheck, perm: Permissions.KYC_GET },
+  ].filter((item) => hasPerm(user, item.perm))
+
   const catalogNav = [
-    { to: '/admin/catalog/categories', label: t('nav.categories'), icon: Tag },
-    { to: '/admin/catalog/products', label: t('nav.products'), icon: Package },
-    { to: '/admin/catalog/collections', label: t('nav.collections'), icon: Layers },
-    { to: '/admin/catalog/tags',        label: t('productTags.title', 'Tags'),        icon: Tag },
-    { to: '/admin/catalog/brands',     label: t('nav.brands', 'Brands'),             icon: Award },
-    { to: '/admin/catalog/sizes',      label: t('nav.sizes', 'Sizes'),               icon: Ruler },
-    { to: '/admin/catalog/suppliers',  label: t('nav.suppliers', 'Suppliers'),        icon: Factory },
-    { to: '/admin/media', label: t('nav.media'), icon: Images },
-  ]
-  
+    { to: '/admin/catalog/categories', label: t('nav.categories'), icon: Tag, perm: Permissions.CATEGORY_GET },
+    { to: '/admin/catalog/products', label: t('nav.products'), icon: Package, perm: Permissions.PRODUCT_GET },
+    { to: '/admin/catalog/collections', label: t('nav.collections'), icon: Layers, perm: Permissions.COLLECTION_GET },
+    { to: '/admin/catalog/tags',        label: t('productTags.title', 'Tags'),        icon: Tag, perm: Permissions.PRODUCT_GET },
+    { to: '/admin/catalog/brands',     label: t('nav.brands', 'Brands'),             icon: Award, perm: Permissions.BRAND_GET },
+    { to: '/admin/catalog/sizes',      label: t('nav.sizes', 'Sizes'),               icon: Ruler, perm: Permissions.SIZE_GET },
+    { to: '/admin/catalog/delivery-types', label: t('nav.deliveryTypes', 'Delivery Types'), icon: PackageCheck, perm: Permissions.DELIVERY_TYPE_GET },
+    { to: '/admin/catalog/suppliers',  label: t('nav.suppliers', 'Suppliers'),        icon: Factory, perm: Permissions.SUPPLIER_GET },
+    { to: '/admin/catalog/reels',      label: t('nav.reels', 'Reels'),                icon: Clapperboard, perm: Permissions.REEL_GET },
+    { to: '/admin/media', label: t('nav.media'), icon: Images, perm: Permissions.MEDIA_GET },
+  ].filter((item) => hasPerm(user, item.perm))
+
   const bottomNav = [
-    { to: '/admin/delivers', label: t('nav.delivers'), icon: Truck },
-    { to: '/admin/plans', label: t('nav.plans'), icon: CreditCard },
-    { to: '/admin/locations', label: t('nav.locations'), icon: MapPin },
-    { to: '/admin/roles', label: t('nav.roles'), icon: Shield },
-    { to: '/admin/audit-logs', label: t('nav.auditLogs'), icon: ScrollText },
-    { to: '/admin/settings', label: t('nav.settings'), icon: Settings },
-  ]
+    { to: '/admin/delivers', label: t('nav.delivers'), icon: Truck, perm: Permissions.DELIVER_GET },
+    { to: '/admin/plans', label: t('nav.plans'), icon: CreditCard, perm: Permissions.PLAN_GET },
+    { to: '/admin/locations', label: t('nav.locations'), icon: MapPin, perm: [Permissions.REGION_GET, Permissions.VILLAGE_GET, Permissions.COUNTRY_GET] },
+    { to: '/admin/roles', label: t('nav.roles'), icon: Shield, perm: Permissions.ROLE_GET },
+    { to: '/admin/audit-logs', label: t('nav.auditLogs'), icon: ScrollText, perm: Permissions.AUDIT_GET },
+    { to: '/admin/settings', label: t('nav.settings'), icon: Settings, perm: null },
+  ].filter((item) => hasPerm(user, item.perm))
 
   const itemBase = cn(
     'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] font-medium transition-all duration-150 w-full',
@@ -120,6 +127,7 @@ export function Sidebar({ collapsed, onToggle }) {
         {topNav.map(({ to, label, icon, end }) => navLink(to, label, icon, end))}
 
         {/* Catalog section */}
+        {catalogNav.length > 0 && (
         <div className="pt-1">
           {divider}
           {!collapsed && (
@@ -142,12 +150,15 @@ export function Sidebar({ collapsed, onToggle }) {
             </div>
           )}
         </div>
+        )}
 
         {/* Bottom nav */}
+        {bottomNav.length > 0 && (
         <div className="pt-1 space-y-0.5">
           {divider}
           {bottomNav.map(({ to, label, icon }) => navLink(to, label, icon))}
         </div>
+        )}
       </nav>
 
       {/* Footer */}

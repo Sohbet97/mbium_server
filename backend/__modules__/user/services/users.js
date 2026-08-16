@@ -161,14 +161,28 @@ class UserService {
       }
     }
 
-    user = await db.User.create({
-      name: given_name || "User",
-      surname: family_name || null,
-      email: email || null,
-      google_id,
-      status: USER_CONSTANTS.STATUS_ACTIVE,
-      password: await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 10),
-    });
+    try {
+      user = await db.User.create({
+        name: given_name || "User",
+        surname: family_name || null,
+        email: email || null,
+        google_id,
+        status: USER_CONSTANTS.STATUS_ACTIVE,
+        password: await bcrypt.hash(crypto.randomBytes(32).toString("hex"), 10),
+      });
+    } catch (e) {
+      if (e.name !== "SequelizeUniqueConstraintError") throw e;
+
+      // Lost a race against a concurrent request for the same account; link to it instead.
+      user = await db.User.findOne({ where: { google_id } });
+      if (!user && email) {
+        user = await db.User.findOne({ where: { email } });
+        if (user && !user.google_id) await user.update({ google_id });
+      }
+      if (!user) throw e;
+
+      return { user, isNew: false };
+    }
 
     return { user, isNew: true };
   }

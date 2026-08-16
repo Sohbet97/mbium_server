@@ -52,7 +52,7 @@ function ReassignOwnerModal({ open, shop, onClose, onSaved }) {
     if (!selected) return
     setSaving(true)
     try {
-      await AdminApi.shops.update(shop.id, { owner_id: selected.id })
+      await AdminApi.shops.reassignOwner(shop.id, selected.id)
       onSaved()
     } catch (e) {
       toast.error(e.response?.data?.message ?? t('toast.error'))
@@ -246,7 +246,7 @@ export default function ShopsPage() {
   // Fetch shops — all setState in async callbacks to satisfy linter
   useEffect(() => {
     let cancelled = false
-    const params = { limit, skip: (page - 1) * limit }
+    const params = { limit, page }
     if (search) params.text = search
     if (activeFilter !== '') params.is_active = activeFilter
     if (showDeleted) params.paranoid = 'true'

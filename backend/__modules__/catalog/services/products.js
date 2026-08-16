@@ -13,12 +13,20 @@ class ProductService {
             include: [
                 { model: db.Category, as: "category", attributes: ["id", "name"] },
                 { model: db.Shop, as: "shop", attributes: ["id", "name"] },
+                { model: db.DeliveryType, as: "deliveryTypes", required: false, through: { attributes: [] } },
                 {
                     model: db.ProductMedia,
                     as: "productMedia",
                     where: { role: "primary" },
                     required: false,
                     include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
+                },
+                {
+                    model: db.ProductMedia,
+                    as: "models3d",
+                    where: { variant_id: null, role: "3d" },
+                    required: false,
+                    include: [{ model: db.Media, as: "media", attributes: ["id", "url"] }],
                 },
             ],
         });
@@ -37,6 +45,7 @@ class ProductService {
                 { model: db.Category, as: "category", attributes: ["id", "name", "slug"] },
                 { model: db.Shop, as: "shop", attributes: ["id", "name", "logo"] },
                 { model: db.Brand, as: "brand", required: false },
+                { model: db.DeliveryType, as: "deliveryTypes", required: false, through: { attributes: [] } },
                 {
                     model: db.ProductVariant,
                     as: "variants",
@@ -55,7 +64,15 @@ class ProductService {
                 {
                     model: db.ProductMedia,
                     as: "productMedia",
-                    where: { variant_id: null },
+                    where: { variant_id: null, role: { [Op.ne]: "3d" } },
+                    required: false,
+                    order: [["sort_order", "ASC"]],
+                    include: [{ model: db.Media, as: "media" }],
+                },
+                {
+                    model: db.ProductMedia,
+                    as: "models3d",
+                    where: { variant_id: null, role: "3d" },
                     required: false,
                     order: [["sort_order", "ASC"]],
                     include: [{ model: db.Media, as: "media" }],
@@ -65,7 +82,7 @@ class ProductService {
     }
 
     static async create(req) {
-        return db.Product.create({
+        const product = await db.Product.create({
             shop_id:                req.body?.shop_id,
             category_id:            req.body?.category_id,
             name:                   req.body?.name,
@@ -93,12 +110,17 @@ class ProductService {
             is_active:              req.body?.is_active ?? true,
             is_published:           req.body?.is_published ?? true,
             scheduled_at:           req.body?.scheduled_at ?? null,
+            moderation_status:      req.body?.moderation_status ?? 0,
             createdBy:              req.user?.id,
         });
+        if (Array.isArray(req.body?.delivery_type_ids)) {
+            await product.setDeliveryTypes(req.body.delivery_type_ids);
+        }
+        return product;
     }
 
     static async update(id, req) {
-        return db.Product.update(
+        const result = await db.Product.update(
             {
                 category_id:            req.body?.category_id,
                 name:                   req.body?.name,
@@ -129,10 +151,43 @@ class ProductService {
             },
             { where: { id } }
         );
+        if (Array.isArray(req.body?.delivery_type_ids)) {
+            const product = await db.Product.findByPk(id);
+            if (product) await product.setDeliveryTypes(req.body.delivery_type_ids);
+        }
+        return result;
     }
 
     static async delete(id, force = false) {
         return db.Product.destroy({ where: { id }, force });
+    }
+
+    // ── Moderation ───────────────────────────────────────────────────────────────
+
+    static async approve(id, userId) {
+        await db.Product.update(
+            {
+                moderation_status: 1,
+                moderated_by: userId,
+                moderated_at: new Date(),
+                moderation_note: null,
+            },
+            { where: { id } }
+        );
+        return this.getById(id);
+    }
+
+    static async reject(id, userId, note) {
+        await db.Product.update(
+            {
+                moderation_status: 2,
+                moderated_by: userId,
+                moderated_at: new Date(),
+                moderation_note: note || null,
+            },
+            { where: { id } }
+        );
+        return this.getById(id);
     }
 
     // ── Variants ─────────────────────────────────────────────────────────────────

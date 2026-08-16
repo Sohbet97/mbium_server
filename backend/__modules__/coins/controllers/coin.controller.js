@@ -22,6 +22,21 @@ class CoinController {
         } catch (e) { next(e); }
     }
 
+    // ─── Admin: Transactions (all users) ─────────────────────────────────────
+
+    static async getAllTransactions(req, res, next) {
+        try {
+            const limit = parseInt(req.query.limit) || 20;
+            const skip  = parseInt(req.query.skip)  || 0;
+            const filter = {};
+            if (req.query.user_id) filter.user_id = req.query.user_id;
+            if (req.query.type) filter.type = req.query.type;
+            if (req.query.source) filter.source = req.query.source;
+            const result = await CoinService.getAllTransactions(filter, limit, skip);
+            res.json({ data: result.rows, count: result.count });
+        } catch (e) { next(e); }
+    }
+
     // ─── Admin: Grant / Deduct ────────────────────────────────────────────────
 
     static async grant(req, res, next) {

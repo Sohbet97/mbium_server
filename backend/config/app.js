@@ -60,7 +60,6 @@ app.use(helmet());
 // Morgan is HTTP logging library
 app.use(morgan("common"));
 
-
 /**
  * Bind Redis client to req.redis
  */
@@ -85,6 +84,25 @@ cron.schedule("5 0 * * *", () => {
   db.Notification.destroy({ where: { createdAt: { [Op.lt]: cutoff } } })
     .then((n) => n > 0 && console.log(`[cron] deleted ${n} old notification(s)`))
     .catch((e) => console.error("[cron] notification cleanup failed:", e.message));
+});
+
+// Release seller order-credit holds whose 24h pending window has elapsed — runs every 15 minutes
+cron.schedule("*/15 * * * *", () => {
+  const PayoutService = require("../__modules__/payouts/services/payouts");
+  PayoutService.releaseDueHolds()
+    .then((n) => n > 0 && console.log(`[cron] released ${n} pending seller balance hold(s)`))
+    .catch((e) => console.error("[cron] release pending balances failed:", e.message));
+});
+
+// Refresh due Turbo boosts' sort-priority timestamp and expire boosts past their 7-day
+// window — runs every 5 minutes so hourly-refresh tiers (Turbo 1) stay reasonably fresh
+cron.schedule("*/5 * * * *", () => {
+  const TurboService = require("../__modules__/turbo/services/TurboService");
+  TurboService.tick()
+    .then(({ refreshed, expired }) => {
+      if (refreshed > 0 || expired > 0) console.log(`[cron] turbo: refreshed ${refreshed}, expired ${expired}`);
+    })
+    .catch((e) => console.error("[cron] turbo tick failed:", e.message));
 });
 
 // Delete temp background-removal files older than 1 hour — runs every 15 minutes

@@ -51,7 +51,7 @@ export default function ReviewsPage() {
   const fetchReviews = useCallback(async () => {
     setLoading(true)
     try {
-      const params = { limit: PAGE_SIZE, skip: (page - 1) * PAGE_SIZE }
+      const params = { limit: PAGE_SIZE, page }
       if (filterStatus !== '') params.status = filterStatus
       if (filterRating !== '') params.rating = filterRating
       const { data } = await AdminApi.reviews.getAll(params)

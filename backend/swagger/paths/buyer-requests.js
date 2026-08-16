@@ -68,7 +68,7 @@ module.exports = {
         },
     },
 
-    '/buyer/requests/{id}/delete': {
+    '/buyer/requests/{id}': {
         delete: {
             tags: ['Buyer — Requests'],
             summary: 'Delete own request',

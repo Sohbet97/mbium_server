@@ -56,10 +56,17 @@ export const PATHS = {
   BRANDS: '/brands',
   // Sizes
   SIZES: '/sizes',
+  // Delivery types
+  DELIVERY_TYPES: '/delivery-types',
   // Suppliers
   SUPPLIERS: '/suppliers',
   // Comments
   COMMENTS: '/comments',
   // KYC documents
   KYC: '/kyc',
+  // Reels
+  REELS: '/reels',
+  // Gifts
+  GIFT_CREATORS: '/gift-creators',
+  GIFT_TYPES:    '/gift-types',
 }

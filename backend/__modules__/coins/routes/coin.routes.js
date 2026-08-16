@@ -5,6 +5,9 @@ const CoinController = require("../controllers/coin.controller");
 router.get("/balances",         CoinController.getBalances);
 router.get("/balances/:userId", CoinController.getBalanceByUser);
 
+// Admin: all-user transaction feed
+router.get("/transactions", CoinController.getAllTransactions);
+
 // Admin: grant / deduct
 router.post("/grant",  CoinController.grant);
 router.post("/deduct", CoinController.deduct);

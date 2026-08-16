@@ -117,4 +117,23 @@ module.exports = {
             },
         },
     },
+    "/seller/push-notifications/customers": {
+        get: {
+            tags: ["Seller"],
+            summary: "Search own shop's customers (for targeted push composing)",
+            description: "Returns distinct users who have ordered from this shop, searchable by name or phone number.",
+            security,
+            parameters: [
+                { in: "query", name: "text", schema: { type: "string" }, description: "Search by name or phone" },
+            ],
+            responses: {
+                200: {
+                    description: "Matching customers",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/UserShort" } },
+                    } } } },
+                },
+            },
+        },
+    },
 };

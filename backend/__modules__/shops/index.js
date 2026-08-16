@@ -13,6 +13,7 @@ const shopGuard = routeGuard({
     GET: Permissions.SHOP_GET,
     POST: Permissions.SHOP_POST,
     PUT: Permissions.SHOP_PUT,
+    PATCH: Permissions.SHOP_PUT,
     DELETE: Permissions.SHOP_DELETE,
 });
 

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Store,
-  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell, BarChart2, Building2,
+  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell, BarChart2, Building2, Coins, Clapperboard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
@@ -24,8 +24,10 @@ function SellerSidebar({ collapsed, onToggle }) {
     { to: '/seller/shop',     label: t('nav.myShop'),       icon: Store },
     { to: '/seller/discounts',label: t('nav.discounts'),    icon: Percent },
     { to: '/seller/payouts',  label: t('nav.payouts'),      icon: Wallet },
+    { to: '/seller/coins',    label: t('nav.coins', 'Coins'), icon: Coins },
     { to: '/seller/media',    label: t('nav.media'),        icon: Images },
     { to: '/seller/banners',  label: t('nav.banners'),      icon: LayoutTemplate },
+    { to: '/seller/reels',    label: t('nav.reels', 'Reels'), icon: Clapperboard },
     { to: '/seller/subscription',       label: t('nav.subscription'),       icon: Crown },
     { to: '/seller/push-notifications', label: t('nav.pushNotifications'),  icon: Bell },
     { to: '/seller/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2 },
@@ -120,6 +122,7 @@ export function SellerLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const { open: aiOpen } = useAiAssistant()
   const { pathname } = useLocation()
+  const { user } = useAuth()
   const hideSidebar = pathname === '/seller/account'
 
   return (
@@ -128,7 +131,8 @@ export function SellerLayout() {
       <div className={`flex flex-col flex-1 overflow-hidden transition-[margin] duration-300 ${aiOpen ? 'mr-[380px]' : ''}`}>
         <TopBar title="Seller Panel" />
         <main className="flex-1 overflow-y-auto p-6">
-          <Outlet />
+          {/* key forces every seller page to remount (re-run its fetch effects) when the active shop changes */}
+          <Outlet key={user?.shop?.id} />
         </main>
       </div>
       <AiAssistant />

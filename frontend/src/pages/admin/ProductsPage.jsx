@@ -28,6 +28,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('')
   const [shopFilter, setShopFilter] = useState(searchParams.get('shop_id') ?? '')
   const [categoryFilter, setCategoryFilter] = useState('')
+  const [moderationFilter, setModerationFilter] = useState('')
   const [loading, setLoading] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const limit = 20
@@ -43,6 +44,7 @@ export default function ProductsPage() {
         if (search) params.search = search
         if (shopFilter) params.shop_id = shopFilter
         if (categoryFilter) params.category_id = categoryFilter
+        if (moderationFilter !== '') params.moderation_status = moderationFilter
         const { data } = await AdminApi.products.getAll(params)
         if (!cancelled) {
           setProducts(data?.data ?? data.data?.products ?? [])
@@ -53,12 +55,12 @@ export default function ProductsPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [page, search, shopFilter, categoryFilter, refreshKey])
+  }, [page, search, shopFilter, categoryFilter, moderationFilter, refreshKey])
 
   useEffect(() => {
     Promise.all([
       AdminApi.shops.getAll({ limit: 500 }),
-      AdminApi.categories.getAll({ limit: 500 }),
+      AdminApi.categories.getAll({ limit: 0 }),
     ]).then(([shopsRes, catsRes]) => {
       setShops(shopsRes.data?.data?.rows ?? shopsRes.data?.data?.shops ?? [])
       setCategories(catsRes.data?.data?.rows ?? catsRes.data?.data?.categories ?? [])
@@ -109,6 +111,12 @@ export default function ProductsPage() {
           <option value="">{t('products.filterCategory')}</option>
           {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </Select>
+        <Select value={moderationFilter} onChange={(e) => { setModerationFilter(e.target.value); setPage(1) }} className="w-44">
+          <option value="">{t('products.filterModeration')}</option>
+          <option value="0">{t('products.modStatusPending')}</option>
+          <option value="1">{t('products.modStatusApproved')}</option>
+          <option value="2">{t('products.modStatusRejected')}</option>
+        </Select>
         <Button variant="ghost" size="icon" onClick={fetchProducts} className="h-9 w-9" title={t('common.refresh')}>
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         </Button>
@@ -126,15 +134,16 @@ export default function ProductsPage() {
                   <th className="px-4 py-3">{t('products.colPrice')}</th>
                   <th className="px-4 py-3">{t('products.colStock')}</th>
                   <th className="px-4 py-3">{t('products.colStatus')}</th>
+                  <th className="px-4 py-3">{t('products.moderationStatus')}</th>
                   <th className="px-4 py-3 w-12"></th>
                 </tr>
               </thead>
               <tbody>
                 {loading && products.length === 0 ? (
-                  <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">{t('common.loading')}</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">{t('common.loading')}</td></tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-16 text-center">
+                    <td colSpan={8} className="px-4 py-16 text-center">
                       <Package className="h-10 w-10 text-slate-200 mx-auto mb-2" />
                       <p className="text-sm text-slate-400">{t('common.noResults')}</p>
                     </td>
@@ -161,6 +170,17 @@ export default function ProductsPage() {
                     <td className="px-4 py-3">
                       <Badge variant={p.is_active ? 'success' : 'secondary'}>
                         {p.is_active ? t('common.active') : t('common.inactive')}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={
+                        p.moderation_status === 1 ? 'success' : p.moderation_status === 2 ? 'destructive' : 'warning'
+                      }>
+                        {p.moderation_status === 1
+                          ? t('products.modStatusApproved')
+                          : p.moderation_status === 2
+                            ? t('products.modStatusRejected')
+                            : t('products.modStatusPending')}
                       </Badge>
                     </td>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>

@@ -3,8 +3,10 @@ import { SellerApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Upload, Trash2, Images, RefreshCw, X, Copy } from 'lucide-react'
+import { Upload, Trash2, Images, RefreshCw, X, Copy, Box } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/store/auth'
+import { isAdmin } from '@/lib/access'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 function mediaUrl(url) { return url ? (url.startsWith('http') ? url : `${BASE}${url}`) : null }
@@ -18,6 +20,8 @@ function fmtSize(bytes) {
 const PAGE = 40
 
 export default function SellerMediaPage() {
+  const { user } = useAuth()
+  const allow3D = isAdmin(user)
   const [items, setItems]       = useState([])
   const [count, setCount]       = useState(0)
   const [loading, setLoading]   = useState(true)
@@ -103,7 +107,7 @@ export default function SellerMediaPage() {
           ref={fileRef}
           type="file"
           multiple
-          accept="image/*,video/*"
+          accept={allow3D ? "image/*,video/*,.glb,.gltf,.obj,.usdz" : "image/*,video/*"}
           className="hidden"
           onChange={handleUpload}
         />
@@ -131,6 +135,7 @@ export default function SellerMediaPage() {
           <option value="">Ähli görnüş</option>
           <option value="image">Surat</option>
           <option value="video">Wideo</option>
+          {allow3D && <option value="3d">3D model</option>}
         </select>
         <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => { setPage(0); load(0) }}>
           <RefreshCw className="h-4 w-4" />
@@ -172,6 +177,10 @@ export default function SellerMediaPage() {
                 <div className="aspect-square bg-slate-100 dark:bg-white/[0.04] overflow-hidden">
                   {thumb ? (
                     <img src={thumb} alt={m.original_name} className="w-full h-full object-cover" />
+                  ) : m.type === '3d' ? (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Box className="h-8 w-8 text-slate-300 dark:text-white/20" />
+                    </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <Images className="h-8 w-8 text-slate-300 dark:text-white/20" />

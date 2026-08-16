@@ -47,6 +47,9 @@ class ProductController {
                 }
             }
 
+            // Products created directly by an admin/moderator don't need self-review
+            if (req.body.moderation_status === undefined) req.body.moderation_status = 1;
+
             const model = await ProductService.create(req);
             return res.status(201).json({ model });
         } catch (e) { next(e); }
@@ -74,6 +77,24 @@ class ProductController {
         try {
             await ProductService.delete(req.params.id, true);
             return res.sendStatus(200);
+        } catch (e) { next(e); }
+    }
+
+    static async approve(req, res, next) {
+        try {
+            const existing = await ProductService.getById(req.params.id);
+            if (!existing) throw ApiError.NotFound("Haryt tapylmady");
+            const model = await ProductService.approve(req.params.id, req.user?.id);
+            return res.status(200).json({ model });
+        } catch (e) { next(e); }
+    }
+
+    static async reject(req, res, next) {
+        try {
+            const existing = await ProductService.getById(req.params.id);
+            if (!existing) throw ApiError.NotFound("Haryt tapylmady");
+            const model = await ProductService.reject(req.params.id, req.user?.id, req.body?.note);
+            return res.status(200).json({ model });
         } catch (e) { next(e); }
     }
 
@@ -144,7 +165,7 @@ class ProductController {
         } catch (e) { next(e); }
     }
 
-    static getFilter({ text, category_id, shop_id, brand_id, is_active, status, paranoid } = {}) {
+    static getFilter({ text, category_id, shop_id, brand_id, is_active, status, moderation_status, paranoid } = {}) {
         const filter = {};
         if (text) {
             const q = buildTsQuery(text)
@@ -169,6 +190,7 @@ class ProductController {
         if (brand_id) filter.brand_id = brand_id;
         if (is_active !== undefined) filter.is_active = is_active;
         if (status !== undefined) filter.status = status;
+        if (moderation_status !== undefined) filter.moderation_status = moderation_status;
         if (paranoid) filter.deletedAt = { [Op.ne]: null };
         return filter;
     }
