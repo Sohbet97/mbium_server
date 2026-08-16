@@ -42,6 +42,8 @@ const reelsModuleRouter         = require("../../__modules__/reels")
 const buyerRequestsModuleRouter = require("../../__modules__/buyer-requests")
 const deliveryTypesModuleRouter = require("../../__modules__/delivery-types")
 const turboModuleRouter         = require("../../__modules__/turbo")
+const giftCreatorsModuleRouter  = require("../../__modules__/giftCreators")
+const giftTypesAdminRouter      = require("../../__modules__/reels/giftTypes.admin")
 //#endregion
 
 //#region Routes
@@ -89,6 +91,8 @@ adminRouter.use(reelsModuleRouter)
 adminRouter.use(buyerRequestsModuleRouter)
 adminRouter.use(deliveryTypesModuleRouter)
 adminRouter.use(turboModuleRouter)
+adminRouter.use(giftCreatorsModuleRouter)
+adminRouter.use(giftTypesAdminRouter)
 //#endregion
 
 module.exports = adminRouter;

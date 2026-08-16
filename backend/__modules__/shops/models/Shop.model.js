@@ -121,6 +121,11 @@ module.exports = (sequelize) => {
             type: DataTypes.DECIMAL(3, 2),
             defaultValue: 0
         },
+        follower_count: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
         plan_id: {
             type: DataTypes.INTEGER,
             allowNull: true,
@@ -166,6 +171,9 @@ module.exports = (sequelize) => {
         }
         if (db.ShopSubscription) {
             Model.hasMany(db.ShopSubscription, { foreignKey: "shop_id", as: "subscriptions" });
+        }
+        if (db.ShopFollow) {
+            Model.hasMany(db.ShopFollow, { foreignKey: "shop_id", as: "follows" });
         }
         if (db.ShopCategory && db.Category) {
             Model.belongsToMany(db.Category, {

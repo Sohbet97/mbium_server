@@ -64,4 +64,9 @@ export const PATHS = {
   COMMENTS: '/comments',
   // KYC documents
   KYC: '/kyc',
+  // Reels
+  REELS: '/reels',
+  // Gifts
+  GIFT_CREATORS: '/gift-creators',
+  GIFT_TYPES:    '/gift-types',
 }

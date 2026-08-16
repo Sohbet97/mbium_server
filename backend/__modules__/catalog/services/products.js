@@ -13,12 +13,20 @@ class ProductService {
             include: [
                 { model: db.Category, as: "category", attributes: ["id", "name"] },
                 { model: db.Shop, as: "shop", attributes: ["id", "name"] },
+                { model: db.DeliveryType, as: "deliveryTypes", required: false, through: { attributes: [] } },
                 {
                     model: db.ProductMedia,
                     as: "productMedia",
                     where: { role: "primary" },
                     required: false,
                     include: [{ model: db.Media, as: "media", attributes: ["id", "url", "thumbnail_url"] }],
+                },
+                {
+                    model: db.ProductMedia,
+                    as: "models3d",
+                    where: { variant_id: null, role: "3d" },
+                    required: false,
+                    include: [{ model: db.Media, as: "media", attributes: ["id", "url"] }],
                 },
             ],
         });

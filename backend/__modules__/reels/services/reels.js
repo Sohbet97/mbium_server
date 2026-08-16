@@ -1,4 +1,5 @@
 const db = require('../../../models')
+const ApiError = require('../../../exceptions/api-error')
 
 const VIDEO_INCLUDE = { model: db.Media, as: 'video',     attributes: ['id', 'url', 'mime_type', 'size'] }
 const THUMB_INCLUDE = { model: db.Media, as: 'thumbnail', attributes: ['id', 'url', 'thumbnail_url'] }
@@ -39,8 +40,8 @@ class ReelService {
         })
     }
 
-    static async create({ shop_id, video_id, thumbnail_id, caption, product_id }) {
-        return db.Reel.create({ shop_id, video_id, thumbnail_id, caption, product_id })
+    static async create({ shop_id, video_id, thumbnail_id, caption, product_id, moderation_status }) {
+        return db.Reel.create({ shop_id, video_id, thumbnail_id, caption, product_id, moderation_status })
     }
 
     static async update(id, { thumbnail_id, caption, product_id, is_active }) {
@@ -56,6 +57,45 @@ class ReelService {
 
     static async delete(id, force = false) {
         return db.Reel.destroy({ where: { id }, force })
+    }
+
+    // ── Moderation ───────────────────────────────────────────────────────────────
+
+    static async approve(id, userId) {
+        await db.Reel.update(
+            { moderation_status: 1, moderated_by: userId, moderated_at: new Date(), moderation_note: null },
+            { where: { id } }
+        )
+        return this.getById(id)
+    }
+
+    static async reject(id, userId, note) {
+        await db.Reel.update(
+            { moderation_status: 2, moderated_by: userId, moderated_at: new Date(), moderation_note: note || null },
+            { where: { id } }
+        )
+        return this.getById(id)
+    }
+
+    // ── Likes ────────────────────────────────────────────────────────────────────
+
+    static async like(userId, reelId) {
+        const reel = await db.Reel.findOne({ where: { id: reelId, is_active: true, moderation_status: 1 } })
+        if (!reel) throw ApiError.NotFound('Reel tapylmady')
+
+        const [, created] = await db.ReelLike.findOrCreate({
+            where: { user_id: userId, reel_id: reelId },
+            defaults: { user_id: userId, reel_id: reelId },
+        })
+        if (created) await db.Reel.increment('like_count', { where: { id: reelId } })
+        return { created }
+    }
+
+    static async unlike(userId, reelId) {
+        const deleted = await db.ReelLike.destroy({ where: { user_id: userId, reel_id: reelId } })
+        if (!deleted) throw ApiError.NotFound('Like tapylmady')
+        await db.Reel.decrement('like_count', { where: { id: reelId } })
+        return { deleted: true }
     }
 }
 

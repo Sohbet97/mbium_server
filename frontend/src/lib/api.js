@@ -315,6 +315,23 @@ export class AdminApi {
     setStatus: (shopId, docId, status) => http.patch(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}/${docId}/status`), { status }),
     delete:    (shopId, docId)  => http.delete(a(`${PATHS.SHOPS}/${shopId}${PATHS.KYC}/${docId}`)),
   }
+  static reels = {
+    getAll:  (params)   => http.get(a(PATHS.REELS), { params }),
+    getOne:  (id)       => http.get(a(`${PATHS.REELS}/${id}`)),
+    create:  (data)     => http.post(a(PATHS.REELS), data),
+    update:  (id, data) => http.put(a(`${PATHS.REELS}/${id}`), data),
+    delete:  (id)       => http.delete(a(`${PATHS.REELS}/${id}`)),
+    approve: (id)       => http.patch(a(`${PATHS.REELS}/${id}/approve`)),
+    reject:  (id, data) => http.patch(a(`${PATHS.REELS}/${id}/reject`), data),
+  }
+  static giftCreators = {
+    ...crud(PATHS.GIFT_CREATORS),
+    getTransactions: (id, params) => http.get(a(`${PATHS.GIFT_CREATORS}/${id}/transactions`), { params }),
+  }
+  static giftTypes = crud(PATHS.GIFT_TYPES)
+  static reelGifts = {
+    getAll: (params) => http.get(a('/reel-gifts'), { params }),
+  }
 }
 
 // ─── BuyerApi ──────────────────────────────────────────────────────────────────
@@ -492,6 +509,13 @@ export class SellerApi {
     upsertInventory: (id, data)   => http.put(s(`/warehouses/${id}/inventory`), data),
     adjustInventory: (id, data)   => http.post(s(`/warehouses/${id}/inventory/adjust`), data),
     getMovements:    (id, params) => http.get(s(`/warehouses/${id}/movements`), { params }),
+  }
+  static reels = {
+    getAll: (params)   => http.get(s('/reels'), { params }),
+    getOne: (id)       => http.get(s(`/reels/${id}`)),
+    create: (data)     => http.post(s('/reels'), data),
+    update: (id, data) => http.put(s(`/reels/${id}`), data),
+    delete: (id)       => http.delete(s(`/reels/${id}`)),
   }
 }
 

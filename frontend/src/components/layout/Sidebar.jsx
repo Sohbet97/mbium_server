@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -33,6 +33,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/warehouses',         label: t('nav.warehouses', 'Warehouses'), icon: Building2, perm: Permissions.WAREHOUSE_GET },
     { to: '/admin/coins',              label: t('nav.coins', 'Coins'), icon: Coins, perm: Permissions.COIN_GET },
     { to: '/admin/turbo',              label: t('nav.turbo', 'Turbo'), icon: Zap, perm: Permissions.TURBO_GET },
+    { to: '/admin/gifts',              label: t('nav.gifts', 'Gifts'), icon: Gift, perm: Permissions.GIFT_TYPE_GET },
     { to: '/admin/favorites',          label: t('nav.favorites', 'Favorites'), icon: Heart, perm: Permissions.PRODUCT_GET },
     { to: '/admin/comments',           label: t('nav.comments', 'Comments'),   icon: MessageSquare, perm: Permissions.COMMENT_GET },
     { to: '/admin/kyc',                label: t('nav.kyc', 'KYC Docs'),        icon: FileCheck, perm: Permissions.KYC_GET },
@@ -47,6 +48,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/catalog/sizes',      label: t('nav.sizes', 'Sizes'),               icon: Ruler, perm: Permissions.SIZE_GET },
     { to: '/admin/catalog/delivery-types', label: t('nav.deliveryTypes', 'Delivery Types'), icon: PackageCheck, perm: Permissions.DELIVERY_TYPE_GET },
     { to: '/admin/catalog/suppliers',  label: t('nav.suppliers', 'Suppliers'),        icon: Factory, perm: Permissions.SUPPLIER_GET },
+    { to: '/admin/catalog/reels',      label: t('nav.reels', 'Reels'),                icon: Clapperboard, perm: Permissions.REEL_GET },
     { to: '/admin/media', label: t('nav.media'), icon: Images, perm: Permissions.MEDIA_GET },
   ].filter((item) => hasPerm(user, item.perm))
 

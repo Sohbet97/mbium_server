@@ -34,6 +34,7 @@ const coinsPaths          = require("./paths/coins");
 const favoritesPaths      = require("./paths/favorites");
 const systemPaths         = require("./paths/system");
 const deliveryTypesPaths  = require("./paths/delivery-types");
+const giftCreatorsPaths   = require("./paths/gift-creators");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -106,6 +107,8 @@ const swaggerSpec = {
         { name: "Reels",              description: "Admin reel moderation — view, toggle active, delete" },
         { name: "Seller — Reels",     description: "Seller reel management — create, edit, delete own reels" },
         { name: "Buyer — Reels",         description: "Public short-video feed and single-reel view" },
+        { name: "Gift Creators",         description: "Admin catalog of gift creators — CRUD, revenue balance and transaction history" },
+        { name: "Gift Types",            description: "Admin catalog of purchasable animated gifts, and a read-only audit feed of gifts sent on reels" },
         { name: "Buyer — Requests",      description: "Buyer RFQ/tender posts — create, track, close requests; matching shops are notified" },
         { name: "Buyer — Notifications", description: "Buyer in-app notification inbox — read, mark, delete" },
         { name: "Buyer Requests",        description: "Admin view of all buyer requests across the platform" },
@@ -163,6 +166,7 @@ const swaggerSpec = {
         ...favoritesPaths,
         ...systemPaths,
         ...deliveryTypesPaths,
+        ...giftCreatorsPaths,
     },
 };
 

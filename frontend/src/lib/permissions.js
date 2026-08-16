@@ -27,9 +27,12 @@ export const Permissions = {
   SUPPLIER_GET: 324,
   COMMENT_GET: 328,
   KYC_GET: 332,
+  REEL_GET: 336,
   SIZE_GET: 340,
   DELIVERY_TYPE_GET: 344,
   TURBO_GET: 348,
+  GIFT_CREATOR_GET: 352,
+  GIFT_TYPE_GET: 356,
 }
 
 // Required permission per /admin/* page. `null` = any logged-in admin.
@@ -70,6 +73,8 @@ export const ADMIN_PAGE_PERMISSIONS = {
   suppliers: Permissions.SUPPLIER_GET,
   comments: Permissions.COMMENT_GET,
   kyc: Permissions.KYC_GET,
+  reels: Permissions.REEL_GET,
+  gifts: Permissions.GIFT_TYPE_GET,
 }
 
 export function hasPerm(user, perm) {

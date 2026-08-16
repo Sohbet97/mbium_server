@@ -523,6 +523,10 @@ function InfoTab({ shop, shopTypes, onRefresh }) {
                 <span>{shop.order ?? '—'}</span>
               </div>
               <div className="flex justify-between">
+                <span className="text-slate-500">{t('shops.followers', 'Followers')}</span>
+                <span>{shop.follower_count ?? 0}</span>
+              </div>
+              <div className="flex justify-between">
                 <span className="text-slate-500">{t('shops.isActive')}</span>
                 <Badge variant={shop.is_active ? 'success' : 'secondary'}>
                   {shop.is_active ? t('common.active') : t('common.inactive')}

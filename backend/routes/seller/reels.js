@@ -1,8 +1,9 @@
-const router      = require('express').Router()
-const ApiError    = require('../../exceptions/api-error')
-const db          = require('../../models')
-const ReelService = require('../../__modules__/reels/services/reels')
-const { FUNCTIONS } = require('../../utils/functions')
+const router          = require('express').Router()
+const ApiError        = require('../../exceptions/api-error')
+const db              = require('../../models')
+const ReelService     = require('../../__modules__/reels/services/reels')
+const ReelGiftService = require('../../__modules__/reels/services/reelGifts')
+const { FUNCTIONS }   = require('../../utils/functions')
 
 // GET /seller/reels  — own shop's reels
 router.get('/', async (req, res, next) => {
@@ -55,12 +56,15 @@ router.post('/', async (req, res, next) => {
             if (!product) throw ApiError.NotFound('Haryt tapylmady')
         }
 
+        // New seller reels always start pending moderator review — a seller
+        // can't self-approve by passing moderation_status in the request body
         const model = await ReelService.create({
             shop_id:      req.shop.id,
             video_id,
             thumbnail_id: thumbnail_id || null,
             caption:      caption      || null,
             product_id:   product_id   || null,
+            moderation_status: 0,
         })
 
         return res.status(201).json({ model })
@@ -87,6 +91,18 @@ router.put('/:id', async (req, res, next) => {
 
         await ReelService.update(req.params.id, { thumbnail_id, caption, product_id, is_active })
         return res.json({ ok: true })
+    } catch (e) { next(e) }
+})
+
+// GET /seller/reels/:id/gifts — gifts received on one of this shop's reels (read-only;
+// shops don't get a revenue share from gifts, this is engagement visibility only)
+router.get('/:id/gifts', async (req, res, next) => {
+    try {
+        const reel = await ReelService.getById(req.params.id)
+        if (!reel || reel.shop_id !== req.shop.id) throw ApiError.NotFound('Reel tapylmady')
+        const { limit, skip } = FUNCTIONS.getQueryParams(req)
+        const { rows: data, count } = await ReelGiftService.getReelGifts(req.params.id, limit, skip)
+        return res.json({ data, count })
     } catch (e) { next(e) }
 })
 

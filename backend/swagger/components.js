@@ -162,6 +162,7 @@ module.exports = {
                 verification_status: { type: "integer", description: "0=draft, 1=pending, 2=verified, 3=rejected" },
                 verification_note: { type: "string", nullable: true },
                 rating: { type: "number", format: "float" },
+                follower_count: { type: "integer" },
                 type: { $ref: "#/components/schemas/ShopType" },
                 categories: { type: "array", items: { $ref: "#/components/schemas/Category" } },
                 deliveryTypes: { type: "array", items: { $ref: "#/components/schemas/DeliveryType" } },
@@ -1184,8 +1185,14 @@ module.exports = {
                 shop_id:    { type: "integer" },
                 caption:    { type: "string", nullable: true },
                 view_count: { type: "integer" },
+                like_count: { type: "integer" },
+                gift_count: { type: "integer" },
+                gift_coin_total: { type: "integer" },
                 is_active:  { type: "boolean" },
                 product_id: { type: "integer", nullable: true },
+                moderation_status: { type: "integer", enum: [0, 1, 2], description: "0=PENDING, 1=APPROVED, 2=REJECTED" },
+                moderation_note:   { type: "string", nullable: true },
+                moderated_at:      { type: "string", format: "date-time", nullable: true },
                 createdAt:  { type: "string", format: "date-time" },
                 video: {
                     type: "object",
@@ -1235,6 +1242,24 @@ module.exports = {
                 product_id:   { type: "integer", nullable: true, description: "Link to one of your shop's products (optional)" },
             },
         },
+        AdminReelCreateRequest: {
+            type: "object",
+            required: ["shop_id", "video_id"],
+            properties: {
+                shop_id:      { type: "integer", description: "Shop this reel belongs to" },
+                video_id:     { type: "string", format: "uuid", description: "Media ID of the uploaded video (must be type=video)" },
+                thumbnail_id: { type: "string", format: "uuid", nullable: true, description: "Media ID of a cover image (optional but recommended)" },
+                caption:      { type: "string", nullable: true, description: "Caption displayed below the reel" },
+                product_id:   { type: "integer", nullable: true, description: "Link to one of the shop's products (optional)" },
+                moderation_status: { type: "integer", enum: [0, 1, 2], description: "Defaults to 1 (APPROVED) when omitted — admin-created reels don't need self-review" },
+            },
+        },
+        ReelRejectRequest: {
+            type: "object",
+            properties: {
+                note: { type: "string", nullable: true, description: "Reason shown to the seller" },
+            },
+        },
         ReelUpdateRequest: {
             type: "object",
             properties: {
@@ -1242,6 +1267,112 @@ module.exports = {
                 caption:      { type: "string", nullable: true },
                 product_id:   { type: "integer", nullable: true },
                 is_active:    { type: "boolean" },
+            },
+        },
+
+        // ── Gift Creators & Gift Types ──────────────────────────────────────────────
+        GiftCreator: {
+            type: "object",
+            properties: {
+                id:           { type: "integer" },
+                name:         { type: "string" },
+                contact_note: { type: "string", nullable: true },
+                is_active:    { type: "boolean" },
+                avatar: {
+                    type: "object", nullable: true,
+                    properties: { id: { type: "string", format: "uuid" }, url: { type: "string" } },
+                },
+                balance: { "$ref": "#/components/schemas/GiftCreatorBalance" },
+            },
+        },
+        GiftCreatorCreateRequest: {
+            type: "object",
+            required: ["name"],
+            properties: {
+                name:         { type: "string" },
+                avatar_id:    { type: "string", format: "uuid", nullable: true },
+                contact_note: { type: "string", nullable: true },
+            },
+        },
+        GiftCreatorBalance: {
+            type: "object",
+            properties: {
+                gift_creator_id:   { type: "integer" },
+                available_balance: { type: "number", example: 70.00 },
+                currency:          { type: "string", example: "TMT" },
+            },
+        },
+        GiftCreatorTransaction: {
+            type: "object",
+            properties: {
+                id:              { type: "integer" },
+                gift_creator_id: { type: "integer" },
+                type:            { type: "string", enum: ["GIFT_CREDIT", "COMMISSION"] },
+                amount:          { type: "number", description: "Positive = credit; COMMISSION rows are negative and audit-only" },
+                status:          { type: "string", example: "AVAILABLE" },
+                balance_after:   { type: "number", nullable: true },
+                reference_id:    { type: "integer", nullable: true, description: "The reel a gift was sent on" },
+                note:            { type: "string", nullable: true },
+                createdAt:       { type: "string", format: "date-time" },
+            },
+        },
+        GiftType: {
+            type: "object",
+            properties: {
+                id:                 { type: "integer" },
+                name:               { type: "string" },
+                price_coin:         { type: "integer" },
+                price_tmt:          { type: "number" },
+                effect_description: { type: "string", nullable: true },
+                sort_order:         { type: "integer" },
+                is_active:          { type: "boolean" },
+                animation: {
+                    type: "object",
+                    properties: { id: { type: "string", format: "uuid" }, url: { type: "string" }, mime_type: { type: "string" } },
+                },
+                icon: {
+                    type: "object", nullable: true,
+                    properties: { id: { type: "string", format: "uuid" }, url: { type: "string" } },
+                },
+                gift_creator: { "$ref": "#/components/schemas/GiftCreator" },
+            },
+        },
+        GiftTypeCreateRequest: {
+            type: "object",
+            required: ["name", "animation_id", "price_coin", "price_tmt", "gift_creator_id"],
+            properties: {
+                name:                { type: "string" },
+                animation_id:        { type: "string", format: "uuid", description: "Media ID of an uploaded GIF; reclassified to type='gift'" },
+                icon_id:             { type: "string", format: "uuid", nullable: true },
+                effect_description:  { type: "string", nullable: true },
+                price_coin:          { type: "integer" },
+                price_tmt:           { type: "number" },
+                gift_creator_id:     { type: "integer" },
+                sort_order:          { type: "integer" },
+            },
+        },
+        ReelGift: {
+            type: "object",
+            properties: {
+                id:         { type: "integer" },
+                reel_id:    { type: "integer" },
+                price_coin: { type: "integer" },
+                price_tmt:  { type: "number" },
+                message:    { type: "string", nullable: true },
+                createdAt:  { type: "string", format: "date-time" },
+                user: {
+                    type: "object",
+                    properties: { id: { type: "string", format: "uuid" }, name: { type: "string" }, surname: { type: "string" } },
+                },
+                gift_type: { "$ref": "#/components/schemas/GiftType" },
+            },
+        },
+        ReelGiftSendRequest: {
+            type: "object",
+            required: ["gift_type_id"],
+            properties: {
+                gift_type_id: { type: "integer" },
+                message:      { type: "string", maxLength: 200, nullable: true },
             },
         },
 

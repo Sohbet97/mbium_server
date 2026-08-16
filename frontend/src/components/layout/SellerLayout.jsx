@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Store,
-  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell, BarChart2, Building2, Coins,
+  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell, BarChart2, Building2, Coins, Clapperboard,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
@@ -27,6 +27,7 @@ function SellerSidebar({ collapsed, onToggle }) {
     { to: '/seller/coins',    label: t('nav.coins', 'Coins'), icon: Coins },
     { to: '/seller/media',    label: t('nav.media'),        icon: Images },
     { to: '/seller/banners',  label: t('nav.banners'),      icon: LayoutTemplate },
+    { to: '/seller/reels',    label: t('nav.reels', 'Reels'), icon: Clapperboard },
     { to: '/seller/subscription',       label: t('nav.subscription'),       icon: Crown },
     { to: '/seller/push-notifications', label: t('nav.pushNotifications'),  icon: Bell },
     { to: '/seller/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2 },

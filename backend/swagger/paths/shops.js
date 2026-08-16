@@ -411,4 +411,50 @@ module.exports = {
             responses: { 201: { description: "Request submitted" } },
         },
     },
+
+    // ── Buyer — Shops ────────────────────────────────────────────────────────
+    "/buyer/shops/{id}/follow": {
+        post: {
+            tags: ["Buyer — Shops"],
+            summary: "Follow a shop",
+            description: "Idempotent — following an already-followed shop returns 200 instead of erroring.",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: {
+                200: { description: "Already following" },
+                201: { description: "Followed" },
+                404: { description: "Shop not found or inactive" },
+            },
+        },
+        delete: {
+            tags: ["Buyer — Shops"],
+            summary: "Unfollow a shop",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: {
+                200: { description: "Unfollowed" },
+                404: { description: "Not following" },
+            },
+        },
+    },
+    "/buyer/shops/followed": {
+        get: {
+            tags: ["Buyer — Shops"],
+            summary: "List shops the current buyer follows",
+            security,
+            parameters: [
+                { in: "query", name: "limit", schema: { type: "integer", default: 20 } },
+                { in: "query", name: "page",  schema: { type: "integer", default: 1 } },
+            ],
+            responses: {
+                200: {
+                    description: "Followed shops",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/Shop" } },
+                        count: { type: "integer" },
+                    }}}},
+                },
+            },
+        },
+    },
 };

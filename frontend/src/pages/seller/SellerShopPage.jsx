@@ -585,6 +585,9 @@ export default function SellerShopPage() {
                     {shop.type.name}
                   </span>
                 )}
+                <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                  {t('seller.followers', 'Yzarlaýjylar')}: {shop?.follower_count ?? 0}
+                </span>
               </div>
               {shop?.verification_note && shop?.verification_status === 3 && (
                 <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">

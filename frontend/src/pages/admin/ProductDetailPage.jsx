@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Trash2, Star, PlusCircle, Package,
-  Pencil, Save, X, ShieldCheck, ShieldX,
+  Pencil, Save, X, ShieldCheck, ShieldX, Truck, Box,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,18 +22,11 @@ import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 import { absUrl } from '@/lib/utils'
 import { ProductMediaManager } from '@/components/media/ProductMediaManager'
+import { ModerationBadge } from '@/components/common/ModerationBadge'
+import { MOD } from '@/lib/moderation'
 import { toast } from 'sonner'
 
 // ─── Moderation ────────────────────────────────────────────────────────────────
-
-const MOD = { PENDING: 0, APPROVED: 1, REJECTED: 2 }
-
-function ModerationBadge({ status }) {
-  const { t } = useTranslation()
-  if (status === MOD.APPROVED) return <Badge variant="success">{t('products.modStatusApproved')}</Badge>
-  if (status === MOD.REJECTED) return <Badge variant="destructive">{t('products.modStatusRejected')}</Badge>
-  return <Badge variant="warning">{t('products.modStatusPending')}</Badge>
-}
 
 function ModerationSection({ product, onRefresh }) {
   const { t } = useTranslation()
@@ -621,6 +614,36 @@ function InfoTab({ product, shops, categories, onRefresh }) {
                   <span className="text-right">{product.tags.join(', ')}</span>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        )}
+
+        {(product.deliveryTypes?.length > 0 || product.models3d?.length > 0) && (
+          <Card>
+            <CardHeader><CardTitle className="text-sm">{t('products.deliveryAnd3d', 'Delivery & 3D')}</CardTitle></CardHeader>
+            <CardContent className="pt-0 space-y-3 text-sm">
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-slate-500 flex items-center gap-1.5 shrink-0">
+                  <Truck className="h-3.5 w-3.5" /> {t('deliveryTypes.title', 'Delivery Types')}
+                </span>
+                {product.deliveryTypes?.length > 0 ? (
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    {product.deliveryTypes.map((dt) => (
+                      <Badge key={dt.id} variant="secondary">{dt.name}</Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-slate-300">—</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 flex items-center gap-1.5">
+                  <Box className="h-3.5 w-3.5" /> {t('products.has3dModel', '3D Model')}
+                </span>
+                <Badge variant={product.models3d?.length > 0 ? 'success' : 'secondary'}>
+                  {product.models3d?.length > 0 ? t('common.yes', 'Yes') : t('common.no', 'No')}
+                </Badge>
+              </div>
             </CardContent>
           </Card>
         )}

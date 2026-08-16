@@ -5,6 +5,7 @@ const { CONSTANTS } = require("../../../config/constants");
 const SHOP_CONSTANTS = require("../utils/constants");
 const NotificationService = require("../../../services/notifications");
 const PushService         = require("../../../services/push");
+const ApiError             = require("../../../exceptions/api-error");
 
 class ShopService {
   static async get(filter = {}, limit = undefined, order = SHOP_CONSTANTS.DEFAULT_SORT, offset = 0, paranoid = true) {
@@ -296,6 +297,37 @@ class ShopService {
         { ignoreDuplicates: true }
       );
     }
+  }
+
+  // ── Follows ────────────────────────────────────────────────────────────────
+
+  static async follow(userId, shopId) {
+    const shop = await db.Shop.findOne({ where: { id: shopId, is_active: true } });
+    if (!shop) throw ApiError.NotFound("Dükan tapylmady");
+
+    const [, created] = await db.ShopFollow.findOrCreate({
+      where: { user_id: userId, shop_id: shopId },
+      defaults: { user_id: userId, shop_id: shopId },
+    });
+    if (created) await db.Shop.increment("follower_count", { where: { id: shopId } });
+    return { created };
+  }
+
+  static async unfollow(userId, shopId) {
+    const deleted = await db.ShopFollow.destroy({ where: { user_id: userId, shop_id: shopId } });
+    if (!deleted) throw ApiError.NotFound("Yzarlama tapylmady");
+    await db.Shop.decrement("follower_count", { where: { id: shopId } });
+    return { deleted: true };
+  }
+
+  static async getFollowedShops(userId, limit, offset) {
+    return db.Shop.findAndCountAll({
+      include: [{ model: db.ShopFollow, as: "follows", where: { user_id: userId }, attributes: [] }],
+      where: { is_active: true },
+      limit,
+      offset,
+      order: [["id", "DESC"]],
+    });
   }
 }
 

@@ -32,6 +32,7 @@ import SettingsPage from '@/pages/admin/SettingsPage'
 import AccountPage from '@/pages/admin/AccountPage'
 import MediaPage from '@/pages/admin/MediaPage'
 import BannersPage from '@/pages/admin/BannersPage'
+import ReelsPage from '@/pages/admin/ReelsPage'
 import DeliveriesPage from '@/pages/admin/DeliveriesPage'
 import PlansPage from '@/pages/admin/PlansPage'
 import ShopApplicationsPage from '@/pages/admin/ShopApplicationsPage'
@@ -50,6 +51,7 @@ import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
 import SellerProductVariantPage from '@/pages/seller/SellerProductVariantPage'
 import SellerMediaPage from '@/pages/seller/SellerMediaPage'
 import SellerBannersPage from '@/pages/seller/SellerBannersPage'
+import SellerReelsPage from '@/pages/seller/SellerReelsPage'
 import SellerSubscriptionPage from '@/pages/seller/SellerSubscriptionPage'
 import AdminPushNotificationsPage from '@/pages/admin/AdminPushNotificationsPage'
 import AdminAuditPage from '@/pages/admin/AdminAuditPage'
@@ -70,6 +72,7 @@ import ShopTypesPage from '@/pages/admin/ShopTypesPage'
 import SuppliersPage from '@/pages/admin/SuppliersPage'
 import AdminCommentsPage from '@/pages/admin/AdminCommentsPage'
 import AdminKycPage from '@/pages/admin/AdminKycPage'
+import AdminGiftsPage from '@/pages/admin/AdminGiftsPage'
 
 const g = (perm, element) => <PermGate perm={perm}>{element}</PermGate>
 
@@ -127,6 +130,8 @@ const router = createBrowserRouter([
           { path: 'catalog/sizes',     element: g(Permissions.SIZE_GET, <SizesPage />),                    handle: { titleKey: 'sizes.title' } },
           { path: 'catalog/delivery-types', element: g(Permissions.DELIVERY_TYPE_GET, <DeliveryTypesPage />),       handle: { titleKey: 'deliveryTypes.title' } },
           { path: 'catalog/suppliers', element: g(Permissions.SUPPLIER_GET, <SuppliersPage />),                handle: { titleKey: 'suppliers.title' } },
+          { path: 'catalog/reels',     element: g(Permissions.REEL_GET, <ReelsPage />),                       handle: { titleKey: 'reels.title' } },
+          { path: 'gifts',             element: g(Permissions.GIFT_TYPE_GET, <AdminGiftsPage />),             handle: { titleKey: 'gifts.title' } },
           { path: 'comments',         element: g(Permissions.COMMENT_GET, <AdminCommentsPage />),            handle: { titleKey: 'comments.title' } },
           { path: 'kyc',             element: g(Permissions.KYC_GET, <AdminKycPage />),                 handle: { titleKey: 'kyc.title' } },
         ],
@@ -152,6 +157,7 @@ const router = createBrowserRouter([
           { path: 'coins',      element: <SellerCoinsPage /> },
           { path: 'media',        element: <SellerMediaPage /> },
           { path: 'banners',      element: <SellerBannersPage /> },
+          { path: 'reels',        element: <SellerReelsPage /> },
           { path: 'subscription',       element: <SellerSubscriptionPage /> },
           { path: 'push-notifications', element: <SellerPushNotificationsPage /> },
           { path: 'account',            element: <SellerAccountPage /> },
