@@ -67,6 +67,7 @@ import AdminFavoritesPage from '@/pages/admin/AdminFavoritesPage'
 import ProductTagsPage from '@/pages/admin/ProductTagsPage'
 import BrandsPage from '@/pages/admin/BrandsPage'
 import SizesPage from '@/pages/admin/SizesPage'
+import ColorsPage from '@/pages/admin/ColorsPage'
 import DeliveryTypesPage from '@/pages/admin/DeliveryTypesPage'
 import ShopTypesPage from '@/pages/admin/ShopTypesPage'
 import SuppliersPage from '@/pages/admin/SuppliersPage'
@@ -128,6 +129,7 @@ const router = createBrowserRouter([
           { path: 'catalog/tags',       element: g(Permissions.PRODUCT_GET, <ProductTagsPage />),              handle: { titleKey: 'productTags.title' } },
           { path: 'catalog/brands',    element: g(Permissions.BRAND_GET, <BrandsPage />),                   handle: { titleKey: 'brands.title' } },
           { path: 'catalog/sizes',     element: g(Permissions.SIZE_GET, <SizesPage />),                    handle: { titleKey: 'sizes.title' } },
+          { path: 'catalog/colors',    element: g(Permissions.COLOR_GET, <ColorsPage />),                  handle: { titleKey: 'colors.title' } },
           { path: 'catalog/delivery-types', element: g(Permissions.DELIVERY_TYPE_GET, <DeliveryTypesPage />),       handle: { titleKey: 'deliveryTypes.title' } },
           { path: 'catalog/suppliers', element: g(Permissions.SUPPLIER_GET, <SuppliersPage />),                handle: { titleKey: 'suppliers.title' } },
           { path: 'catalog/reels',     element: g(Permissions.REEL_GET, <ReelsPage />),                       handle: { titleKey: 'reels.title' } },

@@ -6,6 +6,7 @@ const PayoutService = require("../../payouts/services/payouts");
 const CoinService   = require("../../coins/services/CoinService");
 const PushService   = require("../../../services/push");
 const DiscountService = require("../../discounts/services/discounts");
+const ProductService = require("../../catalog/services/products");
 
 const STATUS_PROCESSING = 2;
 const STATUS_DELIVERED = 4;
@@ -113,13 +114,19 @@ class OrderService {
         const productIds = items.map((i) => i.product_id);
         const products = await db.Product.findAll({
             where: { id: { [Op.in]: productIds }, shop_id },
-            include: [{
-                model: db.ProductVariant,
-                as: "variants",
-                where: { is_active: true },
-                required: false,
-                include: [{ model: db.ProductVariantSize, as: "sizes", where: { is_active: true }, required: false }],
-            }],
+            include: [
+                { model: db.ProductPriceTier, as: "priceTiers", required: false },
+                {
+                    model: db.ProductVariant,
+                    as: "variants",
+                    where: { is_active: true },
+                    required: false,
+                    include: [
+                        { model: db.ProductVariantSize, as: "sizes", where: { is_active: true }, required: false },
+                        { model: db.ProductPriceTier, as: "priceTiers", required: false },
+                    ],
+                },
+            ],
         });
         const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
@@ -153,7 +160,7 @@ class OrderService {
                 );
             }
 
-            const unit_price = parseFloat(variantSize?.price ?? variant?.price ?? product.price);
+            const unit_price = ProductService.resolveUnitPrice({ product, variant, variantSize, quantity: item.quantity });
             const total = unit_price * item.quantity;
             total_price += total;
             return {

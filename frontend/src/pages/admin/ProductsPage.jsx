@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus, Search, RefreshCw, MoreHorizontal, Package } from 'lucide-react'
+import { Plus, Search, RefreshCw, MoreHorizontal, Package, X, Check, Ban } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -12,6 +12,8 @@ import {
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { AdminApi } from '@/lib/api'
+import { ColorSwatches } from '@/components/common/ColorSwatches'
+import { ColorFilter } from '@/components/common/ColorSelect'
 import { absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -29,11 +31,38 @@ export default function ProductsPage() {
   const [shopFilter, setShopFilter] = useState(searchParams.get('shop_id') ?? '')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [moderationFilter, setModerationFilter] = useState('')
+  const [colorFilter, setColorFilter] = useState([])
+  const [colors, setColors] = useState([])
   const [loading, setLoading] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [selectedIds, setSelectedIds] = useState([])
+  const [bulkLoading, setBulkLoading] = useState(false)
   const limit = 20
 
   function fetchProducts() { setRefreshKey((k) => k + 1) }
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => prev.length === products.length ? [] : products.map((p) => p.id))
+  }
+
+  function toggleSelectOne(id) {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }
+
+  async function handleBulkUpdate(data) {
+    if (!selectedIds.length) return
+    setBulkLoading(true)
+    try {
+      await AdminApi.products.bulkUpdate({ ids: selectedIds, ...data })
+      toast.success(t('products.bulkUpdateSuccess', { count: selectedIds.length }))
+      setSelectedIds([])
+      fetchProducts()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    } finally {
+      setBulkLoading(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -45,25 +74,29 @@ export default function ProductsPage() {
         if (shopFilter) params.shop_id = shopFilter
         if (categoryFilter) params.category_id = categoryFilter
         if (moderationFilter !== '') params.moderation_status = moderationFilter
+        if (colorFilter.length) params.color_hex = colorFilter.join(',')
         const { data } = await AdminApi.products.getAll(params)
         if (!cancelled) {
           setProducts(data?.data ?? data.data?.products ?? [])
           setTotal(data?.count ?? data.data?.total ?? 0)
+          setSelectedIds([])
         }
       } catch { if (!cancelled) setProducts([]) }
       finally { if (!cancelled) setLoading(false) }
     }
     load()
     return () => { cancelled = true }
-  }, [page, search, shopFilter, categoryFilter, moderationFilter, refreshKey])
+  }, [page, search, shopFilter, categoryFilter, moderationFilter, colorFilter, refreshKey])
 
   useEffect(() => {
     Promise.all([
       AdminApi.shops.getAll({ limit: 500 }),
       AdminApi.categories.getAll({ limit: 0 }),
-    ]).then(([shopsRes, catsRes]) => {
+      AdminApi.colors.getAll({ limit: 500, is_active: true }),
+    ]).then(([shopsRes, catsRes, colorsRes]) => {
       setShops(shopsRes.data?.data?.rows ?? shopsRes.data?.data?.shops ?? [])
       setCategories(catsRes.data?.data?.rows ?? catsRes.data?.data?.categories ?? [])
+      setColors(colorsRes.data?.data ?? [])
     }).catch(() => {})
   }, [])
 
@@ -117,10 +150,48 @@ export default function ProductsPage() {
           <option value="1">{t('products.modStatusApproved')}</option>
           <option value="2">{t('products.modStatusRejected')}</option>
         </Select>
+        <ColorFilter
+          colors={colors}
+          value={colorFilter}
+          onChange={(next) => { setColorFilter(next); setPage(1) }}
+        />
         <Button variant="ghost" size="icon" onClick={fetchProducts} className="h-9 w-9" title={t('common.refresh')}>
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         </Button>
       </div>
+
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap rounded-md border bg-slate-50 dark:bg-black px-4 py-2.5">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200 mr-2">
+            {t('products.bulkSelected', { count: selectedIds.length })}
+          </span>
+
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{t('products.colStatus')}:</span>
+          <Button size="sm" variant="outline" disabled={bulkLoading} onClick={() => handleBulkUpdate({ is_active: true })}>
+            {t('products.bulkSetActive')}
+          </Button>
+          <Button size="sm" variant="outline" disabled={bulkLoading} onClick={() => handleBulkUpdate({ is_active: false })}>
+            {t('products.bulkSetInactive')}
+          </Button>
+
+          <span className="h-5 w-px bg-slate-200" />
+
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{t('products.moderationStatus')}:</span>
+          <Button size="sm" variant="outline" className="gap-1" disabled={bulkLoading} onClick={() => handleBulkUpdate({ moderation_status: 1 })}>
+            <Check className="h-3.5 w-3.5" /> {t('products.bulkApprove')}
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1 text-red-600" disabled={bulkLoading} onClick={() => handleBulkUpdate({ moderation_status: 2 })}>
+            <Ban className="h-3.5 w-3.5" /> {t('products.bulkReject')}
+          </Button>
+          <Button size="sm" variant="outline" disabled={bulkLoading} onClick={() => handleBulkUpdate({ moderation_status: 0 })}>
+            {t('products.bulkSetPending')}
+          </Button>
+
+          <Button size="sm" variant="ghost" className="gap-1 ml-auto" disabled={bulkLoading} onClick={() => setSelectedIds([])}>
+            <X className="h-3.5 w-3.5" /> {t('products.bulkClearSelection')}
+          </Button>
+        </div>
+      )}
 
       <Card>
         <CardContent className="p-0">
@@ -128,6 +199,15 @@ export default function ProductsPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b bg-slate-50 dark:bg-black dark:text-white text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300"
+                      checked={products.length > 0 && selectedIds.length === products.length}
+                      onChange={toggleSelectAll}
+                      aria-label={t('products.selectAll')}
+                    />
+                  </th>
                   <th className="px-4 py-3">{t('products.colProduct')}</th>
                   <th className="px-4 py-3">{t('products.colShop')}</th>
                   <th className="px-4 py-3">{t('products.colCategory')}</th>
@@ -140,10 +220,10 @@ export default function ProductsPage() {
               </thead>
               <tbody>
                 {loading && products.length === 0 ? (
-                  <tr><td colSpan={8} className="px-4 py-10 text-center text-sm text-slate-400">{t('common.loading')}</td></tr>
+                  <tr><td colSpan={9} className="px-4 py-10 text-center text-sm text-slate-400">{t('common.loading')}</td></tr>
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-16 text-center">
+                    <td colSpan={9} className="px-4 py-16 text-center">
                       <Package className="h-10 w-10 text-slate-200 mx-auto mb-2" />
                       <p className="text-sm text-slate-400">{t('common.noResults')}</p>
                     </td>
@@ -152,6 +232,14 @@ export default function ProductsPage() {
                   <tr key={p.id} className="border-b last:border-0 hover:bg-slate-50 transition-colors cursor-pointer"
                     onClick={() => navigate(`/admin/catalog/products/${p.id}`)}>
                     <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300"
+                        checked={selectedIds.includes(p.id)}
+                        onChange={() => toggleSelectOne(p.id)}
+                      />
+                    </td>
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-3">
                         {(() => { const pm = p.productMedia?.find((m) => m.role === 'primary') ?? p.productMedia?.[0]; const src = absUrl(pm?.media?.thumbnail_url || pm?.media?.url); return src
                           ? <img src={src} alt="" className="h-10 w-10 rounded object-cover border" />
@@ -159,7 +247,10 @@ export default function ProductsPage() {
                         })()}
                         <div>
                           <p className="text-sm font-medium text-slate-900 max-w-[200px] truncate">{p.name}</p>
-                          <p className="text-xs text-slate-400">{p.sku || '—'}</p>
+                          <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                            <span>{p.sku || '—'}</span>
+                            <ColorSwatches product={p} />
+                          </p>
                         </div>
                       </div>
                     </td>

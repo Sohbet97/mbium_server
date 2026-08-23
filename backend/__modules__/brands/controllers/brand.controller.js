@@ -6,8 +6,7 @@ class BrandController {
     static async getAll(req, res, next) {
         try {
             const { limit, skip } = FUNCTIONS.getQueryParams(req);
-            const filter = {};
-            if (req.query.is_active !== undefined) filter.is_active = req.query.is_active === "true";
+            const filter = BrandService.buildFilter(req.query);
             const result = await BrandService.getAll(filter, limit, skip);
             res.json({ data: result.rows, count: result.count });
         } catch (e) { next(e); }

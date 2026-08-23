@@ -150,12 +150,16 @@ class UserService {
    * @returns {{ user: Model, isNew: boolean }}
    */
   static async findOrCreateByGoogle({ google_id, email, given_name, family_name }) {
-    let user = await db.User.findOne({ where: { google_id } });
-    if (user) return { user, isNew: false };
+    let user = await db.User.findOne({ where: { google_id }, paranoid: false });
+    if (user) {
+      if (user.deletedAt) await user.restore();
+      return { user, isNew: false };
+    }
 
     if (email) {
-      user = await db.User.findOne({ where: { email } });
+      user = await db.User.findOne({ where: { email }, paranoid: false });
       if (user) {
+        if (user.deletedAt) await user.restore();
         await user.update({ google_id });
         return { user, isNew: false };
       }
@@ -174,13 +178,14 @@ class UserService {
       if (e.name !== "SequelizeUniqueConstraintError") throw e;
 
       // Lost a race against a concurrent request for the same account; link to it instead.
-      user = await db.User.findOne({ where: { google_id } });
+      user = await db.User.findOne({ where: { google_id }, paranoid: false });
       if (!user && email) {
-        user = await db.User.findOne({ where: { email } });
+        user = await db.User.findOne({ where: { email }, paranoid: false });
         if (user && !user.google_id) await user.update({ google_id });
       }
       if (!user) throw e;
 
+      if (user.deletedAt) await user.restore();
       return { user, isNew: false };
     }
 

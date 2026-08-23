@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus, Search, RefreshCw, MoreHorizontal, Star, Store } from 'lucide-react'
+import { Plus, Search, RefreshCw, MoreHorizontal, Star, Store, X, Check, Ban } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -241,6 +241,8 @@ export default function ShopsPage() {
   const [refreshTick, setRefreshTick] = useState(0)
   const [modal, setModal] = useState({ open: false, shop: null })
   const [reassignModal, setReassignModal] = useState({ open: false, shop: null })
+  const [selectedIds, setSelectedIds] = useState([])
+  const [bulkLoading, setBulkLoading] = useState(false)
   const limit = 20
 
   // Fetch shops — all setState in async callbacks to satisfy linter
@@ -256,6 +258,7 @@ export default function ShopsPage() {
         if (cancelled) return
         setShops(data.data ?? [])
         setTotal(data.count ?? 0)
+        setSelectedIds([])
         setLoading(false)
       })
       .catch(() => {
@@ -266,6 +269,29 @@ export default function ShopsPage() {
 
     return () => { cancelled = true }
   }, [page, search, activeFilter, showDeleted, refreshTick])
+
+  function toggleSelectAll() {
+    setSelectedIds((prev) => prev.length === shops.length ? [] : shops.map((s) => s.id))
+  }
+
+  function toggleSelectOne(id) {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }
+
+  async function handleBulkUpdate(data) {
+    if (!selectedIds.length) return
+    setBulkLoading(true)
+    try {
+      await AdminApi.shops.bulkUpdate({ ids: selectedIds, ...data })
+      toast.success(t('shops.bulkUpdateSuccess', { count: selectedIds.length }))
+      setSelectedIds([])
+      refresh()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    } finally {
+      setBulkLoading(false)
+    }
+  }
 
   // Fetch shop types once for the modal dropdown
   useEffect(() => {
@@ -360,6 +386,39 @@ export default function ShopsPage() {
         </Button>
       </div>
 
+      {selectedIds.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap rounded-md border bg-slate-50 dark:bg-black px-4 py-2.5">
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-200 mr-2">
+            {t('shops.bulkSelected', { count: selectedIds.length })}
+          </span>
+
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{t('shops.colStatus')}:</span>
+          <Button size="sm" variant="outline" disabled={bulkLoading} onClick={() => handleBulkUpdate({ is_active: true })}>
+            {t('shops.bulkSetActive')}
+          </Button>
+          <Button size="sm" variant="outline" disabled={bulkLoading} onClick={() => handleBulkUpdate({ is_active: false })}>
+            {t('shops.bulkSetInactive')}
+          </Button>
+
+          <span className="h-5 w-px bg-slate-200" />
+
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-wide">{t('shops.verificationStatus')}:</span>
+          <Button size="sm" variant="outline" className="gap-1" disabled={bulkLoading} onClick={() => handleBulkUpdate({ verification_status: 2 })}>
+            <Check className="h-3.5 w-3.5" /> {t('shops.bulkVerify')}
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1 text-red-600" disabled={bulkLoading} onClick={() => handleBulkUpdate({ verification_status: 3 })}>
+            <Ban className="h-3.5 w-3.5" /> {t('shops.bulkReject')}
+          </Button>
+          <Button size="sm" variant="outline" disabled={bulkLoading} onClick={() => handleBulkUpdate({ verification_status: 1 })}>
+            {t('shops.bulkSetPending')}
+          </Button>
+
+          <Button size="sm" variant="ghost" className="gap-1 ml-auto" disabled={bulkLoading} onClick={() => setSelectedIds([])}>
+            <X className="h-3.5 w-3.5" /> {t('shops.bulkClearSelection')}
+          </Button>
+        </div>
+      )}
+
       {/* Table */}
       <Card>
         <CardContent className="p-0">
@@ -367,6 +426,15 @@ export default function ShopsPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b bg-slate-50 text-xs font-medium text-slate-500 uppercase tracking-wide dark:bg-black dark:text-white">
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300"
+                      checked={shops.length > 0 && selectedIds.length === shops.length}
+                      onChange={toggleSelectAll}
+                      aria-label={t('shops.selectAll')}
+                    />
+                  </th>
                   <th className="px-4 py-3">{t('shops.colShop')}</th>
                   <th className="px-4 py-3">{t('shops.colOwner')}</th>
                   <th className="px-4 py-3">{t('shops.colType')}</th>
@@ -378,13 +446,13 @@ export default function ShopsPage() {
               <tbody>
                 {loading && shops.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400">
+                    <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
                       {t('common.loading')}
                     </td>
                   </tr>
                 ) : shops.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-16 text-center">
+                    <td colSpan={7} className="px-4 py-16 text-center">
                       <Store className="h-10 w-10 text-slate-200 mx-auto mb-2" />
                       <p className="text-sm text-slate-400">{t('common.noResults')}</p>
                     </td>
@@ -395,6 +463,14 @@ export default function ShopsPage() {
                     className={`border-b last:border-0 hover:bg-slate-50 transition-colors cursor-pointer ${shop.deletedAt ? 'opacity-60' : ''} dark:hover:bg-white/[0.08]`}
                     onClick={() => navigate(`/admin/shops/${shop.id}`)}
                   >
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 rounded border-slate-300"
+                        checked={selectedIds.includes(shop.id)}
+                        onChange={() => toggleSelectOne(shop.id)}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         {shop.logo

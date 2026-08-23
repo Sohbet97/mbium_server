@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift, Palette,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -46,6 +46,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/catalog/tags',        label: t('productTags.title', 'Tags'),        icon: Tag, perm: Permissions.PRODUCT_GET },
     { to: '/admin/catalog/brands',     label: t('nav.brands', 'Brands'),             icon: Award, perm: Permissions.BRAND_GET },
     { to: '/admin/catalog/sizes',      label: t('nav.sizes', 'Sizes'),               icon: Ruler, perm: Permissions.SIZE_GET },
+    { to: '/admin/catalog/colors',     label: t('nav.colors', 'Colors'),             icon: Palette, perm: Permissions.COLOR_GET },
     { to: '/admin/catalog/delivery-types', label: t('nav.deliveryTypes', 'Delivery Types'), icon: PackageCheck, perm: Permissions.DELIVERY_TYPE_GET },
     { to: '/admin/catalog/suppliers',  label: t('nav.suppliers', 'Suppliers'),        icon: Factory, perm: Permissions.SUPPLIER_GET },
     { to: '/admin/catalog/reels',      label: t('nav.reels', 'Reels'),                icon: Clapperboard, perm: Permissions.REEL_GET },

@@ -159,6 +159,7 @@ module.exports = {
                 shopHeader,
                 { in: "query", name: "text",        schema: { type: "string" } },
                 { in: "query", name: "category_id", schema: { type: "integer" } },
+                { in: "query", name: "color_hex",   schema: { type: "string" }, example: "#ef4444,#000000", description: "One hex or a comma-separated list. Matches the product's own colour or any of its variants'. Invalid values are ignored." },
                 { in: "query", name: "is_active",   schema: { type: "boolean" } },
                 { in: "query", name: "limit",       schema: { type: "integer" } },
                 { in: "query", name: "skip",        schema: { type: "integer" } },
@@ -302,6 +303,82 @@ module.exports = {
                 idParam,
                 { in: "path", name: "variantId", required: true, schema: { type: "integer" } },
                 { in: "path", name: "sizeRowId", required: true, schema: { type: "integer" } },
+                shopHeader,
+            ],
+            responses: { 200: { description: "Deleted" }, 404: { description: "Not found" } },
+        },
+    },
+
+    // ── Price tiers ──────────────────────────────────────────────────────────────
+    "/seller/products/{id}/price-tiers": {
+        post: {
+            tags: ["Seller"],
+            summary: "Add a quantity price tier to own product",
+            description: "Defines a buy-more-pay-less unit price for a quantity range (e.g. 25-99 units => 0.75 TMT/unit). Rejected if the range overlaps an existing tier for this product.",
+            security,
+            parameters: [idParam, shopHeader],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductPriceTierRequest" } } } },
+            responses: {
+                201: { description: "Tier created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/ProductPriceTier" } } } } } },
+                400: { description: "Validation error or overlapping range" },
+                404: { description: "Not found or not owned by seller" },
+            },
+        },
+    },
+    "/seller/products/{id}/price-tiers/{tierId}": {
+        put: {
+            tags: ["Seller"],
+            summary: "Update a product price tier",
+            security,
+            parameters: [idParam, { in: "path", name: "tierId", required: true, schema: { type: "integer" } }, shopHeader],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductPriceTierRequest" } } } },
+            responses: { 200: { description: "Updated" }, 400: { description: "Validation error or overlapping range" }, 404: { description: "Not found" } },
+        },
+        delete: {
+            tags: ["Seller"],
+            summary: "Delete a product price tier",
+            security,
+            parameters: [idParam, { in: "path", name: "tierId", required: true, schema: { type: "integer" } }, shopHeader],
+            responses: { 200: { description: "Deleted" }, 404: { description: "Not found" } },
+        },
+    },
+    "/seller/products/{id}/variants/{variantId}/price-tiers": {
+        post: {
+            tags: ["Seller"],
+            summary: "Add a quantity price tier to own variant",
+            description: "Same as the product-level tier endpoint, scoped to one variant. Variant tiers take precedence over the product's own tiers.",
+            security,
+            parameters: [idParam, { in: "path", name: "variantId", required: true, schema: { type: "integer" } }, shopHeader],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductPriceTierRequest" } } } },
+            responses: {
+                201: { description: "Tier created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/ProductPriceTier" } } } } } },
+                400: { description: "Validation error or overlapping range" },
+                404: { description: "Not found or not owned by seller" },
+            },
+        },
+    },
+    "/seller/products/{id}/variants/{variantId}/price-tiers/{tierId}": {
+        put: {
+            tags: ["Seller"],
+            summary: "Update a product variant price tier",
+            security,
+            parameters: [
+                idParam,
+                { in: "path", name: "variantId", required: true, schema: { type: "integer" } },
+                { in: "path", name: "tierId", required: true, schema: { type: "integer" } },
+                shopHeader,
+            ],
+            requestBody: { required: true, content: { "application/json": { schema: { $ref: "#/components/schemas/ProductPriceTierRequest" } } } },
+            responses: { 200: { description: "Updated" }, 400: { description: "Validation error or overlapping range" }, 404: { description: "Not found" } },
+        },
+        delete: {
+            tags: ["Seller"],
+            summary: "Delete a product variant price tier",
+            security,
+            parameters: [
+                idParam,
+                { in: "path", name: "variantId", required: true, schema: { type: "integer" } },
+                { in: "path", name: "tierId", required: true, schema: { type: "integer" } },
                 shopHeader,
             ],
             responses: { 200: { description: "Deleted" }, 404: { description: "Not found" } },

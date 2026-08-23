@@ -258,6 +258,7 @@ module.exports = {
                 { in: "query", name: "shop_id",     schema: { type: "integer" } },
                 { in: "query", name: "min_price",   schema: { type: "number" }, description: "Minimum price filter (inclusive)" },
                 { in: "query", name: "max_price",   schema: { type: "number" }, description: "Maximum price filter (inclusive)" },
+                { in: "query", name: "color_hex",   schema: { type: "string" }, example: "#ef4444,#000000", description: "One hex or a comma-separated list. Matches the product's own colour or any of its variants'. Invalid values are ignored." },
                 productSortParam,
             ],
             responses: {

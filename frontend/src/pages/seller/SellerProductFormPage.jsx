@@ -11,7 +11,9 @@ import { ArrowLeft, Plus, Loader2, Save, Layers } from 'lucide-react'
 import { SellerProduct3DMediaManager } from '@/components/media/SellerProduct3DMediaManager'
 import { SellerProductMediaManager } from '@/components/media/SellerProductMediaManager'
 import { CategoryTreeSelect } from '@/components/common/CategoryTreeSelect'
+import { ColorSelect } from '@/components/common/ColorSelect'
 import { SearchSelect } from '@/components/common/SearchSelect'
+import { PriceTierManager } from '@/components/common/PriceTierManager'
 import { useAuth } from '@/store/auth'
 import { isAdmin } from '@/lib/access'
 
@@ -23,6 +25,7 @@ const EMPTY_FORM = {
   category_id: '',
   description: '',
   brand_id: '',
+  color_hex: '',
   supplier_id: '',
   delivery_type_ids: [],
   price: '', compare_at_price: '', cost_price: '', currency: 'TMT',
@@ -102,9 +105,11 @@ export default function SellerProductFormPage() {
   const [form, setForm]             = useState(EMPTY_FORM)
   const [categories, setCategories] = useState([])
   const [brands, setBrands]         = useState([])
+  const [colors, setColors]         = useState([])
   const [suppliers, setSuppliers]   = useState([])
   const [deliveryTypes, setDeliveryTypes] = useState([])
   const [variants, setVariants]     = useState([])
+  const [priceTiers, setPriceTiers] = useState([])
   const [loading, setLoading]       = useState(isEdit)
   const [saving, setSaving]         = useState(false)
   const [moderation, setModeration] = useState(null)
@@ -113,6 +118,7 @@ export default function SellerProductFormPage() {
     SellerApi.categories.getAll({ limit: 0, tree: 1, mine: 1 }).then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
     SellerApi.brands.getAll({ mine: 1 }).then(({ data }) => setBrands(data.data ?? [])).catch(() => {})
     SellerApi.suppliers.getAll().then(({ data }) => setSuppliers(data.data ?? [])).catch(() => {})
+    SellerApi.colors.getAll().then(({ data }) => setColors(data.data ?? [])).catch(() => {})
     SellerApi.deliveryTypes.getAll({ mine: 1 }).then(({ data }) => setDeliveryTypes(data.data ?? [])).catch(() => {})
   }, [])
 
@@ -128,6 +134,7 @@ export default function SellerProductFormPage() {
           category_id: p.category_id ?? '',
           description: p.description ?? '',
           brand_id:    p.brand_id    ?? '',
+          color_hex:   p.color_hex   ?? '',
           supplier_id: p.supplier_id ?? '',
           delivery_type_ids: (p.deliveryTypes ?? []).map((dt) => dt.id),
           price:            p.price            ?? '',
@@ -147,6 +154,7 @@ export default function SellerProductFormPage() {
             : '',
         })
         setVariants(p.variants ?? [])
+        setPriceTiers(p.priceTiers ?? [])
         setModeration({ status: p.moderation_status ?? 0, note: p.moderation_note })
       })
       .catch(() => { toast.error('Haryt tapylmady'); navigate('/seller/products') })
@@ -176,6 +184,7 @@ export default function SellerProductFormPage() {
         category_id: Number(form.category_id),
         brand_id:    form.brand_id    ? Number(form.brand_id)    : null,
         supplier_id: form.supplier_id ? Number(form.supplier_id) : null,
+        color_hex:   form.color_hex || null,
         price:            form.price            !== '' ? Number(form.price)            : null,
         compare_at_price: form.compare_at_price !== '' ? Number(form.compare_at_price) : null,
         cost_price:       form.cost_price       !== '' ? Number(form.cost_price)       : null,
@@ -259,6 +268,11 @@ export default function SellerProductFormPage() {
                 />
               </div>
             )}
+
+            <div>
+              <Label className="mb-1 block">Reňk</Label>
+              <ColorSelect colors={colors} value={form.color_hex} onChange={(hex) => set('color_hex', hex)} />
+            </div>
 
             {suppliers.length > 0 && (
               <div>
@@ -344,6 +358,23 @@ export default function SellerProductFormPage() {
             </div>
           </CardContent>
         </Card>
+
+        {isEdit && (
+          <Card>
+            <CardHeader><CardTitle>Sanyna görä baha basgançaklary</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-xs text-slate-400 mb-3">
+                Mysal: 1-25 sany — 1 TMT, 25-100 sany — 0.75 TMT, 100+ sany — 0.65 TMT. Görnüşiň öz basgançagy bar bolsa, şol ulanylýar.
+              </p>
+              <PriceTierManager
+                tiers={priceTiers}
+                onCreate={(data) => SellerApi.products.priceTiers.create(id, data)}
+                onUpdate={(tierId, data) => SellerApi.products.priceTiers.update(id, tierId, data)}
+                onDelete={(tierId) => SellerApi.products.priceTiers.delete(id, tierId)}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* ── Shipping ───────────────────────────────────────────────────── */}
         <Card>

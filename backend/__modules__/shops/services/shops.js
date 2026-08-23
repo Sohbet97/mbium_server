@@ -234,6 +234,20 @@ class ShopService {
     return this.getById(id);
   }
 
+  static async bulkUpdate(ids, { is_active, verification_status, verification_note, verifiedBy } = {}) {
+    const payload = {};
+    if (is_active !== undefined) payload.is_active = is_active;
+    if (verification_status !== undefined) {
+      payload.verification_status = verification_status;
+      payload.verified_by = verifiedBy;
+      payload.verified_at = new Date();
+      payload.verification_note = verification_status === 3 ? (verification_note || null) : null;
+      payload.is_verified = verification_status === 2;
+    }
+    if (!Object.keys(payload).length) return [0];
+    return db.Shop.update(payload, { where: { id: { [Op.in]: ids } } });
+  }
+
   static async reject(id, userId, note, io) {
     await db.Shop.update(
       { verification_status: 3, is_verified: false, verified_by: userId, verified_at: new Date(), verification_note: note || null },

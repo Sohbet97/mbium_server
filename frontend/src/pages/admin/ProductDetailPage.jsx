@@ -22,7 +22,11 @@ import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 import { absUrl } from '@/lib/utils'
 import { ProductMediaManager } from '@/components/media/ProductMediaManager'
+import { PriceTierManager } from '@/components/common/PriceTierManager'
 import { ModerationBadge } from '@/components/common/ModerationBadge'
+import { AttributeEditor } from '@/components/common/AttributeEditor'
+import { ColorSwatches } from '@/components/common/ColorSwatches'
+import { ColorSelect } from '@/components/common/ColorSelect'
 import { MOD } from '@/lib/moderation'
 import { toast } from 'sonner'
 
@@ -137,7 +141,7 @@ function ModerationSection({ product, onRefresh }) {
 
 const EMPTY_VARIANT = {
   name: '', sku: '', barcode: '', price: '',
-  compare_at_price: '', stock: '0', attributes: '{}', is_active: true,
+  compare_at_price: '', stock: '0', attributes: {}, color_hex: '', is_active: true,
 }
 
 function buildVariantForm(variant) {
@@ -149,7 +153,8 @@ function buildVariantForm(variant) {
     price:            variant.price            ?? '',
     compare_at_price: variant.compare_at_price ?? '',
     stock:            variant.stock            ?? 0,
-    attributes:       JSON.stringify(variant.attributes ?? {}, null, 2),
+    attributes:       (variant.attributes && typeof variant.attributes === 'object') ? variant.attributes : {},
+    color_hex:        variant.color_hex        ?? '',
     is_active:        variant.is_active        ?? true,
   }
 }
@@ -158,18 +163,20 @@ function VariantModal({ open, productId, variant, onClose, onSaved }) {
   // No useEffect — parent uses key remount.
   const { t } = useTranslation()
   const [form,      setForm]      = useState(() => buildVariantForm(variant))
+  const [colors,    setColors]    = useState([])
   const [saving,    setSaving]    = useState(false)
   const [error,     setError]     = useState('')
-  const [attrError, setAttrError] = useState('')
+
+  useEffect(() => {
+    AdminApi.colors.getAll({ limit: 500, is_active: true })
+      .then(({ data }) => setColors(data.data ?? []))
+      .catch(() => {})
+  }, [])
 
   function set(field, value) { setForm((f) => ({ ...f, [field]: value })) }
 
   async function handleSave() {
-    setError(''); setAttrError('')
-    let attrs = {}
-    try { attrs = JSON.parse(form.attributes || '{}') } catch {
-      setAttrError('Invalid JSON'); return
-    }
+    setError('')
     setSaving(true)
     try {
       const payload = {
@@ -179,7 +186,8 @@ function VariantModal({ open, productId, variant, onClose, onSaved }) {
         price:            form.price            !== '' ? Number(form.price)            : null,
         compare_at_price: form.compare_at_price !== '' ? Number(form.compare_at_price) : null,
         stock:            Number(form.stock),
-        attributes:       attrs,
+        attributes:       form.attributes,
+        color_hex:        form.color_hex || null,
         is_active:        form.is_active,
       }
       if (variant?.id) {
@@ -225,19 +233,46 @@ function VariantModal({ open, productId, variant, onClose, onSaved }) {
           <FormField label={t('variants.stock')}>
             <Input type="number" min="0" value={form.stock} onChange={(e) => set('stock', e.target.value)} />
           </FormField>
-          <FormField label={t('variants.attributes')} error={attrError}>
-            <Textarea
-              value={form.attributes}
-              onChange={(e) => set('attributes', e.target.value)}
-              rows={4}
-              className="font-mono text-xs"
-              placeholder='{"color": "red", "size": "XL"}'
+          <FormField label={t('colors.filterLabel')}>
+            <ColorSelect colors={colors} value={form.color_hex} onChange={(hex) => set('color_hex', hex)} />
+          </FormField>
+          <FormField label={t('variants.attributes')}>
+            <AttributeEditor
+              initial={form.attributes}
+              onChange={(attrs) => set('attributes', attrs)}
             />
           </FormField>
           <div className="flex items-center justify-between rounded-md border px-3 py-2">
             <Label>{t('variants.isActive')}</Label>
             <Switch checked={form.is_active} onCheckedChange={(v) => set('is_active', v)} />
           </div>
+          <FormField label={t('priceTiers.title')}>
+            {variant?.id ? (
+              <PriceTierManager
+                tiers={variant.priceTiers ?? []}
+                onCreate={(data) => AdminApi.products.variants.priceTiers.create(productId, variant.id, data)}
+                onUpdate={(tierId, data) => AdminApi.products.variants.priceTiers.update(productId, variant.id, tierId, data)}
+                onDelete={(tierId) => AdminApi.products.variants.priceTiers.delete(productId, variant.id, tierId)}
+                labels={{
+                  minQty: t('priceTiers.minQty'),
+                  maxQty: t('priceTiers.maxQty'),
+                  unitPrice: t('priceTiers.unitPrice'),
+                  openEnded: t('priceTiers.openEnded'),
+                  add: t('priceTiers.addTier'),
+                  save: t('common.save'),
+                  cancel: t('common.cancel'),
+                  empty: t('priceTiers.empty'),
+                  confirmDelete: t('priceTiers.confirmDelete'),
+                  savedMsg: t('priceTiers.saved'),
+                  deletedMsg: t('priceTiers.deleted'),
+                  invalidMsg: t('priceTiers.invalid'),
+                  errorMsg: t('toast.error'),
+                }}
+              />
+            ) : (
+              <p className="text-xs text-slate-400">{t('priceTiers.saveVariantFirst')}</p>
+            )}
+          </FormField>
         </DialogBody>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
@@ -306,11 +341,16 @@ function VariantsTab({ productId, variants, onRefresh }) {
                       }
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-700">{v.stock}</td>
-                    <td className="px-4 py-3 text-xs text-slate-400 font-mono max-w-[120px] truncate">
-                      {Object.keys(v.attributes ?? {}).length > 0
-                        ? Object.entries(v.attributes).map(([k, val]) => `${k}: ${val}`).join(', ')
-                        : '—'
-                      }
+                    <td className="px-4 py-3 text-xs text-slate-400 font-mono max-w-[160px]">
+                      <div className="flex items-center gap-1.5">
+                        <ColorSwatches variants={[v]} />
+                        <span className="truncate">
+                          {Object.keys(v.attributes ?? {}).length > 0
+                            ? Object.entries(v.attributes).map(([k, val]) => `${k}: ${val}`).join(', ')
+                            : '—'
+                          }
+                        </span>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <Badge variant={v.is_active ? 'success' : 'secondary'}>

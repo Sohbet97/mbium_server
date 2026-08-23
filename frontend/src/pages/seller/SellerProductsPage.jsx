@@ -8,6 +8,8 @@ import { Plus, Pencil, Trash2, Search, RefreshCw, PackageX, Eye, EyeOff, Zap, X,
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { CategoryTreeSelect } from '@/components/common/CategoryTreeSelect'
+import { ColorSwatches } from '@/components/common/ColorSwatches'
+import { ColorFilter } from '@/components/common/ColorSelect'
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
@@ -190,6 +192,8 @@ export default function SellerProductsPage() {
   const [text, setText]           = useState('')
   const [catFilter, setCatFilter] = useState('')
   const [statusFilter, setStatus] = useState('')
+  const [colorFilter, setColorFilter] = useState([])
+  const [colors, setColors]       = useState([])
   const [page, setPage]           = useState(0)
   const [loading, setLoading]     = useState(true)
   const [deleting, setDeleting]   = useState(null)
@@ -198,6 +202,7 @@ export default function SellerProductsPage() {
 
   useEffect(() => {
     SellerApi.categories.getAll({ limit: 0, tree: 1 }).then(({ data }) => setCategories(data.data ?? [])).catch(() => {})
+    SellerApi.colors.getAll().then(({ data }) => setColors(data.data ?? [])).catch(() => {})
   }, [])
 
   const load = useCallback((p = 0) => {
@@ -208,13 +213,14 @@ export default function SellerProductsPage() {
       text: text.trim() || undefined,
       category_id: catFilter || undefined,
       is_active: statusFilter !== '' ? statusFilter : undefined,
+      color_hex: colorFilter.length ? colorFilter.join(',') : undefined,
     }
     SellerApi.products.getAll(params)
       .then(({ data }) => { setProducts(data.data ?? []); setCount(data.count ?? 0) })
       .finally(() => setLoading(false))
-  }, [text, catFilter, statusFilter])
+  }, [text, catFilter, statusFilter, colorFilter])
 
-  useEffect(() => { setPage(0); load(0) }, [catFilter, statusFilter])
+  useEffect(() => { setPage(0); load(0) }, [catFilter, statusFilter, colorFilter])
   useEffect(() => { load(page) }, [page])
 
   function search() { setPage(0); load(0) }
@@ -302,6 +308,8 @@ export default function SellerProductsPage() {
           <option value="false">{t('seller.statusHidden')}</option>
         </select>
 
+        <ColorFilter colors={colors} value={colorFilter} onChange={setColorFilter} />
+
         <Button variant="outline" size="sm" className="h-8 px-2.5" onClick={() => { setPage(0); load(0) }}>
           <RefreshCw className="h-4 w-4" />
         </Button>
@@ -359,9 +367,12 @@ export default function SellerProductsPage() {
                     >
                       {p.name}
                     </Link>
-                    <div className="text-xs text-slate-400 truncate mt-0.5">
-                      {p.category?.name}
-                      {p.variants?.length > 0 && ` · ${t('seller.variantsCount', { count: p.variants.length })}`}
+                    <div className="text-xs text-slate-400 truncate mt-0.5 flex items-center gap-1.5">
+                      <span className="truncate">
+                        {p.category?.name}
+                        {p.variants?.length > 0 && ` · ${t('seller.variantsCount', { count: p.variants.length })}`}
+                      </span>
+                      <ColorSwatches product={p} />
                     </div>
                   </div>
 

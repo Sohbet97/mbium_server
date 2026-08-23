@@ -316,6 +316,11 @@ module.exports = {
                     items: { $ref: "#/components/schemas/ProductVariant" },
                     description: "Only present on the single-product detail endpoint (GET .../products/{id})",
                 },
+                priceTiers: {
+                    type: "array",
+                    items: { $ref: "#/components/schemas/ProductPriceTier" },
+                    description: "Quantity-based unit-price schedule (e.g. buy 25+ for a lower unit price). Only present on the single-product detail endpoint. Ignored when a variant/size selected at purchase time has its own tiers or flat price — see ProductVariant.priceTiers.",
+                },
                 productMedia: {
                     type: "array",
                     items: { $ref: "#/components/schemas/ProductMedia" },
@@ -353,6 +358,7 @@ module.exports = {
                 sku: { type: "string" },
                 stock: { type: "integer" },
                 brand_id: { type: "integer", nullable: true },
+                color_hex: { type: "string", nullable: true, example: "#ef4444", description: "Must match a hex in the `colors` palette" },
                 delivery_type_ids: { type: "array", items: { type: "integer" }, description: "Array of delivery type IDs" },
                 is_active: { type: "boolean" },
             },
@@ -374,6 +380,11 @@ module.exports = {
                     type: "array",
                     items: { $ref: "#/components/schemas/ProductVariantSize" },
                     description: "Per-size stock/price rows nested under this variant (color/style)",
+                },
+                priceTiers: {
+                    type: "array",
+                    items: { $ref: "#/components/schemas/ProductPriceTier" },
+                    description: "Quantity-based unit-price schedule for this variant. Takes precedence over the product's own price tiers when present; a selected size's flat price still wins over any tier.",
                 },
                 media: {
                     type: "array",
@@ -408,6 +419,27 @@ module.exports = {
                 compare_at_price: { type: "number", nullable: true },
                 stock: { type: "integer", default: 0 },
                 is_active: { type: "boolean", default: true },
+            },
+        },
+        ProductPriceTier: {
+            type: "object",
+            description: "One row of a quantity-based unit-price schedule, e.g. '25-99 units => 0.75 TMT/unit'. Belongs to exactly one owner — either a product or one of its variants, never both.",
+            properties: {
+                id: { type: "integer" },
+                product_id: { type: "integer", nullable: true },
+                variant_id: { type: "integer", nullable: true },
+                min_qty: { type: "integer", example: 25 },
+                max_qty: { type: "integer", nullable: true, example: 99, description: "null = open-ended (e.g. '100+')" },
+                unit_price: { type: "number", example: 0.75 },
+            },
+        },
+        ProductPriceTierRequest: {
+            type: "object",
+            required: ["min_qty", "unit_price"],
+            properties: {
+                min_qty: { type: "integer", minimum: 1, example: 25 },
+                max_qty: { type: "integer", nullable: true, example: 99, description: "Omit or null for an open-ended top tier (e.g. '100+'). Must be greater than min_qty when set." },
+                unit_price: { type: "number", minimum: 0, example: 0.75 },
             },
         },
         ProductImage: {
@@ -952,6 +984,33 @@ module.exports = {
         },
 
         // ── Brand ─────────────────────────────────────────────────────────────────
+        Color: {
+            type: "object",
+            properties: {
+                id:         { type: "integer" },
+                name:       { type: "string" },
+                name_ru:    { type: "string", nullable: true },
+                name_eng:   { type: "string", nullable: true },
+                slug:       { type: "string" },
+                hex:        { type: "string", example: "#ef4444", description: "Lower-case #rrggbb; unique, and what products/variants reference" },
+                is_active:  { type: "boolean" },
+                sort_order: { type: "integer" },
+                createdAt:  { type: "string", format: "date-time" },
+            },
+        },
+        ColorRequest: {
+            type: "object",
+            required: ["name", "hex"],
+            properties: {
+                name:       { type: "string" },
+                name_ru:    { type: "string", nullable: true },
+                name_eng:   { type: "string", nullable: true },
+                slug:       { type: "string", description: "Derived from name when omitted" },
+                hex:        { type: "string", example: "#ef4444", description: "#rgb or #rrggbb, with or without the leading #; normalised to lower-case #rrggbb" },
+                is_active:  { type: "boolean", default: true },
+                sort_order: { type: "integer", default: 0 },
+            },
+        },
         Brand: {
             type: "object",
             properties: {

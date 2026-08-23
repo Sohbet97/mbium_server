@@ -87,6 +87,7 @@ export class AdminApi {
     reject:          (id, data) => http.patch(a(`${PATHS.SHOPS}/${id}/reject`), data),
     submitForReview: (id)       => http.patch(a(`${PATHS.SHOPS}/${id}/submit`)),
     reassignOwner:   (id, ownerId) => http.patch(a(`${PATHS.SHOPS}/${id}/owner`), { owner_id: ownerId }),
+    bulkUpdate:      (data)      => http.patch(a(`${PATHS.SHOPS}/bulk`), data),
   }
   static shopTypes = {
     ...crud(PATHS.SHOP_TYPES),
@@ -99,10 +100,21 @@ export class AdminApi {
     ...crud(PATHS.PRODUCTS),
     approve: (id)       => http.patch(a(`${PATHS.PRODUCTS}/${id}/approve`)),
     reject:  (id, data) => http.patch(a(`${PATHS.PRODUCTS}/${id}/reject`), data),
+    bulkUpdate: (data)  => http.patch(a(`${PATHS.PRODUCTS}/bulk`), data),
     variants: {
       create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/variants`), data),
       update: (productId, variantId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`), data),
       delete: (productId, variantId) => http.delete(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`)),
+      priceTiers: {
+        create: (productId, variantId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}/price-tiers`), data),
+        update: (productId, variantId, tierId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}/price-tiers/${tierId}`), data),
+        delete: (productId, variantId, tierId) => http.delete(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}/price-tiers/${tierId}`)),
+      },
+    },
+    priceTiers: {
+      create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/price-tiers`), data),
+      update: (productId, tierId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/price-tiers/${tierId}`), data),
+      delete: (productId, tierId) => http.delete(a(`${PATHS.PRODUCTS}/${productId}/price-tiers/${tierId}`)),
     },
   }
   static collections = {
@@ -288,6 +300,13 @@ export class AdminApi {
     update:  (id, data)   => http.put(a(`${PATHS.SIZES}/${id}`), data),
     delete:  (id)         => http.delete(a(`${PATHS.SIZES}/${id}`)),
   }
+  static colors = {
+    getAll:  (params)     => http.get(a(`${PATHS.COLORS}`), { params }),
+    getOne:  (id)         => http.get(a(`${PATHS.COLORS}/${id}`)),
+    create:  (data)       => http.post(a(`${PATHS.COLORS}`), data),
+    update:  (id, data)   => http.put(a(`${PATHS.COLORS}/${id}`), data),
+    delete:  (id)         => http.delete(a(`${PATHS.COLORS}/${id}`)),
+  }
   static deliveryTypes = {
     getAll:  (params)     => http.get(a(`${PATHS.DELIVERY_TYPES}`), { params }),
     getOne:  (id)         => http.get(a(`${PATHS.DELIVERY_TYPES}/${id}`)),
@@ -384,6 +403,9 @@ export class SellerApi {
     getAll: (params) => http.get(s('/sizes'), { params }),
     getTree: () => http.get(s('/sizes/tree')),
   }
+  static colors = {
+    getAll: (params) => http.get(s('/colors'), { params }),
+  }
   static deliveryTypes = {
     getAll: (params) => http.get(s('/delivery-types'), { params }),
   }
@@ -428,6 +450,16 @@ export class SellerApi {
         update: (productId, variantId, sizeRowId, data)  => http.put(s(`/products/${productId}/variants/${variantId}/sizes/${sizeRowId}`), data),
         delete: (productId, variantId, sizeRowId)        => http.delete(s(`/products/${productId}/variants/${variantId}/sizes/${sizeRowId}`)),
       },
+      priceTiers: {
+        create: (productId, variantId, data)            => http.post(s(`/products/${productId}/variants/${variantId}/price-tiers`), data),
+        update: (productId, variantId, tierId, data)     => http.put(s(`/products/${productId}/variants/${variantId}/price-tiers/${tierId}`), data),
+        delete: (productId, variantId, tierId)           => http.delete(s(`/products/${productId}/variants/${variantId}/price-tiers/${tierId}`)),
+      },
+    },
+    priceTiers: {
+      create: (productId, data)         => http.post(s(`/products/${productId}/price-tiers`), data),
+      update: (productId, tierId, data) => http.put(s(`/products/${productId}/price-tiers/${tierId}`), data),
+      delete: (productId, tierId)       => http.delete(s(`/products/${productId}/price-tiers/${tierId}`)),
     },
   }
   static orders = {

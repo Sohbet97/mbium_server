@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const db = require("../../../models");
 const ApiError = require("../../../exceptions/api-error");
 
@@ -54,6 +55,26 @@ class BrandService {
         // Detach products first
         await db.Product.update({ brand_id: null }, { where: { brand_id: id } });
         return db.Brand.destroy({ where: { id } });
+    }
+
+    static buildFilter({ text, is_active, parent_id } = {}) {
+        const filter = {};
+        if (is_active !== undefined) filter.is_active = is_active === "true" || is_active === true;
+        if (parent_id !== undefined) {
+            // parent_id=null / "root" narrows to top-level brands only
+            filter.parent_id = (parent_id === "null" || parent_id === "root" || parent_id === null)
+                ? { [Op.is]: null }
+                : parent_id;
+        }
+        if (text) {
+            filter[Op.or] = [
+                { name:    { [Op.iLike]: `%${text}%` } },
+                { name_ru: { [Op.iLike]: `%${text}%` } },
+                { name_en: { [Op.iLike]: `%${text}%` } },
+                { slug:    { [Op.iLike]: `%${text}%` } },
+            ];
+        }
+        return filter;
     }
 }
 

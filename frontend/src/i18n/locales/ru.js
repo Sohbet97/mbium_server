@@ -110,6 +110,11 @@ export default {
     verStatusNone: 'Не подан', verStatusPending: 'На проверке',
     verStatusApproved: 'Верифицирован', verStatusRejected: 'Отклонён',
     verifiedAt: 'Верифицирован', verificationNote: 'Причина отклонения',
+    selectAll: 'Выбрать все', bulkSelected: 'Выбрано: {{count}}',
+    bulkSetActive: 'Сделать активным', bulkSetInactive: 'Сделать неактивным',
+    bulkVerify: 'Верифицировать', bulkReject: 'Отклонить', bulkSetPending: 'На проверку',
+    bulkClearSelection: 'Снять выбор',
+    bulkUpdateSuccess: 'Обновлено магазинов: {{count}}',
   },
 
   categories: {
@@ -162,6 +167,11 @@ export default {
     modStatusPending: 'На рассмотрении', modStatusApproved: 'Одобрено', modStatusRejected: 'Отклонено',
     moderatedAt: 'Дата проверки', moderationNote: 'Причина отклонения',
     filterModeration: 'Вся модерация',
+    selectAll: 'Выбрать все', bulkSelected: 'Выбрано: {{count}}',
+    bulkSetActive: 'Сделать активным', bulkSetInactive: 'Сделать неактивным',
+    bulkApprove: 'Одобрить', bulkReject: 'Отклонить', bulkSetPending: 'На рассмотрение',
+    bulkClearSelection: 'Снять выбор',
+    bulkUpdateSuccess: 'Обновлено товаров: {{count}}',
   },
 
   collections: {
@@ -188,9 +198,23 @@ export default {
     title: 'Варианты товара', addVariant: 'Добавить вариант', editVariant: 'Редактировать вариант',
     variantName: 'Название варианта', sku: 'Артикул', barcode: 'Штрихкод',
     price: 'Цена (TMT)', compareAtPrice: 'Цена до скидки (TMT)',
-    stock: 'Остаток', attributes: 'Атрибуты (JSON)', isActive: 'Активен',
+    stock: 'Остаток', attributes: 'Атрибуты', isActive: 'Активен',
     confirmDelete: 'Удалить вариант?',
+    attrKeyPlaceholder: 'Атрибут (например: Цвет)',
+    attrValuePlaceholder: 'Значение (например: Красный)',
+    addAttribute: 'Добавить атрибут', pickColor: 'Выбрать цвет',
     colName: 'Название', colSku: 'Артикул', colPrice: 'Цена', colStock: 'Остаток', colActive: 'Активен',
+  },
+
+  priceTiers: {
+    title: 'Ценовые пороги по количеству', addTier: 'Добавить порог',
+    minQty: 'Мин. кол-во', maxQty: 'Макс. кол-во', unitPrice: 'Цена за ед.',
+    openEnded: 'и более',
+    empty: 'Пороги ещё не заданы. Добавьте, чтобы задать цену по количеству.',
+    confirmDelete: 'Удалить этот ценовой порог?',
+    saved: 'Ценовой порог сохранён', deleted: 'Ценовой порог удалён',
+    invalid: 'Укажите минимальное количество и цену за единицу',
+    saveVariantFirst: 'Сначала сохраните вариант, чтобы добавить ценовые пороги',
   },
 
   orders: {
@@ -841,6 +865,23 @@ export default {
     logoUrl: 'URL логотипа', description: 'Описание',
     nameRequired: 'Название обязательно',
     empty: 'Брендов пока нет',
+    searchPlaceholder: 'Поиск брендов…',
+    noResults: 'Нет брендов по запросу «{{text}}»',
+    resultCount: 'Найдено: {{count}}',
+  },
+  colors: {
+    title: 'Цвета', totalCount: '{{count}} цветов',
+    add: 'Добавить цвет', edit: 'Редактировать цвет',
+    name: 'Название (TK)', nameRu: 'Название (RU)', nameEn: 'Название (EN)',
+    slug: 'Slug', slugAuto: 'Автоматически из названия', sortOrder: 'Порядок',
+    hex: 'Hex', colColor: 'Цвет',
+    nameRequired: 'Название обязательно',
+    hexInvalid: 'Введите hex-цвет, например #ef4444',
+    hexChangeHint: 'Изменение hex обновит все товары и варианты с этим цветом.',
+    empty: 'Цветов пока нет', none: 'Без цвета',
+    searchPlaceholder: 'Поиск цветов…',
+    filterLabel: 'Цвет', clearFilter: 'Сбросить',
+    filterByColor: 'Фильтр по цвету', selectedCount: '{{count}} цветов',
   },
   sizes: {
     title: 'Размеры', totalCount: '{{count}} размеров',

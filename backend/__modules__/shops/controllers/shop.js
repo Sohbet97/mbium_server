@@ -141,6 +141,26 @@ class ShopController {
         } catch (e) { next(e); }
     }
 
+    static async bulkUpdate(req, res, next) {
+        try {
+            const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(Boolean) : [];
+            if (!ids.length) throw ApiError.BadRequest("Dükanlary saýlaň");
+
+            const { is_active, verification_status, verification_note } = req.body || {};
+            if (is_active === undefined && verification_status === undefined) {
+                throw ApiError.BadRequest("Üýtgetjek meýdany saýlaň");
+            }
+
+            const [count] = await ShopService.bulkUpdate(ids, {
+                is_active,
+                verification_status,
+                verification_note,
+                verifiedBy: req.user?.id,
+            });
+            return res.status(200).json({ ok: true, count });
+        } catch (e) { next(e); }
+    }
+
     // ── Public self-service ───────────────────────────────────────────────────
 
     static async applyForShop(req, res, next) {

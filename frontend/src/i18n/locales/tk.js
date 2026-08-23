@@ -110,6 +110,11 @@ export default {
     verStatusNone: 'Berilmedi', verStatusPending: 'Barlagda',
     verStatusApproved: 'Tassyklanan', verStatusRejected: 'Red edilen',
     verifiedAt: 'Tassyklanan', verificationNote: 'Red etmek sebäbi',
+    selectAll: 'Ählisini saýla', bulkSelected: '{{count}} saýlandy',
+    bulkSetActive: 'Işjeň belle', bulkSetInactive: 'Işjeňsiz belle',
+    bulkVerify: 'Tassykla', bulkReject: 'Red et', bulkSetPending: 'Barlagda belle',
+    bulkClearSelection: 'Saýlamany aýyr',
+    bulkUpdateSuccess: '{{count}} dükan täzelendi',
   },
 
   categories: {
@@ -162,6 +167,11 @@ export default {
     modStatusPending: 'Garaşylýar', modStatusApproved: 'Tassyklandy', modStatusRejected: 'Ret edildi',
     moderatedAt: 'Barlanan wagty', moderationNote: 'Ret etme sebäbi',
     filterModeration: 'Ähli moderasiýa',
+    selectAll: 'Ählisini saýla', bulkSelected: '{{count}} saýlandy',
+    bulkSetActive: 'Işjeň belle', bulkSetInactive: 'Işjeňsiz belle',
+    bulkApprove: 'Tassykla', bulkReject: 'Ret et', bulkSetPending: 'Garaşylýar belle',
+    bulkClearSelection: 'Saýlamany aýyr',
+    bulkUpdateSuccess: '{{count}} haryt täzelendi',
   },
 
   collections: {
@@ -188,9 +198,23 @@ export default {
     title: 'Haryt görnüşleri', addVariant: 'Görnüş goş', editVariant: 'Görnüşi üýtgetmek',
     variantName: 'Görnüşiň ady', sku: 'SKU', barcode: 'Ştrikod',
     price: 'Bahasy (TMT)', compareAtPrice: 'Öňki bahasy (TMT)',
-    stock: 'Ammar', attributes: 'Häsiýetleri (JSON)', isActive: 'Işjeň',
+    stock: 'Ammar', attributes: 'Häsiýetleri', isActive: 'Işjeň',
     confirmDelete: 'Bu görnüşi aýyr?',
+    attrKeyPlaceholder: 'Häsiýet (mysal: Reňk)',
+    attrValuePlaceholder: 'Baha (mysal: Gyzyl)',
+    addAttribute: 'Häsiýet goş', pickColor: 'Reňk saýla',
     colName: 'Ady', colSku: 'SKU', colPrice: 'Bahasy', colStock: 'Ammar', colActive: 'Işjeň',
+  },
+
+  priceTiers: {
+    title: 'Sanyna görä baha basgançaklary', addTier: 'Basgançak goş',
+    minQty: 'Min sany', maxQty: 'Max sany', unitPrice: 'Birlik bahasy',
+    openEnded: 'we ýokary',
+    empty: 'Basgançak ýok. Sanyna görä baha bellemek üçin goşuň.',
+    confirmDelete: 'Bu baha basgançagyny aýyr?',
+    saved: 'Baha basgançagy ýatda saklandy', deleted: 'Baha basgançagy pozuldy',
+    invalid: 'Min sany we birlik bahasyny giriziň',
+    saveVariantFirst: 'Baha basgançagy goşmak üçin ilki görnüşi ýatda sakla',
   },
 
   orders: {
@@ -841,6 +865,23 @@ export default {
     logoUrl: 'Logo URL', description: 'Beýany',
     nameRequired: 'Ad hökmanydyr',
     empty: 'Heniz brend ýok',
+    searchPlaceholder: 'Brend gözle…',
+    noResults: '«{{text}}» boýunça brend tapylmady',
+    resultCount: '{{count}} tapyldy',
+  },
+  colors: {
+    title: 'Reňkler', totalCount: '{{count}} reňk',
+    add: 'Reňk goş', edit: 'Reňki üýtget',
+    name: 'Ady (TK)', nameRu: 'Ady (RU)', nameEn: 'Ady (EN)',
+    slug: 'Slug', slugAuto: 'Atdan awtomatiki', sortOrder: 'Tertip',
+    hex: 'Hex', colColor: 'Reňk',
+    nameRequired: 'Ad hökmanydyr',
+    hexInvalid: '#ef4444 görnüşinde hex reňk giriziň',
+    hexChangeHint: 'Hex üýtgedilse, bu reňki ulanýan ähli haryt we görnüş täzelenýär.',
+    empty: 'Heniz reňk ýok', none: 'Reňksiz',
+    searchPlaceholder: 'Reňk gözle…',
+    filterLabel: 'Reňk', clearFilter: 'Arassala',
+    filterByColor: 'Reňk boýunça süzgüç', selectedCount: '{{count}} reňk',
   },
   sizes: {
     title: 'Ölçegler', totalCount: '{{count}} ölçeg',

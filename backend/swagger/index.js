@@ -30,6 +30,7 @@ const kycPaths         = require("./paths/kyc");
 const reelsPaths          = require("./paths/reels");
 const buyerRequestsPaths  = require("./paths/buyer-requests");
 const sizesPaths          = require("./paths/sizes");
+const colorsPaths         = require("./paths/colors");
 const coinsPaths          = require("./paths/coins");
 const favoritesPaths      = require("./paths/favorites");
 const systemPaths         = require("./paths/system");
@@ -162,6 +163,7 @@ const swaggerSpec = {
         ...reelsPaths,
         ...buyerRequestsPaths,
         ...sizesPaths,
+        ...colorsPaths,
         ...coinsPaths,
         ...favoritesPaths,
         ...systemPaths,

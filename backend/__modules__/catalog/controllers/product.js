@@ -6,6 +6,7 @@ const { FUNCTIONS } = require("../../../utils/functions");
 const Validator = require("../../../__artefacts__/_validator_");
 const ProductService = require("../services/products");
 const productSchema = require("../validators/product.schema");
+const priceTierSchema = require("../validators/price-tier.schema");
 
 class ProductController {
     static async get(req, res, next) {
@@ -98,6 +99,27 @@ class ProductController {
         } catch (e) { next(e); }
     }
 
+    static async bulkUpdate(req, res, next) {
+        try {
+            const ids = Array.isArray(req.body?.ids) ? req.body.ids.filter(Boolean) : [];
+            if (!ids.length) throw ApiError.BadRequest("Harytlary saýlaň");
+
+            const { is_active, status, moderation_status, moderation_note } = req.body || {};
+            if (is_active === undefined && status === undefined && moderation_status === undefined) {
+                throw ApiError.BadRequest("Üýtgetjek meýdany saýlaň");
+            }
+
+            const [count] = await ProductService.bulkUpdate(ids, {
+                is_active,
+                status,
+                moderation_status,
+                moderation_note,
+                moderatedBy: req.user?.id,
+            });
+            return res.status(200).json({ ok: true, count });
+        } catch (e) { next(e); }
+    }
+
     static async restore(req, res, next) {
         try {
             const model = await db.Product.findOne({ where: { id: req.params.id }, paranoid: false });
@@ -165,7 +187,69 @@ class ProductController {
         } catch (e) { next(e); }
     }
 
-    static getFilter({ text, category_id, shop_id, brand_id, is_active, status, moderation_status, paranoid } = {}) {
+    // ── Price tiers ──────────────────────────────────────────────────────────────
+
+    static async addProductPriceTier(req, res, next) {
+        try {
+            const { isError, errors } = await Validator.validate(priceTierSchema, req.body);
+            if (isError) throw ApiError.BadRequest(null, errors);
+            const tier = await ProductService.addProductPriceTier(req.params.id, req.body);
+            return res.status(201).json({ model: tier });
+        } catch (e) { next(e); }
+    }
+
+    static async updateProductPriceTier(req, res, next) {
+        try {
+            const { isError, errors } = await Validator.validate(priceTierSchema, req.body);
+            if (isError) throw ApiError.BadRequest(null, errors);
+            const [count] = await ProductService.updateProductPriceTier(req.params.id, req.params.tierId, req.body);
+            if (!count) throw ApiError.NotFound("Baha basgançagy tapylmady");
+            return res.status(200).json({ ok: true });
+        } catch (e) { next(e); }
+    }
+
+    static async deleteProductPriceTier(req, res, next) {
+        try {
+            const count = await ProductService.deleteProductPriceTier(req.params.id, req.params.tierId);
+            if (!count) throw ApiError.NotFound("Baha basgançagy tapylmady");
+            return res.sendStatus(200);
+        } catch (e) { next(e); }
+    }
+
+    static async addVariantPriceTier(req, res, next) {
+        try {
+            const variant = await db.ProductVariant.findOne({ where: { id: req.params.variantId, product_id: req.params.id } });
+            if (!variant) throw ApiError.NotFound("Wariant tapylmady");
+            const { isError, errors } = await Validator.validate(priceTierSchema, req.body);
+            if (isError) throw ApiError.BadRequest(null, errors);
+            const tier = await ProductService.addVariantPriceTier(req.params.variantId, req.body);
+            return res.status(201).json({ model: tier });
+        } catch (e) { next(e); }
+    }
+
+    static async updateVariantPriceTier(req, res, next) {
+        try {
+            const variant = await db.ProductVariant.findOne({ where: { id: req.params.variantId, product_id: req.params.id } });
+            if (!variant) throw ApiError.NotFound("Wariant tapylmady");
+            const { isError, errors } = await Validator.validate(priceTierSchema, req.body);
+            if (isError) throw ApiError.BadRequest(null, errors);
+            const [count] = await ProductService.updateVariantPriceTier(req.params.variantId, req.params.tierId, req.body);
+            if (!count) throw ApiError.NotFound("Baha basgançagy tapylmady");
+            return res.status(200).json({ ok: true });
+        } catch (e) { next(e); }
+    }
+
+    static async deleteVariantPriceTier(req, res, next) {
+        try {
+            const variant = await db.ProductVariant.findOne({ where: { id: req.params.variantId, product_id: req.params.id } });
+            if (!variant) throw ApiError.NotFound("Wariant tapylmady");
+            const count = await ProductService.deleteVariantPriceTier(req.params.variantId, req.params.tierId);
+            if (!count) throw ApiError.NotFound("Baha basgançagy tapylmady");
+            return res.sendStatus(200);
+        } catch (e) { next(e); }
+    }
+
+    static getFilter({ text, category_id, shop_id, brand_id, color_hex, is_active, status, moderation_status, paranoid } = {}) {
         const filter = {};
         if (text) {
             const q = buildTsQuery(text)
@@ -188,6 +272,10 @@ class ProductController {
         if (category_id) filter.category_id = category_id;
         if (shop_id) filter.shop_id = shop_id;
         if (brand_id) filter.brand_id = brand_id;
+        // Appended to Op.and rather than assigned, so it survives alongside the
+        // text search above (which may already own Op.and or Op.or)
+        const color = ProductService.colorFilter(color_hex);
+        if (color) filter[Op.and] = [...(filter[Op.and] ?? []), color];
         if (is_active !== undefined) filter.is_active = is_active;
         if (status !== undefined) filter.status = status;
         if (moderation_status !== undefined) filter.moderation_status = moderation_status;

@@ -111,6 +111,11 @@ export default {
     verStatusNone: 'Not Submitted', verStatusPending: 'Pending Review',
     verStatusApproved: 'Verified', verStatusRejected: 'Rejected',
     verifiedAt: 'Verified At', verificationNote: 'Rejection Note',
+    selectAll: 'Select all', bulkSelected: '{{count}} selected',
+    bulkSetActive: 'Mark active', bulkSetInactive: 'Mark inactive',
+    bulkVerify: 'Verify', bulkReject: 'Reject', bulkSetPending: 'Mark pending',
+    bulkClearSelection: 'Clear selection',
+    bulkUpdateSuccess: '{{count}} shops updated',
   },
 
   categories: {
@@ -163,6 +168,11 @@ export default {
     modStatusPending: 'Pending Review', modStatusApproved: 'Approved', modStatusRejected: 'Rejected',
     moderatedAt: 'Reviewed At', moderationNote: 'Rejection Note',
     filterModeration: 'All Moderation',
+    selectAll: 'Select all', bulkSelected: '{{count}} selected',
+    bulkSetActive: 'Mark active', bulkSetInactive: 'Mark inactive',
+    bulkApprove: 'Approve', bulkReject: 'Reject', bulkSetPending: 'Mark pending',
+    bulkClearSelection: 'Clear selection',
+    bulkUpdateSuccess: '{{count}} products updated',
   },
 
   images: {
@@ -175,9 +185,23 @@ export default {
     title: 'Product Variants', addVariant: 'Add Variant', editVariant: 'Edit Variant',
     variantName: 'Variant Name', sku: 'SKU', barcode: 'Barcode',
     price: 'Price override (TMT)', compareAtPrice: 'Compare-at price (TMT)',
-    stock: 'Stock', attributes: 'Attributes (JSON)', isActive: 'Active',
+    stock: 'Stock', attributes: 'Attributes', isActive: 'Active',
     confirmDelete: 'Remove this variant?',
+    attrKeyPlaceholder: 'Attribute (e.g. Colour)',
+    attrValuePlaceholder: 'Value (e.g. Red)',
+    addAttribute: 'Add attribute', pickColor: 'Pick colour',
     colName: 'Name', colSku: 'SKU', colPrice: 'Price', colStock: 'Stock', colActive: 'Active',
+  },
+
+  priceTiers: {
+    title: 'Quantity Price Tiers', addTier: 'Add Tier',
+    minQty: 'Min qty', maxQty: 'Max qty', unitPrice: 'Unit price',
+    openEnded: 'and up',
+    empty: 'No tiers yet. Add one to price by quantity.',
+    confirmDelete: 'Remove this price tier?',
+    saved: 'Price tier saved', deleted: 'Price tier removed',
+    invalid: 'Enter a minimum quantity and unit price',
+    saveVariantFirst: 'Save the variant first to add price tiers',
   },
 
   orders: {
@@ -842,6 +866,23 @@ export default {
     logoUrl: 'Logo URL', description: 'Description',
     nameRequired: 'Name is required',
     empty: 'No brands yet',
+    searchPlaceholder: 'Search brands…',
+    noResults: 'No brands match “{{text}}”',
+    resultCount: '{{count}} found',
+  },
+  colors: {
+    title: 'Colors', totalCount: '{{count}} colors',
+    add: 'Add Color', edit: 'Edit Color',
+    name: 'Name (TK)', nameRu: 'Name (RU)', nameEn: 'Name (EN)',
+    slug: 'Slug', slugAuto: 'Auto from name', sortOrder: 'Sort order',
+    hex: 'Hex', colColor: 'Color',
+    nameRequired: 'Name is required',
+    hexInvalid: 'Enter a hex colour like #ef4444',
+    hexChangeHint: 'Changing the hex updates every product and variant using this colour.',
+    empty: 'No colors yet', none: 'No color',
+    searchPlaceholder: 'Search colors…',
+    filterLabel: 'Color', clearFilter: 'Clear',
+    filterByColor: 'Filter by color', selectedCount: '{{count}} colors',
   },
   sizes: {
     title: 'Sizes', totalCount: '{{count}} sizes',
