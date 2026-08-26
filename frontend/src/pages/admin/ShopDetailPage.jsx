@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog'
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
+import { BlueBadge } from '@/components/common/BlueBadge'
 import { AdminApi } from '@/lib/api'
 import { cn, absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -1420,7 +1421,10 @@ export default function ShopDetailPage() {
             )
           }
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold text-slate-900 dark:text-white truncate">{shop.name}</h2>
+            <h2 className="text-xl font-semibold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+              <span className="truncate">{shop.name}</span>
+              <BlueBadge show={shop.has_blue_badge} size={18} />
+            </h2>
             <p className="text-sm text-slate-400">
               {shop.type?.name ?? '—'}
               {shop.owner && ` · ${shop.owner.name} ${shop.owner.surname}`}

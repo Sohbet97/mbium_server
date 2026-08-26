@@ -14,6 +14,7 @@ import {
 import { AdminApi } from '@/lib/api'
 import { ColorSwatches } from '@/components/common/ColorSwatches'
 import { ColorFilter } from '@/components/common/ColorSelect'
+import { BlueBadge } from '@/components/common/BlueBadge'
 import { absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -28,6 +29,7 @@ export default function ProductsPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [shopFilter, setShopFilter] = useState(searchParams.get('shop_id') ?? '')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [moderationFilter, setModerationFilter] = useState('')
@@ -65,12 +67,17 @@ export default function ProductsPage() {
   }
 
   useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(id)
+  }, [search])
+
+  useEffect(() => {
     let cancelled = false
     async function load() {
       setLoading(true)
       try {
         const params = { page, limit }
-        if (search) params.search = search
+        if (debouncedSearch.trim()) params.text = debouncedSearch.trim()
         if (shopFilter) params.shop_id = shopFilter
         if (categoryFilter) params.category_id = categoryFilter
         if (moderationFilter !== '') params.moderation_status = moderationFilter
@@ -86,7 +93,7 @@ export default function ProductsPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [page, search, shopFilter, categoryFilter, moderationFilter, colorFilter, refreshKey])
+  }, [page, debouncedSearch, shopFilter, categoryFilter, moderationFilter, colorFilter, refreshKey])
 
   useEffect(() => {
     Promise.all([
@@ -94,8 +101,8 @@ export default function ProductsPage() {
       AdminApi.categories.getAll({ limit: 0 }),
       AdminApi.colors.getAll({ limit: 500, is_active: true }),
     ]).then(([shopsRes, catsRes, colorsRes]) => {
-      setShops(shopsRes.data?.data?.rows ?? shopsRes.data?.data?.shops ?? [])
-      setCategories(catsRes.data?.data?.rows ?? catsRes.data?.data?.categories ?? [])
+      setShops(shopsRes.data?.data ?? [])
+      setCategories(catsRes.data?.data ?? [])
       setColors(colorsRes.data?.data ?? [])
     }).catch(() => {})
   }, [])
@@ -254,7 +261,12 @@ export default function ProductsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">{p.shop?.name ?? '—'}</td>
+                    <td className="px-4 py-3 text-sm text-slate-600">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="truncate">{p.shop?.name ?? '—'}</span>
+                        <BlueBadge show={p.shop?.has_blue_badge} />
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{p.category?.name ?? '—'}</td>
                     <td className="px-4 py-3 text-sm font-medium text-slate-800">{p.price} {p.currency}</td>
                     <td className="px-4 py-3 text-sm text-slate-600">{p.stock}</td>

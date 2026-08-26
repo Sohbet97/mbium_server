@@ -106,7 +106,7 @@ function AppliesToSection({ form, set, shopId }) {
     setFetching(true)
     const req = applyType === 'CATEGORIES'
       ? AdminApi.categories.getAll({ limit: 0 })
-      : AdminApi.products.getAll({ limit: 50, ...(shopId ? { shop_id: shopId } : {}), ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}) })
+      : AdminApi.products.getAll({ limit: 50, ...(shopId ? { shop_id: shopId } : {}), ...(debouncedSearch.trim() ? { text: debouncedSearch.trim() } : {}) })
     req
       .then(({ data }) => setItems(data.data ?? []))
       .catch(() => setItems([]))

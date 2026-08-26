@@ -14,10 +14,12 @@ router.get('/', async (req, res, next) => {
     try {
         const { limit, sort, skip } = FUNCTIONS.getQueryParams(req);
         const filter = { shop_id: req.shop.id };
-        if (req.query.text) {
+        // `search` is accepted as an alias of `text`
+        const term = req.query.text ?? req.query.search;
+        if (term) {
             filter[Op.or] = [
-                { name:    { [Op.iLike]: `%${req.query.text}%` } },
-                { name_ru: { [Op.iLike]: `%${req.query.text}%` } },
+                { name:    { [Op.iLike]: `%${term}%` } },
+                { name_ru: { [Op.iLike]: `%${term}%` } },
             ];
         }
         if (req.query.category_id) filter.category_id = req.query.category_id;

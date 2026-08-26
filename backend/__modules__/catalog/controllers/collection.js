@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const ApiError = require("../../../exceptions/api-error");
 const { FUNCTIONS } = require("../../../utils/functions");
 const Validator = require("../../../__artefacts__/_validator_");
@@ -9,6 +10,15 @@ class CollectionController {
         try {
             const { limit, skip } = FUNCTIONS.getQueryParams(req);
             const filter = {};
+            const term = req.query.text ?? req.query.search;
+            if (term) {
+                filter[Op.or] = [
+                    { name:     { [Op.iLike]: `%${term}%` } },
+                    { name_ru:  { [Op.iLike]: `%${term}%` } },
+                    { name_eng: { [Op.iLike]: `%${term}%` } },
+                    { handle:   { [Op.iLike]: `%${term}%` } },
+                ];
+            }
             if (req.query.is_active !== undefined) filter.is_active = req.query.is_active === "true";
             const [data, count] = await Promise.all([
                 CollectionService.get(filter, limit, skip),

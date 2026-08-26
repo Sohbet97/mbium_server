@@ -38,6 +38,13 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: 0
         },
+        sell_when_out_of_stock: {
+            // Per-variant override; the product-level flag still allows every
+            // variant, so the effective value is product OR variant.
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false
+        },
         attributes: {
             // Free-form key/value pairs for anything without its own column
             // (storage, material…). Colour used to live here too — clients still

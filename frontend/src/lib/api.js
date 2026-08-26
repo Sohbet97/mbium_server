@@ -148,6 +148,9 @@ export class AdminApi {
     markAsRead: (id)     => http.patch(a(`${PATHS.NOTIFICATIONS}/${id}/read`)),
     markAllAsRead: ()    => http.patch(a(`${PATHS.NOTIFICATIONS}/read-all`)),
   }
+  static pendingCounts = {
+    get: () => http.get(a('/pending-counts')),
+  }
   static payouts = {
     getBalances:  (params)          => http.get(a('/payouts/balances'), { params }),
     getRequests:  (params)          => http.get(a('/payouts/requests'), { params }),
@@ -388,6 +391,9 @@ const s = (path) => `${SELLER}${path}`
 export class SellerApi {
   static dashboard = {
     get: () => http.get(s('/dashboard')),
+  }
+  static pendingCounts = {
+    get: () => http.get(s('/pending-counts')),
   }
   static categories = {
     getAll: (params) => http.get(s('/categories'), { params }),

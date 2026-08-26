@@ -22,6 +22,7 @@ export default function CollectionsPage() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const limit = 20
@@ -29,12 +30,17 @@ export default function CollectionsPage() {
   function refresh() { setRefreshKey((k) => k + 1) }
 
   useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(id)
+  }, [search])
+
+  useEffect(() => {
     let cancelled = false
     async function load() {
       setLoading(true)
       try {
         const params = { page, limit }
-        if (search) params.search = search
+        if (debouncedSearch.trim()) params.text = debouncedSearch.trim()
         const { data } = await AdminApi.collections.getAll(params)
         if (!cancelled) {
           setCollections(data?.data ?? [])
@@ -45,7 +51,7 @@ export default function CollectionsPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [page, search, refreshKey])
+  }, [page, debouncedSearch, refreshKey])
 
   async function handleDelete(col) {
     if (!window.confirm(t('collections.confirmDelete', { name: col.name }))) return

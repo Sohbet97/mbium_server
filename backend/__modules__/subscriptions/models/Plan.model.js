@@ -23,6 +23,7 @@ module.exports = (sequelize) => {
         oem_odm_support:      { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
         revenue_share_user:   { type: DataTypes.SMALLINT, allowNull: false, defaultValue: 0 },
         push_notif_monthly:   { type: DataTypes.SMALLINT, allowNull: false, defaultValue: 0 },
+        reel_monthly:         { type: DataTypes.INTEGER, allowNull: true },
         is_active:            { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
         sort_order:           { type: DataTypes.SMALLINT, allowNull: false, defaultValue: 0 },
     }, {

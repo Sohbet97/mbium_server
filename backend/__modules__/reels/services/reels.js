@@ -6,6 +6,11 @@ const THUMB_INCLUDE = { model: db.Media, as: 'thumbnail', attributes: ['id', 'ur
 const SHOP_INCLUDE  = { model: db.Shop,  as: 'shop',      attributes: ['id', 'name', 'logo'] }
 const PROD_INCLUDE  = { model: db.Product, as: 'product', attributes: ['id', 'name', 'price', 'currency'], required: false }
 
+function shopIncludeFor(cityId, attributes) {
+    if (!cityId) return attributes ? { ...SHOP_INCLUDE, attributes } : SHOP_INCLUDE
+    return { ...SHOP_INCLUDE, where: { city_id: cityId }, ...(attributes ? { attributes } : {}) }
+}
+
 const SORT_MAP = {
     newest:  [['createdAt',  'DESC']],
     oldest:  [['createdAt',  'ASC']],
@@ -17,18 +22,19 @@ function resolveSort(param) {
 }
 
 class ReelService {
-    static async get(filter = {}, limit = 20, skip = 0, sort = 'newest') {
+    static async get(filter = {}, limit = 20, skip = 0, sort = 'newest', cityId = null) {
         return db.Reel.findAll({
             where: filter,
             limit,
             offset: skip,
             order: resolveSort(sort),
-            include: [VIDEO_INCLUDE, THUMB_INCLUDE, SHOP_INCLUDE, PROD_INCLUDE],
+            include: [VIDEO_INCLUDE, THUMB_INCLUDE, shopIncludeFor(cityId), PROD_INCLUDE],
         })
     }
 
-    static async getCount(filter = {}) {
-        return db.Reel.count({ where: filter })
+    static async getCount(filter = {}, cityId = null) {
+        if (!cityId) return db.Reel.count({ where: filter })
+        return db.Reel.count({ where: filter, include: [shopIncludeFor(cityId, [])] })
     }
 
     static async getById(id, paranoid = true) {
@@ -51,8 +57,19 @@ class ReelService {
         )
     }
 
-    static async incrementViews(id) {
-        return db.Reel.increment('view_count', { where: { id } })
+    static async recordView(reelId, userId) {
+        if (!userId) return db.Reel.increment('view_count', { where: { id: reelId } })
+
+        const [, created] = await db.ReelView.findOrCreate({
+            where: { user_id: userId, reel_id: reelId },
+            defaults: { user_id: userId, reel_id: reelId },
+        })
+        if (created) await db.Reel.increment('view_count', { where: { id: reelId } })
+        return { created }
+    }
+
+    static async incrementShares(id) {
+        return db.Reel.increment('share_count', { where: { id } })
     }
 
     static async delete(id, force = false) {

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Plus, Search, RefreshCw, MoreHorizontal, Star, Store, X, Check, Ban } from 'lucide-react'
+import { BlueBadge } from '@/components/common/BlueBadge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -482,7 +483,10 @@ export default function ShopsPage() {
                           )
                         }
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{shop.name}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate flex items-center gap-1">
+                            <span className="truncate">{shop.name}</span>
+                            <BlueBadge show={shop.has_blue_badge} />
+                          </p>
                           <p className="text-xs text-slate-400 dark:text-white/[0.8]">{shop.phone || shop.email || '—'}</p>
                         </div>
                       </div>

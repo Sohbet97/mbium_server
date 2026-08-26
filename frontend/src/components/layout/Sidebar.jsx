@@ -9,23 +9,25 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
 import { Permissions, hasPerm } from '@/lib/permissions'
+import { usePendingCounts } from '@/store/pendingCounts'
 
 export function Sidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth()
   const { t } = useTranslation()
   const [catalogOpen, setCatalogOpen] = useState(true)
+  const { counts: pendingCounts } = usePendingCounts() ?? {}
 
   const topNav = [
     { to: '/admin', label: t('nav.dashboard'), icon: LayoutDashboard, end: true, perm: null },
     { to: '/admin/users', label: t('nav.users'), icon: Users, perm: Permissions.USER_GET },
     { to: '/admin/shops', label: t('nav.shops'), icon: Store, perm: Permissions.SHOP_GET },
-    { to: '/admin/shop-applications', label: t('nav.shopApplications', 'Dükan arzalary'), icon: ClipboardList, perm: Permissions.SHOP_GET },
-    { to: '/admin/shop-type-requests', label: t('nav.shopTypeRequests'), icon: Tag, perm: null },
+    { to: '/admin/shop-applications', label: t('nav.shopApplications', 'Dükan arzalary'), icon: ClipboardList, perm: Permissions.SHOP_GET, countKey: 'shopApplications' },
+    { to: '/admin/shop-type-requests', label: t('nav.shopTypeRequests'), icon: Tag, perm: null, countKey: 'shopTypeRequests' },
     { to: '/admin/shop-types', label: t('nav.shopTypes'), icon: Store, perm: null },
     { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart, perm: Permissions.ORDER_GET },
     { to: '/admin/reviews', label: t('nav.reviews'), icon: Star, perm: Permissions.REVIEW_GET },
     { to: '/admin/discounts', label: t('nav.discounts'), icon: Percent, perm: Permissions.DISCOUNT_GET },
-    { to: '/admin/payouts', label: t('nav.payouts'), icon: CreditCard, perm: Permissions.PAYOUT_GET },
+    { to: '/admin/payouts', label: t('nav.payouts'), icon: CreditCard, perm: Permissions.PAYOUT_GET, countKey: 'payoutRequests' },
     { to: '/admin/banners', label: t('nav.banners'), icon: LayoutTemplate, perm: Permissions.BANNER_GET },
     { to: '/admin/ai-recommendations', label: t('nav.aiRecommendations'),   icon: Bot, perm: Permissions.AI_GET },
     { to: '/admin/push-notifications', label: t('nav.pushNotifications'),   icon: Bell, perm: Permissions.PUSH_NOTIF_GET },
@@ -36,12 +38,12 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/gifts',              label: t('nav.gifts', 'Gifts'), icon: Gift, perm: Permissions.GIFT_TYPE_GET },
     { to: '/admin/favorites',          label: t('nav.favorites', 'Favorites'), icon: Heart, perm: Permissions.PRODUCT_GET },
     { to: '/admin/comments',           label: t('nav.comments', 'Comments'),   icon: MessageSquare, perm: Permissions.COMMENT_GET },
-    { to: '/admin/kyc',                label: t('nav.kyc', 'KYC Docs'),        icon: FileCheck, perm: Permissions.KYC_GET },
+    { to: '/admin/kyc',                label: t('nav.kyc', 'KYC Docs'),        icon: FileCheck, perm: Permissions.KYC_GET, countKey: 'kyc' },
   ].filter((item) => hasPerm(user, item.perm))
 
   const catalogNav = [
     { to: '/admin/catalog/categories', label: t('nav.categories'), icon: Tag, perm: Permissions.CATEGORY_GET },
-    { to: '/admin/catalog/products', label: t('nav.products'), icon: Package, perm: Permissions.PRODUCT_GET },
+    { to: '/admin/catalog/products', label: t('nav.products'), icon: Package, perm: Permissions.PRODUCT_GET, countKey: 'products' },
     { to: '/admin/catalog/collections', label: t('nav.collections'), icon: Layers, perm: Permissions.COLLECTION_GET },
     { to: '/admin/catalog/tags',        label: t('productTags.title', 'Tags'),        icon: Tag, perm: Permissions.PRODUCT_GET },
     { to: '/admin/catalog/brands',     label: t('nav.brands', 'Brands'),             icon: Award, perm: Permissions.BRAND_GET },
@@ -49,7 +51,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/catalog/colors',     label: t('nav.colors', 'Colors'),             icon: Palette, perm: Permissions.COLOR_GET },
     { to: '/admin/catalog/delivery-types', label: t('nav.deliveryTypes', 'Delivery Types'), icon: PackageCheck, perm: Permissions.DELIVERY_TYPE_GET },
     { to: '/admin/catalog/suppliers',  label: t('nav.suppliers', 'Suppliers'),        icon: Factory, perm: Permissions.SUPPLIER_GET },
-    { to: '/admin/catalog/reels',      label: t('nav.reels', 'Reels'),                icon: Clapperboard, perm: Permissions.REEL_GET },
+    { to: '/admin/catalog/reels',      label: t('nav.reels', 'Reels'),                icon: Clapperboard, perm: Permissions.REEL_GET, countKey: 'reels' },
     { to: '/admin/media', label: t('nav.media'), icon: Images, perm: Permissions.MEDIA_GET },
   ].filter((item) => hasPerm(user, item.perm))
 
@@ -69,18 +71,28 @@ export function Sidebar({ collapsed, onToggle }) {
   const itemInactive = 'dark:text-[#a0a0ab] text-[#6d7175] dark:hover:bg-white/[0.08] hover:bg-black/[0.06] dark:hover:text-white hover:text-[#202223]'
   const itemActive = 'dark:bg-white/[0.12] bg-black/[0.07] dark:text-white text-[#202223] font-semibold'
 
-  const navLink = (to, label, icon, end) => (
+  const navLink = (to, label, icon, end, count) => (
     <NavLink
       key={to} to={to} end={end}
-      className={({ isActive }) => cn(itemBase, isActive ? itemActive : itemInactive)}
+      className={({ isActive }) => cn(itemBase, 'relative', isActive ? itemActive : itemInactive)}
       title={collapsed ? label : undefined}
     >
       {({ isActive }) => {
         const Icon = icon
         return (
           <>
-            <Icon className={cn('h-[18px] w-[18px] shrink-0', isActive ? 'opacity-100' : 'opacity-60')} />
-            {!collapsed && <span>{label}</span>}
+            <span className="relative shrink-0">
+              <Icon className={cn('h-[18px] w-[18px]', isActive ? 'opacity-100' : 'opacity-60')} />
+              {collapsed && count > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500" />
+              )}
+            </span>
+            {!collapsed && <span className="flex-1">{label}</span>}
+            {!collapsed && count > 0 && (
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {count > 99 ? '99+' : count}
+              </span>
+            )}
           </>
         )
       }}
@@ -125,7 +137,7 @@ export function Sidebar({ collapsed, onToggle }) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
-        {topNav.map(({ to, label, icon, end }) => navLink(to, label, icon, end))}
+        {topNav.map(({ to, label, icon, end, countKey }) => navLink(to, label, icon, end, pendingCounts?.[countKey]))}
 
         {/* Catalog section */}
         {catalogNav.length > 0 && (
@@ -147,7 +159,7 @@ export function Sidebar({ collapsed, onToggle }) {
           )}
           {(catalogOpen || collapsed) && (
             <div className={cn('space-y-0.5 mt-0.5', !collapsed && 'pl-1')}>
-              {catalogNav.map(({ to, label, icon }) => navLink(to, label, icon))}
+              {catalogNav.map(({ to, label, icon, countKey }) => navLink(to, label, icon, undefined, pendingCounts?.[countKey]))}
             </div>
           )}
         </div>

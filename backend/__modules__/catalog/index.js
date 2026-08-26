@@ -24,6 +24,7 @@ catalogModuleRouter.use(
         GET: Permissions.PRODUCT_GET,
         POST: Permissions.PRODUCT_POST,
         PUT: Permissions.PRODUCT_PUT,
+        PATCH: Permissions.PRODUCT_PUT,
         DELETE: Permissions.PRODUCT_DELETE,
     }),
     productRouter

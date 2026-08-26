@@ -7,6 +7,7 @@ const ProductService  = require('../../__modules__/catalog/services/products');
 const CategoryService = require('../../__modules__/catalog/services/categories');
 const CollectionService = require('../../__modules__/catalog/services/collections');
 const ShopService     = require('../../__modules__/shops/services/shops');
+const SHOP_CONSTANTS  = require('../../__modules__/shops/utils/constants');
 const BrandService    = require('../../__modules__/brands/services/BrandService');
 const SizeService     = require('../../__modules__/sizes/services/SizeService');
 const ColorService    = require('../../__modules__/colors/services/ColorService');
@@ -33,6 +34,11 @@ const BUYER_SORT_MAP = {
 function resolveBuyerSort(param) {
     const base = BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
     return [['turbo_active', 'DESC'], ['turbo_boosted_at', 'DESC'], ...base];
+}
+
+// Turbo-boosted shops sort first, then fall back to the default shop order.
+function resolveShopSort() {
+    return [['turbo_active', 'DESC'], ['turbo_boosted_at', 'DESC'], ...SHOP_CONSTANTS.DEFAULT_SORT];
 }
 
 // ── FTS text-filter helpers ───────────────────────────────────────────────────
@@ -152,7 +158,7 @@ router.get('/shops', async (req, res, next) => {
         if (req.query.text) filter[Op.and] = [shopTextFilter(req.query.text)]
         if (req.query.type_id) filter.type_id = req.query.type_id;
         const [data, count] = await Promise.all([
-            ShopService.get(filter, limit, undefined, skip),
+            ShopService.get(filter, limit, resolveShopSort(), skip),
             ShopService.getCount(filter),
         ]);
         return res.status(200).json({ data, count });

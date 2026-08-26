@@ -94,8 +94,9 @@ cron.schedule("*/15 * * * *", () => {
     .catch((e) => console.error("[cron] release pending balances failed:", e.message));
 });
 
-// Refresh due Turbo boosts' sort-priority timestamp and expire boosts past their 7-day
-// window — runs every 5 minutes so hourly-refresh tiers (Turbo 1) stay reasonably fresh
+// Refresh due Turbo boosts' (product and shop) sort-priority timestamp and expire boosts
+// past their 7-day window — runs every 5 minutes so hourly-refresh tiers (Turbo 1) stay
+// reasonably fresh
 cron.schedule("*/5 * * * *", () => {
   const TurboService = require("../__modules__/turbo/services/TurboService");
   TurboService.tick()

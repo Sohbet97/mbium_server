@@ -18,6 +18,7 @@ const EMPTY_VARIANT = {
   name: '', price: '', compare_at_price: '',
   stock: '0', sku: '', barcode: '',
   is_active: true, attributes: {}, color_hex: '',
+  sell_when_out_of_stock: false,
 }
 
 // ── Per-variant size/stock rows ───────────────────────────────────────────────
@@ -381,6 +382,7 @@ export default function SellerProductVariantPage() {
             is_active:        vr.is_active         ?? true,
             attributes:       (typeof vr.attributes === 'object' ? vr.attributes : {}) ?? {},
             color_hex:        vr.color_hex        ?? '',
+            sell_when_out_of_stock: vr.sell_when_out_of_stock ?? false,
           })
         }
       })
@@ -405,6 +407,7 @@ export default function SellerProductVariantPage() {
         is_active:        form.is_active,
         attributes:       form.attributes || {},
         color_hex:        form.color_hex || null,
+        sell_when_out_of_stock: form.sell_when_out_of_stock,
       }
       if (isCreate) {
         const { data } = await SellerApi.products.variants.create(id, payload)
@@ -509,6 +512,17 @@ export default function SellerProductVariantPage() {
               </div>
 
               <Toggle label="Işjeň" checked={form.is_active} onChange={(v) => set('is_active', v)} />
+
+              <div>
+                <Toggle
+                  label="Ammar gutaranda sat"
+                  checked={form.sell_when_out_of_stock}
+                  onChange={(v) => set('sell_when_out_of_stock', v)}
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Diňe şu görnüş üçin. Harydyň özünde açyk bolsa, ähli görnüşler üçin hereket edýär.
+                </p>
+              </div>
             </CardContent>
           </Card>
 

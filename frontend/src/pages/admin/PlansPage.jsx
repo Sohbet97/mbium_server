@@ -67,7 +67,7 @@ const EMPTY_FORM = {
   live_stream_mode: 0,
   ads_dashboard: false, coin_earn: false, coin_earn_priority: false,
   verified_badge: false, virtual_tour: false, oem_odm_support: false,
-  revenue_share_user: 0, push_notif_monthly: 0,
+  revenue_share_user: 0, push_notif_monthly: 0, reel_monthly: '',
   is_active: true, sort_order: 0,
 }
 
@@ -94,6 +94,7 @@ function buildForm(plan) {
     oem_odm_support: plan.oem_odm_support ?? false,
     revenue_share_user: plan.revenue_share_user ?? 0,
     push_notif_monthly: plan.push_notif_monthly ?? 0,
+    reel_monthly: plan.reel_monthly ?? '',
     is_active: plan.is_active ?? true,
     sort_order: plan.sort_order ?? 0,
   }
@@ -127,6 +128,7 @@ function PlanModal({ open, plan, onClose, onSaved }) {
         live_stream_mode: Number(form.live_stream_mode),
         revenue_share_user: Number(form.revenue_share_user),
         push_notif_monthly: Number(form.push_notif_monthly),
+        reel_monthly: form.reel_monthly !== '' ? Number(form.reel_monthly) : null,
         sort_order: Number(form.sort_order),
       }
       if (plan) {
@@ -209,12 +211,15 @@ function PlanModal({ open, plan, onClose, onSaved }) {
             </FormField>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <FormField label={t('plans.revenueShareUser')}>
               <Input type="number" min={0} max={100} value={form.revenue_share_user} onChange={(e) => set('revenue_share_user', e.target.value)} />
             </FormField>
             <FormField label={t('plans.pushNotifMonthly')}>
               <Input type="number" min={0} value={form.push_notif_monthly} onChange={(e) => set('push_notif_monthly', e.target.value)} />
+            </FormField>
+            <FormField label={t('plans.reelMonthly')}>
+              <Input type="number" min={0} value={form.reel_monthly} onChange={(e) => set('reel_monthly', e.target.value)} placeholder={t('plans.unlimited')} />
             </FormField>
           </div>
 
@@ -314,6 +319,7 @@ function PlanCard({ plan, onEdit, onDelete }) {
         <Feat label={t('plans.liveStream')} value={t(liveLabel)} />
         <Feat label={t('plans.revenueShareUser')} value={`${plan.revenue_share_user}%`} />
         <Feat label={t('plans.pushNotifMonthly')} value={plan.push_notif_monthly} />
+        <Feat label={t('plans.reelMonthly')} value={plan.reel_monthly == null ? t('plans.unlimited') : plan.reel_monthly} />
         <Feat label={t('plans.adsDashboard')}     isBoolean value={plan.ads_dashboard} />
         <Feat label={t('plans.coinEarn')}          isBoolean value={plan.coin_earn} />
         <Feat label={t('plans.coinEarnPriority')}  isBoolean value={plan.coin_earn_priority} />

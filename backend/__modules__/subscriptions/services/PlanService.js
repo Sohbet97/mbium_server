@@ -33,6 +33,7 @@ class PlanService {
             oem_odm_support:      data.oem_odm_support ?? false,
             revenue_share_user:   data.revenue_share_user ?? 0,
             push_notif_monthly:   data.push_notif_monthly ?? 0,
+            reel_monthly:         data.reel_monthly ?? null,
             is_active:            data.is_active ?? true,
             sort_order:           data.sort_order ?? 0,
         });
@@ -46,7 +47,7 @@ class PlanService {
             "auction_per_week", "live_stream_mode",
             "ads_dashboard", "coin_earn", "coin_earn_priority",
             "verified_badge", "virtual_tour", "oem_odm_support",
-            "revenue_share_user", "push_notif_monthly", "is_active", "sort_order",
+            "revenue_share_user", "push_notif_monthly", "reel_monthly", "is_active", "sort_order",
         ];
         const patch = {};
         fields.forEach((f) => { if (data[f] !== undefined) patch[f] = data[f]; });

@@ -53,3 +53,11 @@
  documentation/modules/live-stream.md — göni ýaýlym (plans.live_stream_mode уже есть, хук квоты оставить нереализованным)
  documentation/shared/geography.md — etrap/oba: shops без district_id/village_id, delivery_addresses без village_id, /buyer/locations только regions+cities
 Порядок: 1 → 2 → 6 → 3 → 4 → 5 (нужна миграция) → 7 → 8
+
+[*] Review + comment get gelenok
+[*] Haryt ozune stokda dynsada satmaly toggle gerek
+[*] Shops turbo mumkinchiligi
+[*] Reels share/gorulen sany, yerleshyan yeri boyuncha filter etmek mumkinchiligi
+[] Buyer AI agent admin zatlaryny aytmazlyk
+[] OBS logikasyny review etmeli klient ozi baha teklip edyar shonga gora alysh-berish edip bilmek mumiinchiligi
+- 

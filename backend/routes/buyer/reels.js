@@ -11,10 +11,11 @@ router.get('/', async (req, res, next) => {
         const { limit, skip } = FUNCTIONS.getQueryParams(req)
         const filter = { is_active: true, moderation_status: 1 }
         if (req.query.shop_id) filter.shop_id = req.query.shop_id
+        const cityId = req.query.city_id || null
 
         const [data, count] = await Promise.all([
-            ReelService.get(filter, limit, skip, req.query.sort),
-            ReelService.getCount(filter),
+            ReelService.get(filter, limit, skip, req.query.sort, cityId),
+            ReelService.getCount(filter, cityId),
         ])
         return res.json({ data, count })
     } catch (e) { next(e) }
@@ -34,8 +35,18 @@ router.get('/:id', async (req, res, next) => {
     try {
         const model = await ReelService.getById(req.params.id)
         if (!model || !model.is_active || model.moderation_status !== 1) return res.status(404).json({ message: 'Reel tapylmady' })
-        ReelService.incrementViews(model.id).catch(() => {})
+        ReelService.recordView(model.id, req.user?.id).catch(() => {})
         return res.json({ model })
+    } catch (e) { next(e) }
+})
+
+// POST /buyer/reels/:id/share  — record a share
+router.post('/:id/share', async (req, res, next) => {
+    try {
+        const model = await ReelService.getById(req.params.id)
+        if (!model || !model.is_active || model.moderation_status !== 1) return res.status(404).json({ message: 'Reel tapylmady' })
+        ReelService.incrementShares(model.id).catch(() => {})
+        return res.json({ share_count: model.share_count + 1 })
     } catch (e) { next(e) }
 })
 

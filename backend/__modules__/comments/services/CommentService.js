@@ -10,7 +10,7 @@ class CommentService {
             base.push({
                 model:   db.Comment,
                 as:      'replies',
-                where:   { status: 'approved', parent_id: { [Op.ne]: null } },
+                where:   { status: 'approved' },
                 required: false,
                 include: [{ model: db.User, as: 'author', attributes: AUTHOR_ATTRS }],
             })
@@ -21,8 +21,10 @@ class CommentService {
     // Buyer: approved root-level comments for a product (with their approved replies)
     static async getApproved(productId, { limit = 20, skip = 0 } = {}) {
         return db.Comment.findAndCountAll({
-            where:   { product_id: productId, status: 'approved', parent_id: null },
+            // Root comments: parent_id is NULL, but legacy rows stored 0 for "no parent"
+            where:   { product_id: productId, status: 'approved', parent_id: { [Op.or]: [null, 0] } },
             include: this._include(true),
+            distinct: true,
             order:   [['createdAt', 'DESC']],
             limit,
             offset:  skip,

@@ -16,9 +16,7 @@ import { SearchSelect } from '@/components/common/SearchSelect'
 import { PriceTierManager } from '@/components/common/PriceTierManager'
 import { useAuth } from '@/store/auth'
 import { isAdmin } from '@/lib/access'
-
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
-function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
+import { absUrl as imgUrl } from '@/lib/utils'
 
 const EMPTY_FORM = {
   name: '', name_ru: '', name_eng: '',
@@ -30,6 +28,7 @@ const EMPTY_FORM = {
   delivery_type_ids: [],
   price: '', compare_at_price: '', cost_price: '', currency: 'TMT',
   is_physical: true, weight: '',
+  sell_when_out_of_stock: false,
   tags: '', handle: '',
   seo_title: '', seo_description: '',
   is_active: true,
@@ -143,6 +142,7 @@ export default function SellerProductFormPage() {
           currency:         p.currency         ?? 'TMT',
           is_physical:      p.is_physical      ?? true,
           weight:           p.weight           ?? '',
+          sell_when_out_of_stock: p.sell_when_out_of_stock ?? false,
           tags:             (p.tags ?? []).join(', '),
           handle:           p.handle           ?? '',
           seo_title:        p.seo_title        ?? '',
@@ -375,6 +375,19 @@ export default function SellerProductFormPage() {
             </CardContent>
           </Card>
         )}
+
+        {/* ── Inventory ──────────────────────────────────────────────────── */}
+        <Card>
+          <CardHeader><CardTitle>Ammar</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <Toggle
+              label="Ammar gutaranda sat"
+              desc="Ammar nola ýetende hem sargyt al"
+              checked={form.sell_when_out_of_stock}
+              onChange={(v) => set('sell_when_out_of_stock', v)}
+            />
+          </CardContent>
+        </Card>
 
         {/* ── Shipping ───────────────────────────────────────────────────── */}
         <Card>

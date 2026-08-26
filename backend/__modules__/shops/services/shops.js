@@ -8,8 +8,16 @@ const PushService         = require("../../../services/push");
 const ApiError             = require("../../../exceptions/api-error");
 
 class ShopService {
+  // A shop's blue check is a plan grant (plans.verified_badge) OR the KYC
+  // is_verified flag — callers shouldn't have to combine the two themselves.
+  static _withBlueBadge(shop) {
+    if (!shop) return shop;
+    shop.setDataValue("has_blue_badge", Boolean(shop.plan?.verified_badge || shop.is_verified));
+    return shop;
+  }
+
   static async get(filter = {}, limit = undefined, order = SHOP_CONSTANTS.DEFAULT_SORT, offset = 0, paranoid = true) {
-    return db.Shop.findAll({
+    const shops = await db.Shop.findAll({
       where: filter,
       offset,
       order,
@@ -18,8 +26,10 @@ class ShopService {
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number"], required: false },
+        ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
       ],
     });
+    return shops.map((shop) => this._withBlueBadge(shop));
   }
 
   static async getForFilter() {
@@ -32,7 +42,7 @@ class ShopService {
 
   static async getById(id, paranoid = true) {
     if (!id) return;
-    return db.Shop.findOne({
+    const shop = await db.Shop.findOne({
       where: { id },
       paranoid,
       include: [
@@ -41,32 +51,38 @@ class ShopService {
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
         ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
         ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
+        ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
       ],
     });
+    return this._withBlueBadge(shop);
   }
 
   static async getByOwner(userId) {
     if (!userId) return null;
-    return db.Shop.findOne({
+    const shop = await db.Shop.findOne({
       where: { owner_id: userId },
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
         ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
         ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
+        ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
       ],
     });
+    return this._withBlueBadge(shop);
   }
 
   static async getAllByOwner(userId) {
     if (!userId) return [];
-    return db.Shop.findAll({
+    const shops = await db.Shop.findAll({
       where: { owner_id: userId },
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name"] },
+        ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
       ],
       order: [["is_active", "DESC"], ["createdAt", "ASC"]],
     });
+    return shops.map((shop) => this._withBlueBadge(shop));
   }
 
   static async create(req) {

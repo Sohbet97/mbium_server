@@ -5,6 +5,7 @@ const ApiError = require("../../../exceptions/api-error");
 const PayoutService = require("../../payouts/services/payouts");
 const CoinService   = require("../../coins/services/CoinService");
 const PushService   = require("../../../services/push");
+const NotificationService = require("../../../services/notifications");
 const DiscountService = require("../../discounts/services/discounts");
 const ProductService = require("../../catalog/services/products");
 
@@ -154,7 +155,7 @@ class OrderService {
             }
 
             const effectiveStock = variantSize ? variantSize.stock : variant ? variant.stock : product.stock;
-            if (!product.sell_when_out_of_stock && effectiveStock < item.quantity) {
+            if (!ProductService.canSellOutOfStock(product, variant) && effectiveStock < item.quantity) {
                 throw ApiError.BadRequest(
                     `"${product.name}" üçin ýeterlik stok ýok (bar: ${effectiveStock}, gerek: ${item.quantity})`
                 );
@@ -220,7 +221,7 @@ class OrderService {
         return order;
     }
 
-    static async updateStatus(orderId, status, note, changedBy) {
+    static async updateStatus(orderId, status, note, changedBy, io) {
         await db.Order.update({ status }, { where: { id: orderId } });
         await db.OrderStatusHistory.create({ order_id: orderId, status, note, changed_by: changedBy });
         if (status === STATUS_PROCESSING) {
@@ -234,12 +235,26 @@ class OrderService {
                 await this._applyCommission(orderId);
                 await CoinService.awardForOrder(order);
                 this._incrementSoldCount(orderId).catch(() => {});
+                this._notifySaleCompleted(order, io).catch(() => {});
             }
             if (status === STATUS_CANCELLED || status === STATUS_REFUNDED) {
                 await PayoutService.reverseOrderCredit(orderId).catch(() => {});
             }
             PushService.onOrderStatusChanged(orderId, order.user_id, order.shop_id, status).catch(() => {});
         }
+    }
+
+    static async _notifySaleCompleted(order, io) {
+        const shop = await db.Shop.findByPk(order.shop_id, { attributes: ["id", "owner_id", "name"] });
+        if (!shop) return;
+        await NotificationService.createForSaleCompleted(order, shop, io);
+        const amount = Number(order.total_price).toFixed(2);
+        await PushService.notifyShopOwner(
+            shop.id,
+            'Satuw tamamlandy 💰',
+            `Sargyt #${order.id} — ${amount} TMT`,
+            { type: 'SALE_COMPLETED', order_id: String(order.id) },
+        );
     }
 
     static async _deductInventory(orderId, changedBy) {
@@ -250,7 +265,7 @@ class OrderService {
                 as: "items",
                 include: [
                     { model: db.Product, as: "product", attributes: ["id", "name", "track_inventory", "sell_when_out_of_stock", "stock"] },
-                    { model: db.ProductVariant, as: "variant", required: false, attributes: ["id", "stock"] },
+                    { model: db.ProductVariant, as: "variant", required: false, attributes: ["id", "stock", "sell_when_out_of_stock"] },
                     { model: db.ProductVariantSize, as: "variantSize", required: false, attributes: ["id", "stock"] },
                 ],
             }],
@@ -281,7 +296,7 @@ class OrderService {
                 });
 
                 const before = level.quantity;
-                if (before < qty && !product.sell_when_out_of_stock) {
+                if (before < qty && !ProductService.canSellOutOfStock(product, item.variant)) {
                     throw ApiError.BadRequest(
                         `Ammar: "${product.name}" üçin ýeterlik stok ýok (bar: ${before}, gerek: ${qty})`
                     );

@@ -23,8 +23,26 @@ class ProductService {
         if (!exists) throw ApiError.BadRequest("Beýle reňk ýok");
         return hex;
     }
+    // Widens a `db.Shop` include with the plan association needed for the
+    // blue-check badge, then stamps the computed flag onto each result.
+    static _shopInclude(attributes) {
+        return {
+            model: db.Shop,
+            as: "shop",
+            attributes: [...attributes, "is_verified"],
+            include: db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["verified_badge"], required: false }] : [],
+        };
+    }
+
+    static _withShopBlueBadge(product) {
+        if (product?.shop) {
+            product.shop.setDataValue("has_blue_badge", Boolean(product.shop.plan?.verified_badge || product.shop.is_verified));
+        }
+        return product;
+    }
+
     static async get(filter = {}, limit, sort = CATALOG_CONSTANTS.PRODUCT_SORT, skip = 0, paranoid = true) {
-        return db.Product.findAll({
+        const products = await db.Product.findAll({
             where: filter,
             offset: skip,
             order: sort,
@@ -32,7 +50,7 @@ class ProductService {
             paranoid,
             include: [
                 { model: db.Category, as: "category", attributes: ["id", "name"] },
-                { model: db.Shop, as: "shop", attributes: ["id", "name"] },
+                this._shopInclude(["id", "name"]),
                 { model: db.DeliveryType, as: "deliveryTypes", required: false, through: { attributes: [] } },
                 { model: db.Color, as: "color", required: false, attributes: ["id", "name", "hex"] },
                 // Attribute-limited on purpose — list views only need each variant's
@@ -59,6 +77,7 @@ class ProductService {
                 },
             ],
         });
+        return products.map((product) => this._withShopBlueBadge(product));
     }
 
     static async getCount(filter = {}, paranoid = true) {
@@ -67,12 +86,12 @@ class ProductService {
 
     static async getById(id, paranoid = true) {
         if (!id) return null;
-        return db.Product.findOne({
+        const product = await db.Product.findOne({
             where: { id },
             paranoid,
             include: [
                 { model: db.Category, as: "category", attributes: ["id", "name", "slug"] },
-                { model: db.Shop, as: "shop", attributes: ["id", "name", "logo"] },
+                this._shopInclude(["id", "name", "logo"]),
                 { model: db.Brand, as: "brand", required: false },
                 { model: db.Color, as: "color", required: false, attributes: ["id", "name", "hex"] },
                 { model: db.DeliveryType, as: "deliveryTypes", required: false, through: { attributes: [] } },
@@ -112,6 +131,7 @@ class ProductService {
                 },
             ],
         });
+        return this._withShopBlueBadge(product);
     }
 
     static async create(req) {
@@ -357,6 +377,13 @@ class ProductService {
 
     static async deleteVariantPriceTier(variantId, tierId) {
         return db.ProductPriceTier.destroy({ where: { id: tierId, variant_id: variantId } });
+    }
+
+    // Whether a purchase may go through with insufficient stock. The product-level
+    // flag is a blanket allow for all of its variants; a variant can additionally
+    // opt itself in. Sizes have no flag of their own — they follow their variant.
+    static canSellOutOfStock(product, variant = null) {
+        return !!(product?.sell_when_out_of_stock || variant?.sell_when_out_of_stock);
     }
 
     // Resolves the effective per-unit price for a purchase: a selected size's flat

@@ -5,14 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Search, RefreshCw, PackageX, Eye, EyeOff, Zap, X, Loader2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, absUrl } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { CategoryTreeSelect } from '@/components/common/CategoryTreeSelect'
 import { ColorSwatches } from '@/components/common/ColorSwatches'
 import { ColorFilter } from '@/components/common/ColorSelect'
-
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
-function imgUrl(p) { return p ? (p.startsWith('http') ? p : `${BASE}${p}`) : null }
 
 const PAGE = 20
 
@@ -355,7 +352,7 @@ export default function SellerProductsPage() {
                 >
                   {/* Thumbnail */}
                   {thumb
-                    ? <img src={imgUrl(thumb)} alt={p.name} className="h-10 w-10 rounded-lg object-cover" />
+                    ? <img src={absUrl(thumb)} alt={p.name} className="h-10 w-10 rounded-lg object-cover" />
                     : <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-white/10 shrink-0" />
                   }
 

@@ -21,6 +21,7 @@ const planSchema = yup.object().shape({
     oem_odm_support:      yup.boolean().optional(),
     revenue_share_user:   yup.number().integer().min(0).max(100).optional(),
     push_notif_monthly:   yup.number().integer().min(0).optional(),
+    reel_monthly:         yup.number().integer().min(0).nullable().optional(),
     is_active:            yup.boolean().optional(),
     sort_order:           yup.number().integer().optional(),
 });

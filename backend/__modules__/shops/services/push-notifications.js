@@ -1,7 +1,7 @@
 const { Op } = require('sequelize')
 const db = require('../../../models')
 const { sendMulticastNotification } = require('../../../utils/firebase')
-const ApiError = require('../../../exceptions/api-error')
+const PlanLimits = require('../../../services/plan-limits')
 
 class PushNotificationService {
 
@@ -111,13 +111,8 @@ class PushNotificationService {
     }
 
     static async send(shopId, createdBy, { title, body, imageUrl, data }, plan) {
-        const quota = plan?.push_notif_monthly ?? 0
-        if (quota === 0)
-            throw ApiError.Forbidden('Push notifications not available on your plan')
-
         const used = await this.getMonthlyCount(shopId)
-        if (used >= quota)
-            throw ApiError.Forbidden(`Monthly push notification limit reached (${quota})`)
+        PlanLimits.assertQuota(plan, 'push_notif_monthly', used)
 
         return this._dispatch(shopId, createdBy, { title, body, imageUrl, data })
     }

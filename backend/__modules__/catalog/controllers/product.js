@@ -249,10 +249,13 @@ class ProductController {
         } catch (e) { next(e); }
     }
 
-    static getFilter({ text, category_id, shop_id, brand_id, color_hex, is_active, status, moderation_status, paranoid } = {}) {
+    // `search` is accepted as an alias of `text` so a client using either name
+    // filters instead of silently getting the unfiltered list
+    static getFilter({ text, search, category_id, shop_id, brand_id, color_hex, is_active, status, moderation_status, paranoid } = {}) {
         const filter = {};
-        if (text) {
-            const q = buildTsQuery(text)
+        const term = text ?? search;
+        if (term) {
+            const q = buildTsQuery(term)
             if (q) {
                 filter[Op.and] = [literal(
                     `to_tsvector('simple',
@@ -263,9 +266,9 @@ class ProductController {
                 )]
             } else {
                 filter[Op.or] = [
-                    { name:    { [Op.iLike]: `%${text}%` } },
-                    { name_ru: { [Op.iLike]: `%${text}%` } },
-                    { sku:     { [Op.iLike]: `%${text}%` } },
+                    { name:    { [Op.iLike]: `%${term}%` } },
+                    { name_ru: { [Op.iLike]: `%${term}%` } },
+                    { sku:     { [Op.iLike]: `%${term}%` } },
                 ]
             }
         }

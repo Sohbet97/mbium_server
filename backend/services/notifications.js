@@ -130,6 +130,27 @@ class NotificationService {
         return record;
     }
 
+    static async createForSaleCompleted(order, shop, io) {
+        // updateStatus can re-apply STATUS_DELIVERED (retry, status bounced back
+        // and forth) — never notify the seller twice for the same order.
+        const existing = await this.getOne({
+            type: STATUSES.NOT_SALE_COMPLETED,
+            target_id: String(order.id),
+        });
+        if (existing) return existing;
+
+        const amount = Number(order?.total_price).toFixed(2);
+        const content = { message: `Sargyt #${order.id} tamamlandy — ${amount} TMT` };
+        const record = await this.create({
+            userId:   shop.owner_id,
+            type:     STATUSES.NOT_SALE_COMPLETED,
+            targetId: order.id,
+            content,
+        });
+        if (io) io.to(shop.owner_id).emit('notification', record);
+        return record;
+    }
+
     static async createForShopApproved(shop, io) {
         const name = shop?.name ?? 'Dükan';
         const content = { message: `"${name}" dükanyňyz tassyklandy! Indi söwda edip bilersiňiz.` };

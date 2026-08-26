@@ -45,6 +45,11 @@ module.exports = (sequelize) => {
             allowNull: false,
             defaultValue: 0,
         },
+        share_count: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+        },
         gift_count: {
             type: DataTypes.INTEGER,
             allowNull: false,
