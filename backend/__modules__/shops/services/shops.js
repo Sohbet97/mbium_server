@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, QueryTypes } = require("sequelize");
 const db = require("../../../models");
 const { FUNCTIONS } = require("../../../utils/functions");
 const { CONSTANTS } = require("../../../config/constants");
@@ -8,8 +8,16 @@ const PushService         = require("../../../services/push");
 const ApiError             = require("../../../exceptions/api-error");
 
 class ShopService {
+  // A shop's blue check is a plan grant (plans.verified_badge) OR the KYC
+  // is_verified flag — callers shouldn't have to combine the two themselves.
+  static _withBlueBadge(shop) {
+    if (!shop) return shop;
+    shop.setDataValue("has_blue_badge", Boolean(shop.plan?.verified_badge || shop.is_verified));
+    return shop;
+  }
+
   static async get(filter = {}, limit = undefined, order = SHOP_CONSTANTS.DEFAULT_SORT, offset = 0, paranoid = true) {
-    return db.Shop.findAll({
+    const shops = await db.Shop.findAll({
       where: filter,
       offset,
       order,
@@ -18,8 +26,33 @@ class ShopService {
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         { model: db.User, as: "owner", attributes: ["id", "name", "surname", "phone_number"], required: false },
+        ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
       ],
     });
+    return shops.map((shop) => this._withBlueBadge(shop));
+  }
+
+  // Top shops by rating (ties broken by order count), with the aggregates the
+  // mobile "top sellers" screen needs. Raw SQL — these are per-row subquery
+  // counts across favorites/orders/reels/comments, not a plain Sequelize include.
+  static async getTop(limit = 20) {
+    return db.sequelize.query(
+      `SELECT s.id, s.name, s.logo, COALESCE(s.rating, 0)::float AS rating,
+              (SELECT COUNT(*)::int FROM products p WHERE p.shop_id = s.id AND p."deletedAt" IS NULL) AS total_products,
+              (SELECT COUNT(*)::int FROM orders o WHERE o.shop_id = s.id AND o."deletedAt" IS NULL) AS total_orders,
+              (SELECT COUNT(*)::int FROM favorites f
+                 JOIN products p2 ON p2.id = f.product_id
+                 WHERE p2.shop_id = s.id) AS total_product_favorites,
+              (SELECT COUNT(*)::int FROM reels r WHERE r.shop_id = s.id AND r."deletedAt" IS NULL) AS total_reels,
+              (SELECT COUNT(*)::int FROM comments c
+                 JOIN products p3 ON p3.id = c.product_id
+                 WHERE p3.shop_id = s.id) AS total_comments
+       FROM shops s
+       WHERE s."deletedAt" IS NULL AND s.is_active = true
+       ORDER BY COALESCE(s.rating, 0) DESC, total_orders DESC
+       LIMIT :limit`,
+      { replacements: { limit }, type: QueryTypes.SELECT }
+    );
   }
 
   static async getForFilter() {
@@ -32,7 +65,7 @@ class ShopService {
 
   static async getById(id, paranoid = true) {
     if (!id) return;
-    return db.Shop.findOne({
+    const shop = await db.Shop.findOne({
       where: { id },
       paranoid,
       include: [
@@ -41,32 +74,38 @@ class ShopService {
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
         ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
         ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
+        ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
       ],
     });
+    return this._withBlueBadge(shop);
   }
 
   static async getByOwner(userId) {
     if (!userId) return null;
-    return db.Shop.findOne({
+    const shop = await db.Shop.findOne({
       where: { owner_id: userId },
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name"] },
         ...(db.Category ? [{ model: db.Category, as: "categories", through: { attributes: [] } }] : []),
         ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
         ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
+        ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
       ],
     });
+    return this._withBlueBadge(shop);
   }
 
   static async getAllByOwner(userId) {
     if (!userId) return [];
-    return db.Shop.findAll({
+    const shops = await db.Shop.findAll({
       where: { owner_id: userId },
       include: [
         { model: db.ShopType, as: "type", attributes: ["id", "name"] },
+        ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
       ],
       order: [["is_active", "DESC"], ["createdAt", "ASC"]],
     });
+    return shops.map((shop) => this._withBlueBadge(shop));
   }
 
   static async create(req) {
@@ -232,6 +271,20 @@ class ShopService {
     );
     await this._log(id, 'withdrawn', userId, note);
     return this.getById(id);
+  }
+
+  static async bulkUpdate(ids, { is_active, verification_status, verification_note, verifiedBy } = {}) {
+    const payload = {};
+    if (is_active !== undefined) payload.is_active = is_active;
+    if (verification_status !== undefined) {
+      payload.verification_status = verification_status;
+      payload.verified_by = verifiedBy;
+      payload.verified_at = new Date();
+      payload.verification_note = verification_status === 3 ? (verification_note || null) : null;
+      payload.is_verified = verification_status === 2;
+    }
+    if (!Object.keys(payload).length) return [0];
+    return db.Shop.update(payload, { where: { id: { [Op.in]: ids } } });
   }
 
   static async reject(id, userId, note, io) {

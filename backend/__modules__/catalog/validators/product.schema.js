@@ -24,6 +24,11 @@ const productSchema = yup.object().shape({
     sell_when_out_of_stock: yup.boolean().optional(),
     status:                 yup.number().integer().optional(),
     is_active:              yup.boolean().optional(),
+    // Existence in the `colors` palette is checked in ProductService.resolveColorHex
+    color_hex:              yup.string().nullable().optional().matches(/^#[0-9a-fA-F]{6}$/, {
+        excludeEmptyString: true,
+        message: "color_hex #rrggbb görnüşinde bolmaly",
+    }),
 });
 
 module.exports = productSchema;

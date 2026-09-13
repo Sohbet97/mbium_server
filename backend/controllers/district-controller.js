@@ -57,7 +57,7 @@ class DistrictController {
             if (!model) throw ApiError.NotFound();
             model.name = req.body?.name;
             model.ssu_code = req.body?.ssu_code;
-            model.region = FUNCTIONS.getNumber(req.body?.region) || null;
+            model.region_id = FUNCTIONS.getNumber(req.body?.region) || null;
             model.type = FUNCTIONS.getNumber(req.body?.type);
             model.status = FUNCTIONS.getNumber(req.body?.status);
             model.order = FUNCTIONS.getNumber(req.body?.order) || null;
@@ -99,7 +99,7 @@ class DistrictController {
                     // {short_name:{[Op.iLike]:`%${params.text}%`}},
                 ]
             }
-            if (params.region) filter.region = { [Op.eq]: params.region }
+            if (params.region) filter.region_id = { [Op.eq]: params.region }
             if (!isNaN(Number(params?.status))) filter.status = { [Op.eq]: params.status }
         }
         return filter
@@ -124,7 +124,7 @@ class DistrictController {
             errors.name = 'Etrap ady 100 harpdan gysga bolmaly!'
         }
 
-        if (!FUNCTIONS.checkRequire(form?.region)) errors.region = 'Welaýaty saýlaň!'
+        if (!FUNCTIONS.checkRequire(form?.region_id ?? form?.region)) errors.region = 'Welaýaty saýlaň!'
 
         if (FUNCTIONS.checkRequire(form?.order) && form.order > 255) errors.order = 'Tertip belgisi 255-den uly bolmaly däl!'
 

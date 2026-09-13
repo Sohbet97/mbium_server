@@ -49,5 +49,10 @@ module.exports = (sequelize, Sequelize) => {
             { unique: true, fields: ["region_id", "name"] },
         ]
     });
+
+    City.associate = (db) => {
+        City.belongsTo(db.Region, { foreignKey: "region_id", as: "_region" })
+    }
+
     return City;
 };

@@ -9,29 +9,17 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Camera, FileText, Upload, CheckCircle2, Clock, XCircle, Star, CreditCard, Video, FileImage, Loader2, Tag, RefreshCw, ChevronDown, ChevronRight, LayoutGrid, List, Eye, ExternalLink, Truck } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, absUrl as imgUrl } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
-
-function imgUrl(path) {
-  if (!path) return null
-  if (path.startsWith('http')) return path
-  return `${BASE}${path}`
+const TIER_CLASS = {
+  0: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
+  1: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
+  2: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300',
 }
 
-const TIER = {
-  0: { label: 'Garaşylýar',   className: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300' },
-  1: { label: 'Standard',     className: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' },
-  2: { label: 'Verified PRO', className: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300' },
-}
-
-const VS = {
-  0: { icon: Clock,         label: 'Barlanmadyk',   className: 'text-slate-400' },
-  1: { icon: Clock,         label: 'Garaşylýar',    className: 'text-amber-500' },
-  2: { icon: CheckCircle2,  label: 'Tassyklanan',   className: 'text-green-500' },
-  3: { icon: XCircle,       label: 'Ret edildi',    className: 'text-red-500' },
-}
+const VS_ICON = { 0: Clock, 1: Clock, 2: CheckCircle2, 3: XCircle }
+const VS_CLASS = { 0: 'text-slate-400', 1: 'text-amber-500', 2: 'text-green-500', 3: 'text-red-500' }
 
 // ── Logo upload area ──────────────────────────────────────────────────────────
 function LogoUpload({ logoUrl, onUploaded }) {
@@ -92,6 +80,7 @@ function fileViewType(path) {
 }
 
 function FileViewerDialog({ open, onOpenChange, url, label }) {
+  const { t } = useTranslation()
   const type = fileViewType(url)
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -122,7 +111,7 @@ function FileViewerDialog({ open, onOpenChange, url, label }) {
           {type === 'other' && (
             <div className="flex flex-col items-center gap-2 py-10 text-slate-400">
               <FileText className="h-8 w-8 opacity-40" />
-              <p className="text-sm">Görnüş elýeterli däl</p>
+              <p className="text-sm">{t('seller.fileTypeUnavailable')}</p>
             </div>
           )}
           <div className="flex justify-end">
@@ -133,7 +122,7 @@ function FileViewerDialog({ open, onOpenChange, url, label }) {
               className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-              Täze goýagçda aç
+              {t('seller.openInNewTab')}
             </a>
           </div>
         </div>
@@ -182,7 +171,7 @@ function DocRow({ icon: Icon, label, fieldName, currentPath, onUploaded, accept 
               <CheckCircle2 className="h-3 w-3 shrink-0" /> {filename}
             </p>
           ) : (
-            <p className="text-xs text-slate-400 mt-0.5">Faýl ýok</p>
+            <p className="text-xs text-slate-400 mt-0.5">{t('seller.noFile')}</p>
           )}
         </div>
         {fileUrl && (
@@ -192,7 +181,7 @@ function DocRow({ icon: Icon, label, fieldName, currentPath, onUploaded, accept 
             className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
           >
             <Eye className="h-3.5 w-3.5" />
-            Görmek
+            {t('seller.view')}
           </button>
         )}
         <button
@@ -552,9 +541,13 @@ export default function SellerShopPage() {
     </div>
   )
 
-  const tier = TIER[shop?.seller_tier ?? 0]
-  const vs   = VS[shop?.verification_status ?? 0]
-  const VsIcon = vs.icon
+  const TIER_LABEL = { 0: t('seller.tierPending'), 1: t('seller.tierStandard'), 2: t('seller.tierVerifiedPro') }
+  const VS_LABEL = { 0: t('seller.vsUnverified'), 1: t('seller.vsPending'), 2: t('seller.vsApproved'), 3: t('seller.vsRejected') }
+  const tierIdx = shop?.seller_tier ?? 0
+  const vsIdx   = shop?.verification_status ?? 0
+  const tier = { label: TIER_LABEL[tierIdx], className: TIER_CLASS[tierIdx] }
+  const vs   = { label: VS_LABEL[vsIdx], className: VS_CLASS[vsIdx] }
+  const VsIcon = VS_ICON[vsIdx]
 
   return (
     <div className="space-y-5 max-w-3xl">
@@ -591,7 +584,7 @@ export default function SellerShopPage() {
               </div>
               {shop?.verification_note && shop?.verification_status === 3 && (
                 <p className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 rounded-lg px-3 py-2">
-                  <span className="font-medium">Sebäp:</span> {shop.verification_note}
+                  <span className="font-medium">{t('seller.reason')}</span> {shop.verification_note}
                 </p>
               )}
             </div>
@@ -606,7 +599,7 @@ export default function SellerShopPage() {
           <TabsTrigger value="categories">{t('seller.categoriesTitle')}</TabsTrigger>
           <TabsTrigger value="brands">{t('nav.brands', 'Brands')}</TabsTrigger>
           <TabsTrigger value="delivery-types">{t('deliveryTypes.title')}</TabsTrigger>
-          <TabsTrigger value="documents">Resminamalar</TabsTrigger>
+          <TabsTrigger value="documents">{t('seller.documentsTab')}</TabsTrigger>
         </TabsList>
 
         {/* ── Info tab ─────────────────────────────────────────────────────── */}
@@ -616,18 +609,18 @@ export default function SellerShopPage() {
               <form onSubmit={handleSaveInfo} className="space-y-5">
                 {/* Names */}
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dükan ady</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('seller.shopNameSection')}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1.5">
-                      <Label>Türkmençe <span className="text-red-500">*</span></Label>
+                      <Label>{t('seller.langTk')} <span className="text-red-500">*</span></Label>
                       <Input {...field('name')} required />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Rusça</Label>
+                      <Label>{t('seller.langRu')}</Label>
                       <Input {...field('name_ru')} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Iňlisçe</Label>
+                      <Label>{t('seller.langEn')}</Label>
                       <Input {...field('name_eng')} />
                     </div>
                   </div>
@@ -635,18 +628,18 @@ export default function SellerShopPage() {
 
                 {/* Descriptions */}
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Beýany</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('seller.descriptionSection')}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div className="space-y-1.5">
-                      <Label>Türkmençe</Label>
+                      <Label>{t('seller.langTk')}</Label>
                       <Textarea {...field('description_tm')} rows={3} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Rusça</Label>
+                      <Label>{t('seller.langRu')}</Label>
                       <Textarea {...field('description_ru')} rows={3} />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>Iňlisçe</Label>
+                      <Label>{t('seller.langEn')}</Label>
                       <Textarea {...field('description_en')} rows={3} />
                     </div>
                   </div>
@@ -654,14 +647,14 @@ export default function SellerShopPage() {
 
                 {/* Contact */}
                 <div>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Habarlaşmak</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">{t('seller.contactSection')}</p>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label>Telefon</Label>
+                      <Label>{t('seller.phoneLabel')}</Label>
                       <Input {...field('phone')} placeholder="6XXXXXXX" />
                     </div>
                     <div className="space-y-1.5">
-                      <Label>E-mail</Label>
+                      <Label>{t('seller.emailLabel')}</Label>
                       <Input {...field('email')} type="email" placeholder="shop@example.tm" />
                     </div>
                   </div>
@@ -669,8 +662,8 @@ export default function SellerShopPage() {
 
                 {/* Address */}
                 <div className="space-y-1.5">
-                  <Label>Salgy</Label>
-                  <Input {...field('address')} placeholder="Şäher, köçe, jaý" />
+                  <Label>{t('seller.addressLabel')}</Label>
+                  <Input {...field('address')} placeholder={t('seller.addressPlaceholder')} />
                 </div>
 
                 <div className="flex justify-end">
@@ -691,7 +684,7 @@ export default function SellerShopPage() {
                 <div>
                   <CardTitle>{t('seller.categoriesTitle')}</CardTitle>
                   <p className="text-sm text-slate-500 mt-0.5">
-                    Dükanyňyzyň hödürleýän haryt kategoriýalaryny saýlaň.
+                    {t('seller.categoriesDesc')}
                   </p>
                 </div>
                 {/* View toggle */}
@@ -699,7 +692,7 @@ export default function SellerShopPage() {
                   <button
                     type="button"
                     onClick={() => setCatView('tree')}
-                    title="Tree view"
+                    title={t('seller.treeView')}
                     className={cn(
                       'p-2 transition-colors',
                       catView === 'tree'
@@ -712,7 +705,7 @@ export default function SellerShopPage() {
                   <button
                     type="button"
                     onClick={() => setCatView('grid')}
-                    title="Grid view"
+                    title={t('seller.gridView')}
                     className={cn(
                       'p-2 transition-colors',
                       catView === 'grid'
@@ -727,7 +720,7 @@ export default function SellerShopPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {allCategories.length === 0 ? (
-                <p className="text-sm text-slate-400 text-center py-6">Kategoriýalar ýüklenýär…</p>
+                <p className="text-sm text-slate-400 text-center py-6">{t('seller.categoriesLoading')}</p>
               ) : catView === 'tree' ? (
                 <CategoryTree
                   categories={allCategories}
@@ -763,7 +756,7 @@ export default function SellerShopPage() {
             <CardHeader>
               <CardTitle>{t('nav.brands', 'Brands')}</CardTitle>
               <p className="text-sm text-slate-500 mt-0.5">
-                Dükanyňyzda satylýan brendleri saýlaň.
+                {t('seller.brandsDesc')}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -814,7 +807,7 @@ export default function SellerShopPage() {
             <CardHeader>
               <CardTitle>{t('deliveryTypes.title')}</CardTitle>
               <p className="text-sm text-slate-500 mt-0.5">
-                Dükanyňyzyň hödürleýän eltip bermek görnüşlerini saýlaň.
+                {t('seller.deliveryTypesDesc')}
               </p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -867,11 +860,9 @@ export default function SellerShopPage() {
           {/* KYC Documents */}
           <Card>
             <CardHeader>
-              <CardTitle>Resminamalar</CardTitle>
+              <CardTitle>{t('seller.documentsTab')}</CardTitle>
               <p className="text-sm text-slate-500 mt-0.5">
-                Patent we bank IBAN bolan dükanlara{' '}
-                <span className="font-medium text-purple-600 dark:text-purple-400">Verified PRO</span>{' '}
-                derejesi berilýär.
+                {t('seller.verifiedProHint', { tier: t('seller.tierVerifiedPro') })}
               </p>
             </CardHeader>
             <CardContent className="space-y-0 divide-y divide-slate-100 dark:divide-white/[0.06]">
@@ -904,14 +895,14 @@ export default function SellerShopPage() {
 
           {/* Payment details */}
           <Card>
-            <CardHeader><CardTitle>Töleg maglumatlary</CardTitle></CardHeader>
+            <CardHeader><CardTitle>{t('seller.paymentDetails')}</CardTitle></CardHeader>
             <CardContent>
               <form onSubmit={handleSaveIban} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label className="flex items-center gap-1.5">
                       <CreditCard className="h-3.5 w-3.5 text-slate-400" />
-                      Bank IBAN
+                      {t('seller.bankIban')}
                     </Label>
                     <Input
                       value={ibanForm.bank_iban}
@@ -924,7 +915,7 @@ export default function SellerShopPage() {
                   <div className="space-y-1.5">
                     <Label className="flex items-center gap-1.5">
                       <CreditCard className="h-3.5 w-3.5 text-slate-400" />
-                      Kart belgisi
+                      {t('seller.cardNumber')}
                     </Label>
                     <Input
                       value={ibanForm.card_number}
@@ -938,8 +929,8 @@ export default function SellerShopPage() {
                 <div className="flex justify-end">
                   <Button type="submit" disabled={savingIban} variant="outline">
                     {savingIban
-                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saklanyp dur…</>
-                      : 'Ýatda sakla'}
+                      ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />{t('seller.saving')}</>
+                      : t('common.save')}
                   </Button>
                 </div>
               </form>
@@ -949,17 +940,17 @@ export default function SellerShopPage() {
           {/* Plan info */}
           {shop?.plan && (
             <Card>
-              <CardHeader><CardTitle>Abunalyk plany</CardTitle></CardHeader>
+              <CardHeader><CardTitle>{t('seller.planCardTitle')}</CardTitle></CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  <Stat label="Plan" value={shop.plan.name} />
-                  <Stat label="Komissiýa" value={`${shop.plan.commission_rate ?? 0}%`} />
-                  <Stat label="Haryt limiti" value={shop.plan.product_limit ?? '∞'} />
+                  <Stat label={t('seller.planLabel')} value={shop.plan.name} />
+                  <Stat label={t('seller.commissionLabel')} value={`${shop.plan.commission_rate ?? 0}%`} />
+                  <Stat label={t('seller.productLimitLabel')} value={shop.plan.product_limit ?? '∞'} />
                   {shop.plan.ai_credits_monthly != null && (
-                    <Stat label="AI kreditler" value={`${shop.plan.ai_credits_monthly} / aý`} />
+                    <Stat label={t('seller.aiCreditsLabel')} value={`${shop.plan.ai_credits_monthly} ${t('seller.creditsPerMonth')}`} />
                   )}
                   {shop.plan.auction_per_week != null && (
-                    <Stat label="Auksion / hepde" value={shop.plan.auction_per_week} />
+                    <Stat label={t('seller.auctionPerWeekLabel')} value={shop.plan.auction_per_week} />
                   )}
                 </div>
               </CardContent>
@@ -1011,6 +1002,7 @@ function TreeCheckbox({ checked, indeterminate }) {
 }
 
 function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
+  const { t } = useTranslation()
   const [open, setOpen] = useState(depth === 0)
   const hasChildren = node.children?.length > 0
   // Structural placeholder for a deactivated/deleted category kept only so its still-active
@@ -1054,7 +1046,7 @@ function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
           'text-sm flex-1 leading-tight',
           isStructural ? 'text-slate-400 dark:text-slate-500 italic' : 'text-slate-700 dark:text-slate-300'
         )}>
-          {node.name}{isStructural ? ' (öçürilen)' : ''}
+          {node.name}{isStructural ? t('seller.categoryDeactivated') : ''}
         </span>
         {hasChildren && selCount > 0 && (
           <span className="text-[11px] text-slate-400 shrink-0 tabular-nums">{selCount}/{leafIds.length}</span>
@@ -1072,8 +1064,9 @@ function TreeNode({ node, selected, onBulkToggle, depth = 0 }) {
 }
 
 function CategoryTree({ categories, selected, onBulkToggle }) {
+  const { t } = useTranslation()
   const tree = useMemo(() => buildTree(categories), [categories])
-  if (!tree.length) return <p className="text-sm text-slate-400 text-center py-6">Kategoriýalar ýüklenýär…</p>
+  if (!tree.length) return <p className="text-sm text-slate-400 text-center py-6">{t('seller.categoriesLoading')}</p>
   return (
     <div className="space-y-0.5">
       {tree.map((node) => (

@@ -5,6 +5,7 @@ router.get("/", ProductController.get.bind(ProductController));
 router.get("/:id", ProductController.getById.bind(ProductController));
 router.post("/", ProductController.create.bind(ProductController));
 router.put("/:id", ProductController.update.bind(ProductController));
+router.patch("/bulk", ProductController.bulkUpdate.bind(ProductController));
 router.patch("/:id/restore", ProductController.restore.bind(ProductController));
 router.patch("/:id/approve", ProductController.approve.bind(ProductController));
 router.patch("/:id/reject", ProductController.reject.bind(ProductController));
@@ -20,5 +21,15 @@ router.delete("/:id/variants/:variantId", ProductController.deleteVariant.bind(P
 router.post("/:id/variants/:variantId/sizes", ProductController.addVariantSize.bind(ProductController));
 router.put("/:id/variants/:variantId/sizes/:sizeRowId", ProductController.updateVariantSize.bind(ProductController));
 router.delete("/:id/variants/:variantId/sizes/:sizeRowId", ProductController.deleteVariantSize.bind(ProductController));
+
+// Price tiers (product-level)
+router.post("/:id/price-tiers", ProductController.addProductPriceTier.bind(ProductController));
+router.put("/:id/price-tiers/:tierId", ProductController.updateProductPriceTier.bind(ProductController));
+router.delete("/:id/price-tiers/:tierId", ProductController.deleteProductPriceTier.bind(ProductController));
+
+// Price tiers (variant-level)
+router.post("/:id/variants/:variantId/price-tiers", ProductController.addVariantPriceTier.bind(ProductController));
+router.put("/:id/variants/:variantId/price-tiers/:tierId", ProductController.updateVariantPriceTier.bind(ProductController));
+router.delete("/:id/variants/:variantId/price-tiers/:tierId", ProductController.deleteVariantPriceTier.bind(ProductController));
 
 module.exports = router;

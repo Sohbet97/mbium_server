@@ -46,7 +46,7 @@ router.post('/:id/cancel', async (req, res, next) => {
         if (!order || order.user_id !== req.user.id) throw ApiError.NotFound('Sargyt tapylmady');
         // Only pending (0) or confirmed (1) orders can be cancelled by buyer
         if (order.status > 1) throw ApiError.NotAllowed('Bu sargyt ýatyrylmagy mümkin däl');
-        await OrderService.updateStatus(order.id, 9, req.body.note ?? null, req.user.id);
+        await OrderService.updateStatus(order.id, 9, req.body.note ?? null, req.user.id, req.app.io);
         return res.sendStatus(200);
     } catch (e) { next(e); }
 });

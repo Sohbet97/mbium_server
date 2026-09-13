@@ -140,6 +140,10 @@ module.exports = (sequelize) => {
         card_number:   { type: DataTypes.STRING(20), allowNull: true },
         // 0 = pending, 1 = standard seller, 2 = verified_pro
         seller_tier:   { type: DataTypes.SMALLINT, allowNull: false, defaultValue: 0 },
+        // Denormalized from turbo_shop_boosts (Turbo module) — set only via
+        // TurboService, never through the generic shop create/update whitelist.
+        turbo_active: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+        turbo_boosted_at: { type: DataTypes.DATE, allowNull: true },
         createdBy: {
             type: DataTypes.UUID,
             allowNull: true,
@@ -156,6 +160,7 @@ module.exports = (sequelize) => {
             { fields: ["region_id"] },
             { fields: ["city_id"] },
             { fields: ["verification_status"] },
+            { fields: ["turbo_active", "turbo_boosted_at"] },
         ]
     });
 
@@ -207,6 +212,9 @@ module.exports = (sequelize) => {
                 otherKey: "brand_id",
                 as: "brands",
             });
+        }
+        if (db.TurboShopBoost) {
+            Model.hasMany(db.TurboShopBoost, { foreignKey: "shop_id", as: "turboBoosts" });
         }
     };
 

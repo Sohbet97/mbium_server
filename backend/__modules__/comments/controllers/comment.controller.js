@@ -30,7 +30,7 @@ class CommentController {
                 req.user.id,
                 Number(req.params.productId),
                 body.trim(),
-                parent_id ?? null,
+                parent_id ? Number(parent_id) : null,
             )
             res.status(201).json(comment)
         } catch (e) { next(e) }

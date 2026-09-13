@@ -63,7 +63,7 @@ class DistrictService {
         const model = await db.District.create({
             name:req.body?.name,
             ssu_code:req.body?.ssu_code,
-            region:FUNCTIONS.getNumber(req.body?.region) || null,
+            region_id:FUNCTIONS.getNumber(req.body?.region) || null,
             type:FUNCTIONS.getNumber(req.body?.type),
             status:FUNCTIONS.getNumber(req.body?.status),
             order:FUNCTIONS.getNumber(req.body?.order) || null,

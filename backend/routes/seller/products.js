@@ -14,14 +14,18 @@ router.get('/', async (req, res, next) => {
     try {
         const { limit, sort, skip } = FUNCTIONS.getQueryParams(req);
         const filter = { shop_id: req.shop.id };
-        if (req.query.text) {
+        // `search` is accepted as an alias of `text`
+        const term = req.query.text ?? req.query.search;
+        if (term) {
             filter[Op.or] = [
-                { name:    { [Op.iLike]: `%${req.query.text}%` } },
-                { name_ru: { [Op.iLike]: `%${req.query.text}%` } },
+                { name:    { [Op.iLike]: `%${term}%` } },
+                { name_ru: { [Op.iLike]: `%${term}%` } },
             ];
         }
         if (req.query.category_id) filter.category_id = req.query.category_id;
         if (req.query.is_active !== undefined) filter.is_active = req.query.is_active;
+        const colorFilter = ProductService.colorFilter(req.query.color_hex);
+        if (colorFilter) filter[Op.and] = [...(filter[Op.and] ?? []), colorFilter];
 
         const [data, count] = await Promise.all([
             ProductService.get(filter, limit, sort, skip),
@@ -155,6 +159,76 @@ router.delete('/:id/variants/:variantId/sizes/:sizeRowId', async (req, res, next
         if (!variant) throw ApiError.NotFound('Wariant tapylmady');
         const count = await ProductService.deleteVariantSize(req.params.variantId, req.params.sizeRowId);
         if (!count) throw ApiError.NotFound('Ölçeg tapylmady');
+        return res.sendStatus(200);
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/price-tiers
+router.post('/:id/price-tiers', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const tier = await ProductService.addProductPriceTier(req.params.id, req.body);
+        return res.status(201).json({ model: tier });
+    } catch (e) { next(e); }
+});
+
+// PUT /seller/products/:id/price-tiers/:tierId
+router.put('/:id/price-tiers/:tierId', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const [count] = await ProductService.updateProductPriceTier(req.params.id, req.params.tierId, req.body);
+        if (!count) throw ApiError.NotFound('Baha basgançagy tapylmady');
+        return res.status(200).json({ ok: true });
+    } catch (e) { next(e); }
+});
+
+// DELETE /seller/products/:id/price-tiers/:tierId
+router.delete('/:id/price-tiers/:tierId', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const count = await ProductService.deleteProductPriceTier(req.params.id, req.params.tierId);
+        if (!count) throw ApiError.NotFound('Baha basgançagy tapylmady');
+        return res.sendStatus(200);
+    } catch (e) { next(e); }
+});
+
+// POST /seller/products/:id/variants/:variantId/price-tiers
+router.post('/:id/variants/:variantId/price-tiers', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variant = (product.variants ?? []).find((v) => String(v.id) === String(req.params.variantId));
+        if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+        const tier = await ProductService.addVariantPriceTier(req.params.variantId, req.body);
+        return res.status(201).json({ model: tier });
+    } catch (e) { next(e); }
+});
+
+// PUT /seller/products/:id/variants/:variantId/price-tiers/:tierId
+router.put('/:id/variants/:variantId/price-tiers/:tierId', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variant = (product.variants ?? []).find((v) => String(v.id) === String(req.params.variantId));
+        if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+        const [count] = await ProductService.updateVariantPriceTier(req.params.variantId, req.params.tierId, req.body);
+        if (!count) throw ApiError.NotFound('Baha basgançagy tapylmady');
+        return res.status(200).json({ ok: true });
+    } catch (e) { next(e); }
+});
+
+// DELETE /seller/products/:id/variants/:variantId/price-tiers/:tierId
+router.delete('/:id/variants/:variantId/price-tiers/:tierId', async (req, res, next) => {
+    try {
+        const product = await ProductService.getById(req.params.id);
+        if (!product || product.shop_id !== req.shop.id) throw ApiError.NotFound('Haryt tapylmady');
+        const variant = (product.variants ?? []).find((v) => String(v.id) === String(req.params.variantId));
+        if (!variant) throw ApiError.NotFound('Wariant tapylmady');
+        const count = await ProductService.deleteVariantPriceTier(req.params.variantId, req.params.tierId);
+        if (!count) throw ApiError.NotFound('Baha basgançagy tapylmady');
         return res.sendStatus(200);
     } catch (e) { next(e); }
 });

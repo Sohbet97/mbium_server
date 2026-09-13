@@ -9,7 +9,7 @@ module.exports = async (req, res, next) => {
     try {
         const requestedId = req.headers['x-shop-id'];
         const include = [
-            { model: db.Plan, as: 'plan', attributes: ['id', 'name', 'commission_rate', 'product_limit', 'ai_credits_monthly', 'auction_per_week', 'live_stream_mode', 'verified_badge', 'push_notif_monthly'], required: false },
+            { model: db.Plan, as: 'plan', attributes: ['id', 'name', 'commission_rate', 'product_limit', 'ai_credits_monthly', 'auction_per_week', 'live_stream_mode', 'verified_badge', 'push_notif_monthly', 'reel_monthly'], required: false },
             { model: db.ShopType, as: 'type', attributes: ['id', 'name'], required: false },
         ];
 

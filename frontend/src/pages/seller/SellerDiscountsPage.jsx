@@ -113,7 +113,7 @@ function AppliesToSection({ form, set }) {
     setFetching(true)
     const req = applyType === 'CATEGORIES'
       ? SellerApi.categories.getAll({ limit: 0 })
-      : SellerApi.products.getAll({ limit: 50, ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}) })
+      : SellerApi.products.getAll({ limit: 50, ...(debouncedSearch.trim() ? { text: debouncedSearch.trim() } : {}) })
     req
       .then(({ data }) => setItems(data.data ?? []))
       .catch(() => setItems([]))

@@ -2,32 +2,36 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Store,
-  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell, BarChart2, Building2, Coins, Clapperboard,
+  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell, BarChart2, Building2, Coins, Clapperboard, Handshake,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
 import { useTranslation } from 'react-i18next'
 import { TopBar } from './TopBar'
+import { BlueBadge } from '@/components/common/BlueBadge'
 import { AiAssistant } from './AiAssistant'
 import { useAiAssistant } from '@/store/aiAssistant'
+import { SellerPendingCountsProvider, useSellerPendingCounts } from '@/store/sellerPendingCounts'
 
 function SellerSidebar({ collapsed, onToggle }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
   const { t } = useTranslation()
   const shop = user?.shop
+  const { counts: pendingCounts } = useSellerPendingCounts() ?? {}
 
   const nav = [
     { to: '/seller',          label: t('nav.dashboard'),    icon: LayoutDashboard, end: true },
-    { to: '/seller/products', label: t('nav.products'),     icon: Package },
+    { to: '/seller/products', label: t('nav.products'),     icon: Package, countKey: 'products' },
     { to: '/seller/orders',   label: t('nav.orders'),       icon: ShoppingCart },
-    { to: '/seller/shop',     label: t('nav.myShop'),       icon: Store },
+    { to: '/seller/shop',     label: t('nav.myShop'),       icon: Store, countKey: 'shopTypeRequests' },
     { to: '/seller/discounts',label: t('nav.discounts'),    icon: Percent },
-    { to: '/seller/payouts',  label: t('nav.payouts'),      icon: Wallet },
+    { to: '/seller/buyer-requests', label: t('nav.buyerRequests'), icon: Handshake },
+    { to: '/seller/payouts',  label: t('nav.payouts'),      icon: Wallet, countKey: 'payoutRequests' },
     { to: '/seller/coins',    label: t('nav.coins', 'Coins'), icon: Coins },
     { to: '/seller/media',    label: t('nav.media'),        icon: Images },
     { to: '/seller/banners',  label: t('nav.banners'),      icon: LayoutTemplate },
-    { to: '/seller/reels',    label: t('nav.reels', 'Reels'), icon: Clapperboard },
+    { to: '/seller/reels',    label: t('nav.reels', 'Reels'), icon: Clapperboard, countKey: 'reels' },
     { to: '/seller/subscription',       label: t('nav.subscription'),       icon: Crown },
     { to: '/seller/push-notifications', label: t('nav.pushNotifications'),  icon: Bell },
     { to: '/seller/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2 },
@@ -57,8 +61,9 @@ function SellerSidebar({ collapsed, onToggle }) {
           {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
         </button>
         {!collapsed && (
-          <span className="text-sm font-bold tracking-tight dark:text-white">
-            {shop?.name ?? 'Seller'}
+          <span className="text-sm font-bold tracking-tight dark:text-white flex items-center gap-1">
+            <span className="truncate">{shop?.name ?? 'Seller'}</span>
+            <BlueBadge show={shop?.has_blue_badge} />
           </span>
         )}
       </div>
@@ -72,20 +77,33 @@ function SellerSidebar({ collapsed, onToggle }) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
-        {nav.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to} to={to} end={end}
-            className={({ isActive }) => cn(itemBase, isActive ? active : inactive)}
-            title={collapsed ? label : undefined}
-          >
-            {({ isActive }) => (
-              <>
-                <Icon className={cn('h-[18px] w-[18px] shrink-0', isActive ? 'opacity-100' : 'opacity-60')} />
-                {!collapsed && <span>{label}</span>}
-              </>
-            )}
-          </NavLink>
-        ))}
+        {nav.map(({ to, label, icon: Icon, end, countKey }) => {
+          const count = pendingCounts?.[countKey]
+          return (
+            <NavLink
+              key={to} to={to} end={end}
+              className={({ isActive }) => cn(itemBase, 'relative', isActive ? active : inactive)}
+              title={collapsed ? label : undefined}
+            >
+              {({ isActive }) => (
+                <>
+                  <span className="relative shrink-0">
+                    <Icon className={cn('h-[18px] w-[18px]', isActive ? 'opacity-100' : 'opacity-60')} />
+                    {collapsed && count > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500" />
+                    )}
+                  </span>
+                  {!collapsed && <span className="flex-1">{label}</span>}
+                  {!collapsed && count > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                      {count > 99 ? '99+' : count}
+                    </span>
+                  )}
+                </>
+              )}
+            </NavLink>
+          )
+        })}
       </nav>
 
       {/* User / logout */}
@@ -126,16 +144,18 @@ export function SellerLayout() {
   const hideSidebar = pathname === '/seller/account'
 
   return (
-    <div className="flex h-screen overflow-hidden dark:bg-[#0f0f12] bg-slate-50">
-      {!hideSidebar && <SellerSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />}
-      <div className={`flex flex-col flex-1 overflow-hidden transition-[margin] duration-300 ${aiOpen ? 'mr-[380px]' : ''}`}>
-        <TopBar title="Seller Panel" />
-        <main className="flex-1 overflow-y-auto p-6">
-          {/* key forces every seller page to remount (re-run its fetch effects) when the active shop changes */}
-          <Outlet key={user?.shop?.id} />
-        </main>
+    <SellerPendingCountsProvider>
+      <div className="flex h-screen overflow-hidden dark:bg-[#0f0f12] bg-slate-50">
+        {!hideSidebar && <SellerSidebar collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />}
+        <div className={`flex flex-col flex-1 overflow-hidden transition-[margin] duration-300 ${aiOpen ? 'mr-[380px]' : ''}`}>
+          <TopBar title="Seller Panel" />
+          <main className="flex-1 overflow-y-auto p-6">
+            {/* key forces every seller page to remount (re-run its fetch effects) when the active shop changes */}
+            <Outlet key={user?.shop?.id} />
+          </main>
+        </div>
+        <AiAssistant />
       </div>
-      <AiAssistant />
-    </div>
+    </SellerPendingCountsProvider>
   )
 }

@@ -22,6 +22,7 @@ const pushNotifPaths   = require("./paths/push-notifications");
 const aiChatPaths      = require("./paths/ai-chat");
 const supportPaths     = require("./paths/support");
 const analyticsPaths   = require("./paths/analytics");
+const pendingCountsPaths = require("./paths/pending-counts");
 const warehousePaths   = require("./paths/warehouse");
 const brandsPaths      = require("./paths/brands");
 const suppliersPaths   = require("./paths/suppliers");
@@ -30,6 +31,7 @@ const kycPaths         = require("./paths/kyc");
 const reelsPaths          = require("./paths/reels");
 const buyerRequestsPaths  = require("./paths/buyer-requests");
 const sizesPaths          = require("./paths/sizes");
+const colorsPaths         = require("./paths/colors");
 const coinsPaths          = require("./paths/coins");
 const favoritesPaths      = require("./paths/favorites");
 const systemPaths         = require("./paths/system");
@@ -98,6 +100,7 @@ const swaggerSpec = {
         { name: "Seller — Support",   description: "Seller's own support conversation with the platform admin team" },
         { name: "Push Notifications", description: "FCM push notification campaigns — admin (no quota) and seller (plan-quota enforced)" },
         { name: "Analytics",          description: "Admin and seller analytics — revenue, orders, users, shop performance" },
+        { name: "PendingCounts",      description: "Admin sidebar red-badge counts for pending moderation/review items" },
         { name: "Warehouses",         description: "Multi-warehouse inventory management — warehouses, stock levels, and movement history (admin + seller)" },
         { name: "Brands",             description: "Brand catalogue with hierarchical parent/child tree and flat list" },
         { name: "Suppliers",          description: "Product supplier management" },
@@ -110,6 +113,8 @@ const swaggerSpec = {
         { name: "Gift Creators",         description: "Admin catalog of gift creators — CRUD, revenue balance and transaction history" },
         { name: "Gift Types",            description: "Admin catalog of purchasable animated gifts, and a read-only audit feed of gifts sent on reels" },
         { name: "Buyer — Requests",      description: "Buyer RFQ/tender posts — create, track, close requests; matching shops are notified" },
+        { name: "Buyer — ÖTS",           description: "Buyer side of the ÖTS offer negotiation thread on their own requests" },
+        { name: "Seller — ÖTS",          description: "Seller side of the ÖTS offer negotiation thread on buyer requests" },
         { name: "Buyer — Notifications", description: "Buyer in-app notification inbox — read, mark, delete" },
         { name: "Buyer Requests",        description: "Admin view of all buyer requests across the platform" },
         { name: "Sizes",                 description: "Structured size catalogue with hierarchical parent/child tree and flat list" },
@@ -152,6 +157,7 @@ const swaggerSpec = {
         ...pushNotifPaths,
         // Analytics (admin + seller)
         ...analyticsPaths,
+        ...pendingCountsPaths,
         // Warehouse management (admin + seller)
         ...warehousePaths,
         // Brands, Suppliers, Comments, KYC
@@ -162,6 +168,7 @@ const swaggerSpec = {
         ...reelsPaths,
         ...buyerRequestsPaths,
         ...sizesPaths,
+        ...colorsPaths,
         ...coinsPaths,
         ...favoritesPaths,
         ...systemPaths,

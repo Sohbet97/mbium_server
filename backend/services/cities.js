@@ -79,7 +79,7 @@ class CityService {
         const model = await db.City.create({
             name:req.body?.name,
             code:req.body?.code,
-            region:req.body?.region,
+            region_id:FUNCTIONS.getNumber(req.body?.region) || null,
             status:FUNCTIONS.getNumber(req.body?.status),
             order:FUNCTIONS.getNumber(req.body?.order) || null,
             createdBy:req.user?.id

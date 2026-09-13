@@ -10,6 +10,7 @@ router.use('/dashboard',  require('./dashboard'));
 router.use('/shop',       require('./shop'));
 router.use('/categories', require('./categories'));
 router.use('/brands',     require('./brands'));
+router.use('/colors',     require('./colors'));
 router.use('/suppliers',  require('./suppliers'));
 router.use('/sizes',      require('./sizes'));
 router.use('/delivery-types', require('./delivery-types'));
@@ -26,5 +27,7 @@ router.use('/support',             require('./support'));
 router.use('/analytics',           require('./analytics'));
 router.use('/warehouses',          require('./warehouses'));
 router.use('/reels',               require('./reels'));
+router.use('/buyer-requests',      require('./buyer-requests'));
+router.use('/pending-counts',      require('./pending-counts'));
 
 module.exports = router;

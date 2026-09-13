@@ -7,9 +7,11 @@ const BrandService = require('../../__modules__/brands/services/BrandService');
 // GET /seller/brands?mine=1 — restricted to the brands this shop picked in its settings,
 // for the product form's brand picker. Falls back to the full catalog if the shop hasn't
 // picked any yet, so setup order can't lock a seller out of creating their first product.
+// GET /seller/brands?text=... — name/slug search, combinable with mine=1.
 router.get('/', async (req, res, next) => {
     try {
-        const filter = { is_active: true };
+        // Sellers only ever see active brands, so is_active is forced rather than read from the query
+        const filter = { ...BrandService.buildFilter({ text: req.query.text }), is_active: true };
 
         if (req.query.mine) {
             const picks = await db.ShopBrand.findAll({

@@ -51,7 +51,7 @@ router.patch('/:id/status', async (req, res, next) => {
         if (!allowed.includes(Number(status))) {
             throw ApiError.NotAllowed('Bu status geçişine rugsat ýok');
         }
-        await OrderService.updateStatus(model.id, Number(status), note, req.user.id);
+        await OrderService.updateStatus(model.id, Number(status), note, req.user.id, req.app.io);
         const updated = await OrderService.getById(model.id);
         return res.status(200).json({ model: updated });
     } catch (e) { next(e); }

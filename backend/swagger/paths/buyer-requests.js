@@ -26,10 +26,10 @@ module.exports = {
             tags: ['Buyer — Requests'],
             summary: 'Create buyer request — notifies matching shops',
             description:
-                'Buyer posts what they need (text and/or images). ' +
+                'Buyer posts what they need (text and/or attachments). ' +
                 'The server finds all active shops in the given `city_id` and sends them ' +
                 'a push notification (FCM) + in-app notification. ' +
-                'At least one of `text` or `images` is required.',
+                'At least one of `text` or `attachments` is required.',
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
@@ -37,7 +37,7 @@ module.exports = {
             },
             responses: {
                 201: { description: 'Created', ...json(oneSchema) },
-                400: { description: 'Validation error (text and images both missing)' },
+                400: { description: 'Validation error (text and attachments both missing)' },
             },
         },
     },
@@ -78,6 +78,177 @@ module.exports = {
                 200: { description: 'Deleted' },
                 404: { description: 'Not found' },
             },
+        },
+    },
+
+    '/buyer/requests/attachments/upload': {
+        post: {
+            tags: ['Buyer — Requests'],
+            summary: 'Upload one file (image/video/excel/word/pdf) to attach to a request or offer counter',
+            description: 'Returns a URL + inferred metadata to pass in the `attachments` array of POST /buyer/requests or an offer counter.',
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: { 'multipart/form-data': { schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } } },
+            },
+            responses: {
+                201: { description: 'Uploaded', ...json(ref('BuyerRequestAttachmentInput')) },
+                400: { description: 'No file, or unsupported file type' },
+            },
+        },
+    },
+
+    // ── ÖTS (buyer) ───────────────────────────────────────────────────────────
+
+    '/buyer/requests/{id}/offers': {
+        get: {
+            tags: ['Buyer — ÖTS'],
+            summary: 'Get the offer negotiation thread for own request',
+            security: [{ bearerAuth: [] }],
+            parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
+            responses: {
+                200: { description: 'Offer thread', ...json({ type: 'object', properties: { data: { type: 'array', items: ref('BuyerRequestOffer') } } }) },
+                404: { description: 'Not found' },
+            },
+        },
+    },
+
+    '/buyer/requests/{id}/offers/{offerId}/counter': {
+        post: {
+            tags: ['Buyer — ÖTS'],
+            summary: 'Counter a pending seller offer',
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: 'path', name: 'id', required: true, schema: { type: 'integer' } },
+                { in: 'path', name: 'offerId', required: true, schema: { type: 'integer' } },
+            ],
+            requestBody: { required: true, ...json(ref('BuyerRequestOfferCounter')) },
+            responses: { 201: { description: 'New counter-offer created', ...json({ type: 'object', properties: { model: ref('BuyerRequestOffer') } }) } },
+        },
+    },
+
+    '/buyer/requests/{id}/offers/{offerId}/accept': {
+        patch: {
+            tags: ['Buyer — ÖTS'],
+            summary: 'Accept a pending seller offer',
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: 'path', name: 'id', required: true, schema: { type: 'integer' } },
+                { in: 'path', name: 'offerId', required: true, schema: { type: 'integer' } },
+            ],
+            responses: { 200: { description: 'Offer accepted', ...json({ type: 'object', properties: { model: ref('BuyerRequestOffer') } }) } },
+        },
+    },
+
+    '/buyer/requests/{id}/offers/{offerId}/reject': {
+        patch: {
+            tags: ['Buyer — ÖTS'],
+            summary: 'Reject a pending seller offer',
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: 'path', name: 'id', required: true, schema: { type: 'integer' } },
+                { in: 'path', name: 'offerId', required: true, schema: { type: 'integer' } },
+            ],
+            responses: { 200: { description: 'Offer rejected', ...json({ type: 'object', properties: { model: ref('BuyerRequestOffer') } }) } },
+        },
+    },
+
+    '/seller/buyer-requests/attachments/upload': {
+        post: {
+            tags: ['Seller — ÖTS'],
+            summary: 'Upload one file (image/video/excel/word/pdf) to attach to an offer',
+            description: 'Returns a URL + inferred metadata to pass in the `attachments` array of an offer create/counter.',
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+                required: true,
+                content: { 'multipart/form-data': { schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } }, required: ['file'] } } },
+            },
+            responses: {
+                201: { description: 'Uploaded', ...json(ref('BuyerRequestAttachmentInput')) },
+                400: { description: 'No file, or unsupported file type' },
+            },
+        },
+    },
+
+    // ── ÖTS (seller) ──────────────────────────────────────────────────────────
+
+    '/seller/buyer-requests': {
+        get: {
+            tags: ['Seller — ÖTS'],
+            summary: 'List buyer requests relevant to own shop (direct or city-broadcast)',
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: 'query', name: 'limit', schema: { type: 'integer', default: 20 } },
+                { in: 'query', name: 'page',  schema: { type: 'integer', default: 1  } },
+            ],
+            responses: { 200: { description: 'Buyer requests', ...json(listSchema) } },
+        },
+    },
+
+    '/seller/buyer-requests/{id}': {
+        get: {
+            tags: ['Seller — ÖTS'],
+            summary: "Get request detail + own shop's offer thread",
+            security: [{ bearerAuth: [] }],
+            parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
+            responses: {
+                200: {
+                    description: 'Request + own offer thread',
+                    ...json({ type: 'object', properties: { model: ref('BuyerRequest'), offers: { type: 'array', items: ref('BuyerRequestOffer') } } }),
+                },
+                404: { description: 'Not found' },
+            },
+        },
+    },
+
+    '/seller/buyer-requests/{id}/offers': {
+        post: {
+            tags: ['Seller — ÖTS'],
+            summary: 'Submit an initial priced offer on a buyer request',
+            security: [{ bearerAuth: [] }],
+            parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
+            requestBody: { required: true, ...json(ref('BuyerRequestOfferCreate')) },
+            responses: { 201: { description: 'Offer created', ...json({ type: 'object', properties: { model: ref('BuyerRequestOffer') } }) } },
+        },
+    },
+
+    '/seller/buyer-requests/{id}/offers/{offerId}/counter': {
+        post: {
+            tags: ['Seller — ÖTS'],
+            summary: 'Counter a pending buyer offer',
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: 'path', name: 'id', required: true, schema: { type: 'integer' } },
+                { in: 'path', name: 'offerId', required: true, schema: { type: 'integer' } },
+            ],
+            requestBody: { required: true, ...json(ref('BuyerRequestOfferCounter')) },
+            responses: { 201: { description: 'New counter-offer created', ...json({ type: 'object', properties: { model: ref('BuyerRequestOffer') } }) } },
+        },
+    },
+
+    '/seller/buyer-requests/{id}/offers/{offerId}/accept': {
+        patch: {
+            tags: ['Seller — ÖTS'],
+            summary: 'Accept a pending buyer offer',
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: 'path', name: 'id', required: true, schema: { type: 'integer' } },
+                { in: 'path', name: 'offerId', required: true, schema: { type: 'integer' } },
+            ],
+            responses: { 200: { description: 'Offer accepted', ...json({ type: 'object', properties: { model: ref('BuyerRequestOffer') } }) } },
+        },
+    },
+
+    '/seller/buyer-requests/{id}/offers/{offerId}/reject': {
+        patch: {
+            tags: ['Seller — ÖTS'],
+            summary: 'Reject a pending buyer offer',
+            security: [{ bearerAuth: [] }],
+            parameters: [
+                { in: 'path', name: 'id', required: true, schema: { type: 'integer' } },
+                { in: 'path', name: 'offerId', required: true, schema: { type: 'integer' } },
+            ],
+            responses: { 200: { description: 'Offer rejected', ...json({ type: 'object', properties: { model: ref('BuyerRequestOffer') } }) } },
         },
     },
 
@@ -157,6 +328,7 @@ module.exports = {
                 { in: 'query', name: 'page',    schema: { type: 'integer', default: 1  } },
                 { in: 'query', name: 'user_id', schema: { type: 'string', format: 'uuid' } },
                 { in: 'query', name: 'city_id', schema: { type: 'integer' } },
+                { in: 'query', name: 'shop_id', schema: { type: 'integer' } },
                 { in: 'query', name: 'status',  schema: { type: 'integer', enum: [0, 1] } },
             ],
             responses: {
@@ -168,11 +340,14 @@ module.exports = {
     '/admin/buyer-requests/{id}': {
         get: {
             tags: ['Buyer Requests'],
-            summary: 'Get buyer request by ID (admin)',
+            summary: 'Get buyer request by ID (admin), including its ÖTS offer thread',
             security: [{ bearerAuth: [] }],
             parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
             responses: {
-                200: { description: 'Buyer request', ...json(oneSchema) },
+                200: {
+                    description: 'Buyer request + offer thread',
+                    ...json({ type: 'object', properties: { model: ref('BuyerRequest'), offers: { type: 'array', items: ref('BuyerRequestOffer') } } }),
+                },
                 404: { description: 'Not found' },
             },
         },

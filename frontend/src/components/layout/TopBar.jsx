@@ -10,6 +10,7 @@ import { useAuth } from '@/store/auth'
 import { useTheme } from '@/store/theme'
 import { useAiAssistant } from '@/store/aiAssistant'
 import { NotificationPanel } from './NotificationPanel'
+import { BlueBadge } from '@/components/common/BlueBadge'
 import { cn } from '@/lib/utils'
 
 const LANGUAGES = [
@@ -150,7 +151,10 @@ export function TopBar({ title }) {
                   {shopInitials(s.name)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{s.name}</p>
+                  <p className="text-sm font-medium truncate flex items-center gap-1">
+                    <span className="truncate">{s.name}</span>
+                    <BlueBadge show={s.has_blue_badge} />
+                  </p>
                   {!s.is_active && <p className="text-[10px] text-orange-400">Pending</p>}
                 </div>
                 {s.id === shop?.id && <Check className="h-4 w-4 text-slate-400 shrink-0" />}

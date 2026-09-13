@@ -8,6 +8,15 @@ const sortParam = {
 
 const reelRef        = { $ref: '#/components/schemas/Reel' }
 const reelListSchema = { type: 'object', properties: { data: { type: 'array', items: reelRef }, count: { type: 'integer' } } }
+const sellerReelListSchema = {
+    type: 'object',
+    properties: {
+        data:  { type: 'array', items: reelRef },
+        count: { type: 'integer' },
+        used:  { type: 'integer', description: "This shop's reels created this calendar month" },
+        quota: { type: 'integer', nullable: true, description: 'From plan.reel_monthly — null = unlimited, 0 = not available' },
+    },
+}
 const reelOneSchema  = { type: 'object', properties: { model: reelRef } }
 const json           = (schema) => ({ content: { 'application/json': { schema } } })
 
@@ -32,6 +41,7 @@ module.exports = {
                 { in: 'query', name: 'limit',   schema: { type: 'integer', default: 20 } },
                 { in: 'query', name: 'page',    schema: { type: 'integer', default: 1  } },
                 { in: 'query', name: 'shop_id', schema: { type: 'integer' }, description: 'Filter to one shop\'s reels' },
+                { in: 'query', name: 'city_id', schema: { type: 'integer' }, description: 'Filter to reels from shops located in this city' },
                 sortParam,
             ],
             responses: {
@@ -44,10 +54,29 @@ module.exports = {
         get: {
             tags: ['Buyer — Reels'],
             summary: 'Get single reel (increments view_count)',
+            description:
+                'Increments `view_count` once per authenticated buyer (deduplicated via a per-user view record). ' +
+                'Anonymous requests (no bearer token) increment on every call, same as before.',
             parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
             responses: {
                 200: { description: 'Reel', ...json(reelOneSchema) },
                 404: { description: 'Not found' },
+            },
+        },
+    },
+
+    '/buyer/reels/{id}/share': {
+        post: {
+            tags: ['Buyer — Reels'],
+            summary: 'Record a share of a reel',
+            description: 'Fire-and-forget increment of `share_count`. Not idempotent — every call counts as a new share.',
+            parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
+            responses: {
+                200: {
+                    description: 'Share recorded',
+                    ...json({ type: 'object', properties: { share_count: { type: 'integer' } } }),
+                },
+                404: { description: 'Reel not found or not visible to buyers' },
             },
         },
     },
@@ -133,7 +162,7 @@ module.exports = {
                 sortParam,
             ],
             responses: {
-                200: { description: 'Reels list', ...json(reelListSchema) },
+                200: { description: 'Reels list', ...json(sellerReelListSchema) },
             },
         },
         post: {
@@ -142,7 +171,8 @@ module.exports = {
             description:
                 'Upload the video first via `POST /seller/media/upload` and pass the returned `model.id` as `video_id`. ' +
                 'Optionally upload a cover image the same way and pass its id as `thumbnail_id`. ' +
-                'New reels always start with `moderation_status = 0` (PENDING) and only appear to buyers once an admin approves them.',
+                'New reels always start with `moderation_status = 0` (PENDING) and only appear to buyers once an admin approves them. ' +
+                "Subject to the shop's plan.reel_monthly quota (null = unlimited, 0 = not available).",
             security: [{ bearerAuth: [] }],
             requestBody: {
                 required: true,
@@ -151,6 +181,7 @@ module.exports = {
             responses: {
                 201: { description: 'Created', ...json(reelOneSchema) },
                 400: { description: 'Validation error' },
+                403: { description: 'Monthly reel quota reached, or reels not available on this plan' },
                 404: { description: 'Media or product not found' },
             },
         },

@@ -33,6 +33,7 @@ export const Permissions = {
   TURBO_GET: 348,
   GIFT_CREATOR_GET: 352,
   GIFT_TYPE_GET: 356,
+  COLOR_GET: 360,
 }
 
 // Required permission per /admin/* page. `null` = any logged-in admin.
@@ -69,6 +70,7 @@ export const ADMIN_PAGE_PERMISSIONS = {
   tags: Permissions.PRODUCT_GET,
   brands: Permissions.BRAND_GET,
   sizes: Permissions.SIZE_GET,
+  colors: Permissions.COLOR_GET,
   deliveryTypes: Permissions.DELIVERY_TYPE_GET,
   suppliers: Permissions.SUPPLIER_GET,
   comments: Permissions.COMMENT_GET,

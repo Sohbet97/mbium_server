@@ -1,5 +1,6 @@
 const db = require("../../../models");
 const ApiError = require("../../../exceptions/api-error");
+const ProductService = require("../../catalog/services/products");
 
 class CartService {
     static async getByUser(userId) {
@@ -84,7 +85,7 @@ class CartService {
         const { product, variant, variantSize, effectiveStock } =
             await this._resolveSelection(productId, variantId, variantSizeId);
 
-        if (!product.sell_when_out_of_stock && effectiveStock < quantity) {
+        if (!ProductService.canSellOutOfStock(product, variant) && effectiveStock < quantity) {
             throw ApiError.BadRequest(`Ýeterlik stok ýok (bar: ${effectiveStock})`);
         }
 

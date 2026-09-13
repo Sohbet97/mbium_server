@@ -7,8 +7,10 @@ const ProductService  = require('../../__modules__/catalog/services/products');
 const CategoryService = require('../../__modules__/catalog/services/categories');
 const CollectionService = require('../../__modules__/catalog/services/collections');
 const ShopService     = require('../../__modules__/shops/services/shops');
+const SHOP_CONSTANTS  = require('../../__modules__/shops/utils/constants');
 const BrandService    = require('../../__modules__/brands/services/BrandService');
 const SizeService     = require('../../__modules__/sizes/services/SizeService');
+const ColorService    = require('../../__modules__/colors/services/ColorService');
 const SupplierService = require('../../__modules__/suppliers/services/SupplierService');
 const SearchService   = require('../../services/search');
 
@@ -32,6 +34,11 @@ const BUYER_SORT_MAP = {
 function resolveBuyerSort(param) {
     const base = BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
     return [['turbo_active', 'DESC'], ['turbo_boosted_at', 'DESC'], ...base];
+}
+
+// Turbo-boosted shops sort first, then fall back to the default shop order.
+function resolveShopSort() {
+    return [['turbo_active', 'DESC'], ['turbo_boosted_at', 'DESC'], ...SHOP_CONSTANTS.DEFAULT_SORT];
 }
 
 // ── FTS text-filter helpers ───────────────────────────────────────────────────
@@ -151,10 +158,21 @@ router.get('/shops', async (req, res, next) => {
         if (req.query.text) filter[Op.and] = [shopTextFilter(req.query.text)]
         if (req.query.type_id) filter.type_id = req.query.type_id;
         const [data, count] = await Promise.all([
-            ShopService.get(filter, limit, undefined, skip),
+            ShopService.get(filter, limit, resolveShopSort(), skip),
             ShopService.getCount(filter),
         ]);
         return res.status(200).json({ data, count });
+    } catch (e) { next(e); }
+});
+
+// GET /buyer/catalog/shops/top?limit=20
+// Top shops by rating, tie-broken by order count. Must stay registered before
+// '/shops/:id' or Express would match ':id' = "top".
+router.get('/shops/top', async (req, res, next) => {
+    try {
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 20);
+        const data = await ShopService.getTop(limit);
+        return res.status(200).json({ data });
     } catch (e) { next(e); }
 });
 
@@ -180,6 +198,8 @@ router.get('/shops/:id/products', async (req, res, next) => {
         };
         if (req.query.category_id) filter.category_id = req.query.category_id;
         if (req.query.text) filter[Op.and] = [productTextFilter(req.query.text)]
+        const shopColorFilter = ProductService.colorFilter(req.query.color_hex);
+        if (shopColorFilter) filter[Op.and] = [...(filter[Op.and] ?? []), shopColorFilter];
         const [data, count] = await Promise.all([
             ProductService.get(filter, limit, sort, skip),
             ProductService.getCount(filter),
@@ -214,6 +234,9 @@ router.get('/products', async (req, res, next) => {
             if (isNaN(maxPrice)) throw ApiError.BadRequest('max_price nädogry');
             filter.price = { ...filter.price, [Op.lte]: maxPrice };
         }
+        // ?color_hex=#ef4444 or a comma-separated list
+        const colorFilter = ProductService.colorFilter(req.query.color_hex);
+        if (colorFilter) filter[Op.and] = [...(filter[Op.and] ?? []), colorFilter];
 
         const [data, count] = await Promise.all([
             ProductService.get(filter, limit, sort, skip),
@@ -235,6 +258,14 @@ router.get('/products/:id', async (req, res, next) => {
 });
 
 // ── Brands (public, read-only) ────────────────────────────────────────────────
+
+// GET /buyer/catalog/colors — active palette, for the colour filter chips
+router.get('/colors', async (req, res, next) => {
+    try {
+        const result = await ColorService.getAll({ is_active: true }, undefined, 0);
+        return res.status(200).json({ data: result.rows, count: result.count });
+    } catch (e) { next(e); }
+});
 
 router.get('/brands', async (req, res, next) => {
     try {

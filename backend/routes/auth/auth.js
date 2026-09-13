@@ -21,6 +21,7 @@ authRouter.get('/captcha', UserController.captcha);
 authRouter.post('/register', UserController.register.bind(UserController));
 authRouter.post('/login', UserController.login.bind(UserController));
 authRouter.post('/google', UserController.googleLogin.bind(UserController));
+authRouter.post('/request-otp', UserController.requestOtp.bind(UserController));
 authRouter.post('/verify-otp', UserController.verifyOtp.bind(UserController));
 authRouter.post('/resend-otp', UserController.resendOtp.bind(UserController));
 authRouter.post('/refresh', UserController.refresh.bind(UserController));

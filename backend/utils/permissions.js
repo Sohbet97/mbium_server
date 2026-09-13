@@ -181,6 +181,11 @@ class Permissions {
     static GIFT_TYPE_POST   = 357
     static GIFT_TYPE_PUT    = 358
     static GIFT_TYPE_DELETE = 359
+
+    static COLOR_GET    = 360
+    static COLOR_POST   = 361
+    static COLOR_PUT    = 362
+    static COLOR_DELETE = 363
 }
 
 module.exports = Permissions

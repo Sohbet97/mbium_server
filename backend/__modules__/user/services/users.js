@@ -150,12 +150,16 @@ class UserService {
    * @returns {{ user: Model, isNew: boolean }}
    */
   static async findOrCreateByGoogle({ google_id, email, given_name, family_name }) {
-    let user = await db.User.findOne({ where: { google_id } });
-    if (user) return { user, isNew: false };
+    let user = await db.User.findOne({ where: { google_id }, paranoid: false });
+    if (user) {
+      if (user.deletedAt) await user.restore();
+      return { user, isNew: false };
+    }
 
     if (email) {
-      user = await db.User.findOne({ where: { email } });
+      user = await db.User.findOne({ where: { email }, paranoid: false });
       if (user) {
+        if (user.deletedAt) await user.restore();
         await user.update({ google_id });
         return { user, isNew: false };
       }
@@ -174,17 +178,62 @@ class UserService {
       if (e.name !== "SequelizeUniqueConstraintError") throw e;
 
       // Lost a race against a concurrent request for the same account; link to it instead.
-      user = await db.User.findOne({ where: { google_id } });
+      user = await db.User.findOne({ where: { google_id }, paranoid: false });
       if (!user && email) {
-        user = await db.User.findOne({ where: { email } });
+        user = await db.User.findOne({ where: { email }, paranoid: false });
         if (user && !user.google_id) await user.update({ google_id });
       }
       if (!user) throw e;
 
+      if (user.deletedAt) await user.restore();
       return { user, isNew: false };
     }
 
     return { user, isNew: true };
+  }
+
+  /**
+   * Accepts E.164 (+99361234567) or the bare local 8-digit form and returns
+   * the local form this codebase stores/validates against (TM_PHONE_REGEX).
+   */
+  static normalizePhone(phone_number) {
+    const digits = String(phone_number || "").replace(/[^\d]/g, "");
+    const local = digits.startsWith("993") ? digits.slice(3) : digits;
+    if (!USER_CONSTANTS.TM_PHONE_REGEX.test(local)) {
+      throw ApiError.BadRequest("phone_number nädogry görnüşde");
+    }
+    return local;
+  }
+
+  /**
+   * Phone-only OTP flow: finds the user by phone, or creates a NOT_ACTIVATED
+   * placeholder so an OTP session (which requires an existing user_id) can be
+   * issued before the number has ever verified. Mirrors findOrCreateByGoogle.
+   */
+  static async findOrCreateByPhone(phone_number) {
+    let user = await db.User.findOne({ where: { phone_number }, paranoid: false });
+    if (user) {
+      if (user.deletedAt) await user.restore();
+      return user;
+    }
+    return db.User.create({ phone_number, status: USER_CONSTANTS.STATUS_NOT_ACTIVATED });
+  }
+
+  /** Most recent non-expired OTP session for a phone number + purpose. */
+  static async findActiveOtpSessionByPhone(phone_number, purpose) {
+    return db.UserOtpSession.findOne({
+      where: { purpose, expires_at: { [Op.gt]: new Date() } },
+      include: [{ model: db.User, as: "user", where: { phone_number }, attributes: [] }],
+      order: [["createdAt", "DESC"]],
+    });
+  }
+
+  /** POST /auth/request-otp orchestrator — phone-only flow, alongside login/register. */
+  static async requestPhoneOtp(phone_number) {
+    const normalized = this.normalizePhone(phone_number);
+    const user = await this.findOrCreateByPhone(normalized);
+    await this.createOtpSession(user.id, USER_CONSTANTS.OTP_PURPOSES.PHONE_LOGIN);
+    return { retry_after_seconds: 60, code_ttl_seconds: OTP_TTL_MINUTES * 60 };
   }
 
   /** Self-registration: always starts as STATUS_NOT_ACTIVATED. */
@@ -267,7 +316,7 @@ class UserService {
    * - Destroys the session after success or max-attempts lockout.
    * @returns {string|null} userId on success, null on wrong OTP
    */
-  static async validateOtpSession(sessionId, otp) {
+  static async validateOtpSession(sessionId, otp, { lockoutError } = {}) {
     const session = await db.UserOtpSession.findByPk(sessionId);
 
     if (!session || session.expires_at < new Date()) {
@@ -277,7 +326,7 @@ class UserService {
 
     if (session.attempts >= OTP_MAX_ATTEMPTS) {
       await session.destroy();
-      throw ApiError.BadRequest("Too many incorrect attempts. Please log in again.");
+      throw lockoutError ? lockoutError() : ApiError.BadRequest("Too many incorrect attempts. Please log in again.");
     }
 
     const isMatch =

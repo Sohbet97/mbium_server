@@ -6,71 +6,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { ArrowLeft, Plus, Trash2, Loader2, Save, X, Pencil } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2, Loader2, Save, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SellerProductMediaManager } from '@/components/media/SellerProductMediaManager'
 import { SellerProductSpinManager } from '@/components/media/SellerProductSpinManager'
+import { PriceTierManager } from '@/components/common/PriceTierManager'
+import { AttributeEditor } from '@/components/common/AttributeEditor'
+import { ColorSelect } from '@/components/common/ColorSelect'
 
 const EMPTY_VARIANT = {
   name: '', price: '', compare_at_price: '',
   stock: '0', sku: '', barcode: '',
-  is_active: true, attributes: {},
-}
-
-// ── Attribute key-value editor ────────────────────────────────────────────────
-function AttributeEditor({ initial = {}, onChange }) {
-  const [pairs, setPairs] = useState(() => Object.entries(initial))
-
-  function push(next) {
-    setPairs(next)
-    onChange(Object.fromEntries(next.filter(([k]) => k.trim())))
-  }
-
-  function updatePair(idx, field, v) {
-    push(pairs.map((p, i) => i === idx ? (field === 'k' ? [v, p[1]] : [p[0], v]) : p))
-  }
-
-  function addPair() { setPairs([...pairs, ['', '']]) }
-
-  function removePair(idx) {
-    push(pairs.filter((_, i) => i !== idx))
-  }
-
-  return (
-    <div className="space-y-1.5">
-      {pairs.map(([k, v], idx) => (
-        <div key={idx} className="flex gap-1.5 items-center">
-          <Input
-            value={k}
-            onChange={(e) => updatePair(idx, 'k', e.target.value)}
-            placeholder="Häsiýet (mysal: Reňk)"
-            className="h-7 text-xs flex-1"
-          />
-          <span className="text-slate-400 text-xs shrink-0">:</span>
-          <Input
-            value={v}
-            onChange={(e) => updatePair(idx, 'v', e.target.value)}
-            placeholder="Baha (mysal: Gyzyl)"
-            className="h-7 text-xs flex-1"
-          />
-          <button
-            type="button"
-            onClick={() => removePair(idx)}
-            className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={addPair}
-        className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-      >
-        <Plus className="h-3 w-3" />Häsiýet goş
-      </button>
-    </div>
-  )
+  is_active: true, attributes: {}, color_hex: '',
+  sell_when_out_of_stock: false,
 }
 
 // ── Per-variant size/stock rows ───────────────────────────────────────────────
@@ -392,6 +340,7 @@ const TABS = [
   { key: 'media', label: 'Suratlar' },
   { key: 'spin',  label: '360° Aýlanma' },
   { key: 'sales', label: 'Aksiýalar' },
+  { key: 'tiers', label: 'Baha basgançaklary' },
 ]
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -404,12 +353,14 @@ export default function SellerProductVariantPage() {
   const [variant, setVariant]         = useState(null)
   const [sizeOptions, setSizeOptions] = useState([])
   const [form, setForm]               = useState(EMPTY_VARIANT)
+  const [colors, setColors]           = useState([])
   const [loading, setLoading]         = useState(!isCreate)
   const [saving, setSaving]           = useState(false)
   const [tab, setTab]                 = useState('info')
 
   useEffect(() => {
     SellerApi.sizes.getAll().then(({ data }) => setSizeOptions(data.data ?? [])).catch(() => {})
+    SellerApi.colors.getAll().then(({ data }) => setColors(data.data ?? [])).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -430,6 +381,8 @@ export default function SellerProductVariantPage() {
             barcode:          vr.barcode           ?? '',
             is_active:        vr.is_active         ?? true,
             attributes:       (typeof vr.attributes === 'object' ? vr.attributes : {}) ?? {},
+            color_hex:        vr.color_hex        ?? '',
+            sell_when_out_of_stock: vr.sell_when_out_of_stock ?? false,
           })
         }
       })
@@ -453,6 +406,8 @@ export default function SellerProductVariantPage() {
         barcode:          form.barcode || null,
         is_active:        form.is_active,
         attributes:       form.attributes || {},
+        color_hex:        form.color_hex || null,
+        sell_when_out_of_stock: form.sell_when_out_of_stock,
       }
       if (isCreate) {
         const { data } = await SellerApi.products.variants.create(id, payload)
@@ -547,11 +502,27 @@ export default function SellerProductVariantPage() {
               </div>
 
               <div>
+                <Label className="mb-1 block">Reňk</Label>
+                <ColorSelect colors={colors} value={form.color_hex} onChange={(hex) => set('color_hex', hex)} />
+              </div>
+
+              <div>
                 <Label className="mb-1 block">Häsiýetler</Label>
                 <AttributeEditor initial={form.attributes} onChange={(attrs) => set('attributes', attrs)} />
               </div>
 
               <Toggle label="Işjeň" checked={form.is_active} onChange={(v) => set('is_active', v)} />
+
+              <div>
+                <Toggle
+                  label="Ammar gutaranda sat"
+                  checked={form.sell_when_out_of_stock}
+                  onChange={(v) => set('sell_when_out_of_stock', v)}
+                />
+                <p className="text-xs text-slate-400 mt-1">
+                  Diňe şu görnüş üçin. Harydyň özünde açyk bolsa, ähli görnüşler üçin hereket edýär.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -598,6 +569,20 @@ export default function SellerProductVariantPage() {
           <CardHeader><CardTitle>Aksiýalar</CardTitle></CardHeader>
           <CardContent>
             <VariantSalesManager productId={id} variant={variant} />
+          </CardContent>
+        </Card>
+      )}
+
+      {!isCreate && tab === 'tiers' && (
+        <Card>
+          <CardHeader><CardTitle>Baha basgançaklary</CardTitle></CardHeader>
+          <CardContent>
+            <PriceTierManager
+              tiers={variant.priceTiers ?? []}
+              onCreate={(data) => SellerApi.products.variants.priceTiers.create(id, variant.id, data)}
+              onUpdate={(tierId, data) => SellerApi.products.variants.priceTiers.update(id, variant.id, tierId, data)}
+              onDelete={(tierId) => SellerApi.products.variants.priceTiers.delete(id, variant.id, tierId)}
+            />
           </CardContent>
         </Card>
       )}

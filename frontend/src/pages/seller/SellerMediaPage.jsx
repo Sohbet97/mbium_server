@@ -4,12 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import { Upload, Trash2, Images, RefreshCw, X, Copy, Box } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, absUrl as mediaUrl } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
 import { isAdmin } from '@/lib/access'
-
-const BASE = import.meta.env.VITE_API_BASE_URL ?? ''
-function mediaUrl(url) { return url ? (url.startsWith('http') ? url : `${BASE}${url}`) : null }
 
 function fmtSize(bytes) {
   if (bytes < 1024) return `${bytes} B`

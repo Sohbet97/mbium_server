@@ -9,7 +9,8 @@ module.exports = {
             summary: "List brands (flat, paginated)",
             security,
             parameters: [
-                { in: "query", name: "search",    schema: { type: "string" }, description: "Filter by name" },
+                { in: "query", name: "text",       schema: { type: "string" }, description: "Case-insensitive search across name, name_ru, name_en and slug" },
+                { in: "query", name: "parent_id",  schema: { type: "string" }, description: "Narrow to one parent brand; `null` or `root` returns top-level brands only" },
                 { in: "query", name: "is_active",  schema: { type: "boolean" } },
                 { in: "query", name: "limit",      schema: { type: "integer", default: 50 } },
                 { in: "query", name: "skip",       schema: { type: "integer", default: 0 } },
@@ -96,6 +97,10 @@ module.exports = {
             tags: [tag],
             summary: "List active brands (flat, for the product form's brand picker)",
             security,
+            parameters: [
+                { in: "query", name: "text", schema: { type: "string" }, description: "Case-insensitive search across name, name_ru, name_en and slug" },
+                { in: "query", name: "mine", schema: { type: "boolean" }, description: "Restrict to the brands this shop picked in its settings" },
+            ],
             responses: {
                 200: {
                     description: "Active brands",

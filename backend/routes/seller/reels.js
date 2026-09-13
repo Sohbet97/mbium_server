@@ -4,6 +4,7 @@ const db              = require('../../models')
 const ReelService     = require('../../__modules__/reels/services/reels')
 const ReelGiftService = require('../../__modules__/reels/services/reelGifts')
 const { FUNCTIONS }   = require('../../utils/functions')
+const PlanLimits      = require('../../services/plan-limits')
 
 // GET /seller/reels  — own shop's reels
 router.get('/', async (req, res, next) => {
@@ -12,11 +13,12 @@ router.get('/', async (req, res, next) => {
         const filter = { shop_id: req.shop.id }
         if (req.query.is_active !== undefined) filter.is_active = req.query.is_active
 
-        const [data, count] = await Promise.all([
+        const [data, count, { used, quota }] = await Promise.all([
             ReelService.get(filter, limit, skip, req.query.sort),
             ReelService.getCount(filter),
+            PlanLimits.getUsage(req.shop, 'reel_monthly'),
         ])
-        return res.json({ data, count })
+        return res.json({ data, count, used, quota })
     } catch (e) { next(e) }
 })
 
@@ -38,6 +40,9 @@ router.post('/', async (req, res, next) => {
     try {
         const { video_id, thumbnail_id, caption, product_id } = req.body
         if (!video_id) throw ApiError.BadRequest('video_id hökman')
+
+        const used = await PlanLimits.getMonthlyUsage(req.shop.id, 'reel_monthly')
+        PlanLimits.assertQuota(req.shop.plan, 'reel_monthly', used)
 
         // Verify the video belongs to this seller
         const video = await db.Media.findOne({ where: { id: video_id, uploaded_by: req.user.id } })

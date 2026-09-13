@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Award, Plus, Pencil, Trash2, X, Loader2, ChevronRight, ChevronDown } from 'lucide-react'
+import { Award, Plus, Pencil, Trash2, X, Loader2, ChevronRight, ChevronDown, Search } from 'lucide-react'
 import { AdminApi } from '@/lib/api'
 import { toast } from 'sonner'
 
@@ -175,6 +175,45 @@ function BrandRow({ brand, depth = 0, forceOpen, onEdit, onDelete }) {
   )
 }
 
+// ── Search result row ─────────────────────────────────────────────────────────
+// Search returns a flat list, so results are rendered without the tree's
+// expand/collapse chrome — the parent is shown inline instead of by indentation.
+
+function BrandResultRow({ brand, onEdit, onDelete }) {
+  return (
+    <tr className="border-b dark:border-white/[0.04] border-black/[0.04] last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1.5">
+          {brand.logo_url && (
+            <img src={brand.logo_url} alt="" className="w-6 h-6 rounded object-cover shrink-0" />
+          )}
+          {brand.parent && (
+            <span className="text-xs opacity-40">{brand.parent.name} /</span>
+          )}
+          <span className="font-medium dark:text-white">{brand.name}</span>
+          {brand.name_ru && <span className="text-xs opacity-40 ml-1">{brand.name_ru}</span>}
+        </div>
+      </td>
+      <td className="px-4 py-3 text-xs opacity-50 font-mono">{brand.slug}</td>
+      <td className="px-4 py-3 text-center">
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${brand.is_active ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-100 text-slate-500 dark:bg-white/5'}`}>
+          {brand.is_active ? '✓' : '—'}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-1 justify-end">
+          <button onClick={() => onEdit(brand)} className="p-1.5 rounded hover:bg-black/5 dark:hover:bg-white/10 opacity-60 hover:opacity-100">
+            <Pencil size={13} />
+          </button>
+          <button onClick={() => onDelete(brand.id)} className="p-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 opacity-60 hover:opacity-100 text-red-500">
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  )
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function BrandsPage() {
@@ -184,6 +223,16 @@ export default function BrandsPage() {
   const [loading, setLoading]   = useState(true)
   const [modal, setModal]       = useState(null)
   const [forceOpen, setForceOpen] = useState(null)
+  const [search, setSearch]     = useState('')
+  const [results, setResults]   = useState([])
+  // The query `results` actually belongs to — lets us derive the in-flight state
+  // instead of tracking it separately.
+  const [resultsFor, setResultsFor] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const query      = search.trim()
+  const searchMode = query.length > 0
+  const searching  = searchMode && resultsFor !== query
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -200,12 +249,32 @@ export default function BrandsPage() {
 
   useEffect(() => { load() }, [load])
 
+  // Debounced server-side search. An empty box falls back to the tree view,
+  // so there is nothing to fetch or clear.
+  useEffect(() => {
+    const text = search.trim()
+    if (!text) return
+
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      try {
+        const { data } = await AdminApi.brands.getAll({ limit: 500, text })
+        if (!cancelled) { setResults(data.data ?? []); setResultsFor(text) }
+      } catch {
+        if (!cancelled) { setResults([]); setResultsFor(text); toast.error(t('toast.error')) }
+      }
+    }, 300)
+
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [search, refreshKey, t])
+
   async function handleDelete(id) {
     if (!window.confirm(t('common.confirmDelete'))) return
     try {
       await AdminApi.brands.delete(id)
       toast.success(t('toast.deleted'))
       load()
+      setRefreshKey((k) => k + 1) // re-run the search effect so results drop the deleted row
     } catch { toast.error(t('toast.error')) }
   }
 
@@ -220,11 +289,33 @@ export default function BrandsPage() {
           </div>
           <div>
             <h1 className="text-xl font-semibold dark:text-white">{t('brands.title')}</h1>
-            <p className="text-xs opacity-50">{t('brands.totalCount', { count: flat.length })}</p>
+            <p className="text-xs opacity-50">
+              {searchMode
+                ? t('brands.resultCount', { count: results.length })
+                : t('brands.totalCount', { count: flat.length })}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {hasNested && (
+          <div className="relative">
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-40 pointer-events-none" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('brands.searchPlaceholder')}
+              className="w-56 rounded-lg border pl-8 pr-8 py-2 text-sm dark:bg-[#111] dark:border-white/10 dark:text-white border-slate-200"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                aria-label={t('common.clear', 'Clear')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-80"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+          {!searchMode && hasNested && (
             <>
               <button onClick={() => setForceOpen(true)}
                 className="flex items-center gap-1 px-3 py-2 text-xs rounded-lg dark:hover:bg-white/5 hover:bg-black/5 opacity-60 hover:opacity-100">
@@ -243,9 +334,11 @@ export default function BrandsPage() {
         </div>
       </div>
 
-      {loading ? (
+      {loading || searching ? (
         <div className="flex justify-center py-16"><Loader2 className="animate-spin opacity-40" /></div>
-      ) : tree.length === 0 ? (
+      ) : searchMode && results.length === 0 ? (
+        <p className="text-center text-sm opacity-40 py-16">{t('brands.noResults', { text: query })}</p>
+      ) : !searchMode && tree.length === 0 ? (
         <p className="text-center text-sm opacity-40 py-16">{t('brands.empty')}</p>
       ) : (
         <div className="rounded-xl border dark:border-white/[0.06] border-black/[0.06] overflow-hidden">
@@ -259,16 +352,25 @@ export default function BrandsPage() {
               </tr>
             </thead>
             <tbody>
-              {tree.map((brand) => (
-                <BrandRow
-                  key={brand.id}
-                  brand={brand}
-                  depth={0}
-                  forceOpen={forceOpen}
-                  onEdit={(b) => setModal(b)}
-                  onDelete={handleDelete}
-                />
-              ))}
+              {searchMode
+                ? results.map((brand) => (
+                    <BrandResultRow
+                      key={brand.id}
+                      brand={brand}
+                      onEdit={(b) => setModal(b)}
+                      onDelete={handleDelete}
+                    />
+                  ))
+                : tree.map((brand) => (
+                    <BrandRow
+                      key={brand.id}
+                      brand={brand}
+                      depth={0}
+                      forceOpen={forceOpen}
+                      onEdit={(b) => setModal(b)}
+                      onDelete={handleDelete}
+                    />
+                  ))}
             </tbody>
           </table>
         </div>

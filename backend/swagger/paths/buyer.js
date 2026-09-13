@@ -210,6 +210,35 @@ module.exports = {
         },
     },
 
+    "/buyer/catalog/shops/top": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Top shops by rating",
+            description: "Shops sorted by rating desc, tie-broken by order count desc.",
+            parameters: [
+                { in: "query", name: "limit", schema: { type: "integer", default: 20, maximum: 20 } },
+            ],
+            responses: {
+                200: {
+                    description: "Top shops",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { type: "object", properties: {
+                            id:                       { type: "integer" },
+                            name:                      { type: "string" },
+                            logo:                      { type: "string", nullable: true },
+                            rating:                    { type: "number" },
+                            total_products:            { type: "integer" },
+                            total_orders:              { type: "integer" },
+                            total_product_favorites:   { type: "integer" },
+                            total_reels:                { type: "integer" },
+                            total_comments:            { type: "integer" },
+                        } } },
+                    } } } },
+                },
+            },
+        },
+    },
+
     "/buyer/catalog/shops/{id}": {
         get: {
             tags: ["Buyer — Catalog"],
@@ -258,6 +287,7 @@ module.exports = {
                 { in: "query", name: "shop_id",     schema: { type: "integer" } },
                 { in: "query", name: "min_price",   schema: { type: "number" }, description: "Minimum price filter (inclusive)" },
                 { in: "query", name: "max_price",   schema: { type: "number" }, description: "Maximum price filter (inclusive)" },
+                { in: "query", name: "color_hex",   schema: { type: "string" }, example: "#ef4444,#000000", description: "One hex or a comma-separated list. Matches the product's own colour or any of its variants'. Invalid values are ignored." },
                 productSortParam,
             ],
             responses: {

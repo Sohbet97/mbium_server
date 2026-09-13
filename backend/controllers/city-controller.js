@@ -57,7 +57,7 @@ class CityController {
             if(!model) throw ApiError.NotFound()
             model.name = req.body?.name
             model.code = req.body?.code
-            model.region = req.body?.region
+            model.region_id = FUNCTIONS.getNumber(req.body?.region) || null
             model.order = FUNCTIONS.getNumber(req.body?.order) || null
             model.status = FUNCTIONS.getNumber(req.body?.status)
             const {isError, errors} = await this.validate(model, true)
@@ -91,7 +91,7 @@ class CityController {
                 ]
             }
             if(params.region){
-                filter.region = {[Op.eq]:params.region}
+                filter.region_id = {[Op.eq]:params.region}
             }
             
             if(!isNaN(Number(params?.status))) filter.status = {[Op.eq]:params.status}
@@ -105,7 +105,7 @@ class CityController {
             errors.name='Şäher ady boş bolup bilmez!'
         } 
         if(!isUpdate){
-            const oldModel = await db.Village.findOne({
+            const oldModel = await db.City.findOne({
                 where:{
                     [Op.and]:{
                         name:{[Op.eq]:form?.name},
@@ -118,9 +118,10 @@ class CityController {
             }
         }
     
-        if(!FUNCTIONS.checkRequire(form?.region)){
+        const region = form?.region_id ?? form?.region
+        if(!FUNCTIONS.checkRequire(region)){
             errors.region='Şäheriň haýsy welaýata degişlidigini saýlaň!'
-        }else if(!db.Region.findOne({where:{id:{[Op.eq]:form.region}}})){
+        }else if(!(await db.Region.findOne({where:{id:{[Op.eq]:region}}}))){
             errors.region='Şäheriň haýsy welaýata degişlidigini dogry saýlaň!'
         }else{
             errors.region = null

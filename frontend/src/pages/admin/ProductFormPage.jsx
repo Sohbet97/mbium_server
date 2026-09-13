@@ -16,8 +16,10 @@ import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
 import { CategoryTreeSelect } from '@/components/common/CategoryTreeSelect'
 import { SearchSelect } from '@/components/common/SearchSelect'
+import { ColorSelect } from '@/components/common/ColorSelect'
 import { AdminApi } from '@/lib/api'
 import { ProductMediaManager } from '@/components/media/ProductMediaManager'
+import { PriceTierManager } from '@/components/common/PriceTierManager'
 import { toast } from 'sonner'
 
 const EMPTY_FORM = {
@@ -36,6 +38,7 @@ const EMPTY_FORM = {
   scheduled_at: '',
   brand_id: '',
   supplier_id: '',
+  color_hex: '',
 }
 
 function buildForm(product) {
@@ -69,6 +72,7 @@ function buildForm(product) {
       : '',
     brand_id:               product.brand_id    ?? '',
     supplier_id:            product.supplier_id ?? '',
+    color_hex:              product.color_hex   ?? '',
   }
 }
 
@@ -98,6 +102,7 @@ export default function ProductFormPage() {
   const [shops, setShops] = useState([])
   const [categories, setCategories] = useState([])
   const [brands, setBrands] = useState([])
+  const [colors, setColors] = useState([])
   const [suppliers, setSuppliers] = useState([])
   const [form, setForm] = useState(EMPTY_FORM)
   const [loading, setLoading] = useState(isEdit)
@@ -114,11 +119,13 @@ export default function ProductFormPage() {
       AdminApi.categories.getAll({ limit: 0, tree: 1 }),
       AdminApi.brands.getAll({ limit: 500, is_active: true }),
       AdminApi.suppliers.getAll({ limit: 500, is_active: true }),
-    ]).then(([s, c, br, su]) => {
+      AdminApi.colors.getAll({ limit: 500, is_active: true }),
+    ]).then(([s, c, br, su, co]) => {
       setShops(s.data?.data ?? [])
       setCategories(c.data?.data ?? [])
       setBrands(br.data?.data ?? [])
       setSuppliers(su.data?.data ?? [])
+      setColors(co.data?.data ?? [])
     }).catch(() => {})
   }, [])
 
@@ -168,6 +175,7 @@ export default function ProductFormPage() {
         scheduled_at:           form.scheduled_at || null,
         brand_id:               form.brand_id    ? Number(form.brand_id)    : null,
         supplier_id:            form.supplier_id ? Number(form.supplier_id) : null,
+        color_hex:              form.color_hex || null,
       }
       if (isEdit) {
         await AdminApi.products.update(id, payload)
@@ -314,6 +322,38 @@ export default function ProductFormPage() {
               </FormField>
             </CardContent>
           </Card>
+
+          {/* Price tiers */}
+          {isEdit && product && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">{t('priceTiers.title')}</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <PriceTierManager
+                  tiers={product.priceTiers ?? []}
+                  onCreate={(data) => AdminApi.products.priceTiers.create(id, data)}
+                  onUpdate={(tierId, data) => AdminApi.products.priceTiers.update(id, tierId, data)}
+                  onDelete={(tierId) => AdminApi.products.priceTiers.delete(id, tierId)}
+                  labels={{
+                    minQty: t('priceTiers.minQty'),
+                    maxQty: t('priceTiers.maxQty'),
+                    unitPrice: t('priceTiers.unitPrice'),
+                    openEnded: t('priceTiers.openEnded'),
+                    add: t('priceTiers.addTier'),
+                    save: t('common.save'),
+                    cancel: t('common.cancel'),
+                    empty: t('priceTiers.empty'),
+                    confirmDelete: t('priceTiers.confirmDelete'),
+                    savedMsg: t('priceTiers.saved'),
+                    deletedMsg: t('priceTiers.deleted'),
+                    invalidMsg: t('priceTiers.invalid'),
+                    errorMsg: t('toast.error'),
+                  }}
+                />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Inventory */}
           <Card>
@@ -497,6 +537,13 @@ export default function ProductFormPage() {
                   />
                 </FormField>
               )}
+              <FormField label={t('colors.filterLabel')}>
+                <ColorSelect
+                  colors={colors}
+                  value={form.color_hex}
+                  onChange={(hex) => set('color_hex', hex)}
+                />
+              </FormField>
               {suppliers.length > 0 && (
                 <FormField label={t('products.supplier')}>
                   <Select value={form.supplier_id} onChange={(e) => set('supplier_id', e.target.value)}>

@@ -235,26 +235,66 @@ class UserController {
   }
 
   /**
+   * POST /request-otp
+   * Body: { phone_number }
+   * Phone-only flow — no session_id. Auto-creates a NOT_ACTIVATED user if the
+   * number is unregistered; the same schema/OTP machinery as login/register
+   * is reused underneath, which are untouched by this addition.
+   */
+  static async requestOtp(req, res, next) {
+    try {
+      const { phone_number } = req.body;
+      if (!phone_number) throw ApiError.BadRequest("phone_number is required");
+
+      const result = await UserService.requestPhoneOtp(phone_number);
+      return res.status(200).json(result);
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  /**
    * POST /verify-otp
-   * Body: { session_id, otp }
-   * Completes 2FA login: validates the OTP and returns tokens.
+   * Body EITHER { session_id, otp } — the existing session_id-keyed flow used by
+   * login/register 2FA, unchanged — OR { phone_number, otp } — the new phone-only
+   * flow, auto-activates the user and returns refreshToken in the body too.
    */
   static async verifyOtp(req, res, next) {
     try {
-      const { session_id, otp } = req.body;
-      if (!session_id || !otp) throw ApiError.BadRequest("session_id and otp are required");
+      const { session_id, otp, phone_number } = req.body;
 
-      const { userId, purpose } = await UserService.validateOtpSession(session_id, otp);
-      if (!userId) throw ApiError.BadRequest("Invalid or expired OTP");
+      if (session_id) {
+        if (!otp) throw ApiError.BadRequest("session_id and otp are required");
 
-      if (purpose === USER_CONSTANTS.OTP_PURPOSES.REGISTER) {
-        await UserService.activateUser(userId);
+        const { userId, purpose } = await UserService.validateOtpSession(session_id, otp);
+        if (!userId) throw ApiError.BadRequest("Invalid or expired OTP");
+
+        if (purpose === USER_CONSTANTS.OTP_PURPOSES.REGISTER) {
+          await UserService.activateUser(userId);
+        }
+
+        const user = await UserService.getById(userId);
+        if (!user) throw ApiError.NotFound("User not found");
+
+        return this._issueTokenResponse(req, res, user, null);
       }
 
-      const user = await UserService.getById(userId);
-      if (!user) throw ApiError.NotFound("User not found");
+      if (phone_number && otp) {
+        const normalized = UserService.normalizePhone(phone_number);
+        const session = await UserService.findActiveOtpSessionByPhone(normalized, USER_CONSTANTS.OTP_PURPOSES.PHONE_LOGIN);
+        if (!session) throw ApiError.NotFound("No active OTP session for this number");
 
-      return this._issueTokenResponse(req, res, user, null);
+        const { userId } = await UserService.validateOtpSession(session.id, otp, { lockoutError: ApiError.UnauthorizedError });
+        if (!userId) throw ApiError.BadRequest("Invalid or expired OTP");
+
+        await UserService.activateUser(userId);
+        const user = await UserService.getById(userId);
+        if (!user) throw ApiError.NotFound("User not found");
+
+        return this._issueTokenResponse(req, res, user, null, { includeRefreshInBody: true });
+      }
+
+      throw ApiError.BadRequest("session_id+otp or phone_number+otp are required");
     } catch (e) {
       next(e);
     }
@@ -558,7 +598,7 @@ class UserController {
   // ─── Utils ───────────────────────────────────────────────────────────────────
 
   /** Shared helper: finalize login and emit tokens. */
-  static async _issueTokenResponse(req, res, user, assignment) {
+  static async _issueTokenResponse(req, res, user, assignment, opts = {}) {
     const resolvedAssignment = assignment ?? user.position_assignments?.[0] ?? null;
     const userDTO = new UserDTO(user, resolvedAssignment);
     const [accessToken, refreshToken] = UserService.getTokens({ ...userDTO });
@@ -579,7 +619,10 @@ class UserController {
       httpOnly: true,
     });
 
-    return res.status(200).json({ token: accessToken, user: userDTO, is2FA: false });
+    const body = { token: accessToken, user: userDTO, is2FA: false };
+    // Opt-in only — the session_id-keyed flow's response stays byte-identical.
+    if (opts.includeRefreshInBody) body.refreshToken = refreshToken;
+    return res.status(200).json(body);
   }
 
   static async getFilter(params) {

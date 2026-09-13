@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { SellerApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Eye, EyeOff, ImagePlus, X, Loader2 } from 'lucide-react'
 import { cn, absUrl } from '@/lib/utils'
@@ -15,6 +17,7 @@ const EMPTY = {
 
 // ── Banner form modal ─────────────────────────────────────────────────────────
 function BannerFormModal({ banner, onClose, onSaved }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState(banner ? {
     title:       banner.title       ?? '',
     subtitle:    banner.subtitle    ?? '',
@@ -46,7 +49,7 @@ function BannerFormModal({ banner, onClose, onSaved }) {
   }
 
   async function handleSave() {
-    if (!form.title.trim()) { toast.error('Başlyk hökmany'); return }
+    if (!form.title.trim()) { toast.error(t('seller.titleRequired')); return }
     setSaving(true)
     try {
       const payload = {
@@ -59,9 +62,9 @@ function BannerFormModal({ banner, onClose, onSaved }) {
         ? await SellerApi.banners.update(banner.id, payload)
         : await SellerApi.banners.create(payload)
       onSaved(data.model)
-      toast.success(banner ? 'Üýtgedildi' : 'Döredildi')
+      toast.success(banner ? t('toast.updated') : t('toast.created'))
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setSaving(false) }
   }
 
@@ -70,20 +73,15 @@ function BannerFormModal({ banner, onClose, onSaved }) {
     : null
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg bg-white dark:bg-[#1a1a1f] rounded-xl shadow-2xl flex flex-col" style={{ maxHeight: '90vh' }}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-white/[0.08] shrink-0">
-          <h2 className="font-semibold dark:text-white">{banner ? 'Banneri üýtget' : 'Täze banner'}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{banner ? t('banners.edit') : t('seller.newBanner')}</DialogTitle>
+        </DialogHeader>
+        <DialogBody>
           {/* Image */}
           <div>
-            <Label className="mb-1.5 block">Surat</Label>
+            <Label className="mb-1.5 block">{t('banners.image')}</Label>
             {thumb ? (
               <div className="relative rounded-xl overflow-hidden bg-slate-100 dark:bg-white/[0.04]" style={{ aspectRatio: '3/1' }}>
                 <img src={thumb} alt="" className="w-full h-full object-cover" />
@@ -99,7 +97,7 @@ function BannerFormModal({ banner, onClose, onSaved }) {
                   onClick={() => setPickerOpen(true)}
                   className="absolute bottom-2 right-2 px-2.5 py-1 rounded-lg bg-black/60 text-white text-xs hover:bg-black/80"
                 >
-                  Üýtget
+                  {t('banners.changeImage')}
                 </button>
               </div>
             ) : (
@@ -109,37 +107,37 @@ function BannerFormModal({ banner, onClose, onSaved }) {
                 className="w-full flex flex-col items-center justify-center border-2 border-dashed rounded-xl dark:border-white/[0.12] border-slate-200 dark:hover:border-white/20 hover:border-slate-300 dark:text-slate-500 text-slate-400 gap-1.5 transition-colors py-8"
               >
                 <ImagePlus className="h-7 w-7" />
-                <span className="text-sm">Surat saýla</span>
+                <span className="text-sm">{t('seller.selectImage')}</span>
               </button>
             )}
           </div>
 
           {/* Title */}
           <div>
-            <Label className="mb-1 block">Başlyk <span className="text-red-500">*</span></Label>
-            <Input value={form.title} onChange={(e) => set('title', e.target.value)} placeholder="Banner başlygy" />
+            <Label className="mb-1 block">{t('seller.bannerTitle')} <span className="text-red-500">*</span></Label>
+            <Input value={form.title} onChange={(e) => set('title', e.target.value)} placeholder={t('banners.titlePlaceholder')} />
           </div>
 
           {/* Subtitle */}
           <div>
-            <Label className="mb-1 block">Goşmaça tekst</Label>
-            <Input value={form.subtitle} onChange={(e) => set('subtitle', e.target.value)} placeholder="Gysgaça düşündiriş" />
+            <Label className="mb-1 block">{t('seller.bannerSubtitle')}</Label>
+            <Input value={form.subtitle} onChange={(e) => set('subtitle', e.target.value)} placeholder={t('banners.subtitlePlaceholder')} />
           </div>
 
           {/* Link */}
           <div>
-            <Label className="mb-1 block">Salgy (URL)</Label>
+            <Label className="mb-1 block">{t('seller.bannerLink')}</Label>
             <Input value={form.link_url} onChange={(e) => set('link_url', e.target.value)} placeholder="https://..." />
           </div>
 
           {/* Button */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="mb-1 block">Düwme teksti</Label>
-              <Input value={form.button_text} onChange={(e) => set('button_text', e.target.value)} placeholder="Satyn al" />
+              <Label className="mb-1 block">{t('seller.bannerBtnText')}</Label>
+              <Input value={form.button_text} onChange={(e) => set('button_text', e.target.value)} placeholder={t('banners.buttonTextPlaceholder')} />
             </div>
             <div>
-              <Label className="mb-1 block">Düwme URL</Label>
+              <Label className="mb-1 block">{t('seller.bannerBtnUrl')}</Label>
               <Input value={form.button_url} onChange={(e) => set('button_url', e.target.value)} placeholder="https://..." />
             </div>
           </div>
@@ -147,11 +145,11 @@ function BannerFormModal({ banner, onClose, onSaved }) {
           {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="mb-1 block">Başlanýar</Label>
+              <Label className="mb-1 block">{t('banners.startsAt')}</Label>
               <Input type="date" value={form.starts_at} onChange={(e) => set('starts_at', e.target.value)} className="dark:[color-scheme:dark]" />
             </div>
             <div>
-              <Label className="mb-1 block">Tamamlanýar</Label>
+              <Label className="mb-1 block">{t('banners.endsAt')}</Label>
               <Input type="date" value={form.ends_at} onChange={(e) => set('ends_at', e.target.value)} className="dark:[color-scheme:dark]" />
             </div>
           </div>
@@ -163,31 +161,31 @@ function BannerFormModal({ banner, onClose, onSaved }) {
               <div className={cn('w-9 h-5 rounded-full transition-colors', form.is_active ? 'bg-blue-600' : 'bg-slate-200 dark:bg-white/20')} />
               <div className={cn('absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform', form.is_active ? 'translate-x-4' : '')} />
             </div>
-            <span className="text-sm dark:text-white">Işjeň</span>
+            <span className="text-sm dark:text-white">{t('common.active')}</span>
           </label>
-        </div>
+        </DialogBody>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-5 py-4 border-t dark:border-white/[0.08] shrink-0">
-          <Button variant="outline" onClick={onClose}>Ýatyr</Button>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
-            Sakla
+            {t('common.save')}
           </Button>
-        </div>
-      </div>
+        </DialogFooter>
 
-      <InlineMediaPicker
-        open={pickerOpen}
-        onClose={() => setPickerOpen(false)}
-        onSelect={handleMediaSelect}
-      />
-    </div>
+        <InlineMediaPicker
+          open={pickerOpen}
+          onClose={() => setPickerOpen(false)}
+          onSelect={handleMediaSelect}
+        />
+      </DialogContent>
+    </Dialog>
   )
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SellerBannersPage() {
+  const { t } = useTranslation()
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
   const [editTarget, setEditTarget] = useState(undefined) // undefined=closed, null=new, obj=edit
@@ -208,14 +206,14 @@ export default function SellerBannersPage() {
   }
 
   async function handleDelete(id) {
-    if (!confirm('Banneri pozmak isleýärsiňizmi?')) return
+    if (!confirm(t('seller.confirmDeleteBanner'))) return
     setDeleting(id)
     try {
       await SellerApi.banners.delete(id)
       setBanners((prev) => prev.filter((b) => b.id !== id))
-      toast.success('Pozuldy')
+      toast.success(t('toast.deleted'))
     } catch (e) {
-      toast.error(e.response?.data?.message ?? 'Ýalňyşlyk')
+      toast.error(e.response?.data?.message ?? t('toast.error'))
     } finally { setDeleting(null) }
   }
 
@@ -223,7 +221,7 @@ export default function SellerBannersPage() {
     try {
       const { data } = await SellerApi.banners.update(banner.id, { is_active: !banner.is_active })
       setBanners((prev) => prev.map((b) => b.id === banner.id ? data.model : b))
-    } catch (e) { toast.error(e.response?.data?.message ?? 'Ýalňyşlyk') }
+    } catch (e) { toast.error(e.response?.data?.message ?? t('toast.error')) }
   }
 
   return (
@@ -231,10 +229,10 @@ export default function SellerBannersPage() {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-semibold dark:text-white">
-          Bannerler <span className="text-slate-400 font-normal text-base">({banners.length})</span>
+          {t('seller.bannersTitle')} <span className="text-slate-400 font-normal text-base">({banners.length})</span>
         </h1>
         <Button size="sm" onClick={() => setEditTarget(null)}>
-          <Plus className="h-4 w-4 mr-1.5" />Täze banner
+          <Plus className="h-4 w-4 mr-1.5" />{t('seller.newBanner')}
         </Button>
       </div>
 
@@ -245,9 +243,9 @@ export default function SellerBannersPage() {
       ) : banners.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-slate-400">
           <ImagePlus className="h-12 w-12 text-slate-200 dark:text-white/10" />
-          <p className="text-sm">Banner ýok</p>
+          <p className="text-sm">{t('seller.noBanners')}</p>
           <Button size="sm" variant="outline" onClick={() => setEditTarget(null)}>
-            <Plus className="h-4 w-4 mr-1.5" />Ilkinji banneri goş
+            <Plus className="h-4 w-4 mr-1.5" />{t('seller.addFirstBanner')}
           </Button>
         </div>
       ) : (
@@ -295,7 +293,7 @@ export default function SellerBannersPage() {
                     ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400'
                     : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
                 )}>
-                  {b.is_active ? 'Işjeň' : 'Gizlin'}
+                  {b.is_active ? t('common.active') : t('common.inactive')}
                 </span>
 
                 {/* Actions */}
@@ -303,7 +301,7 @@ export default function SellerBannersPage() {
                   <button
                     onClick={() => handleToggle(b)}
                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors"
-                    title={b.is_active ? 'Gizle' : 'Işjeňleşdir'}
+                    title={b.is_active ? t('common.deactivate') : t('common.activate')}
                   >
                     {b.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

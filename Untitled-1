@@ -1,0 +1,72 @@
+Список тасков (из плана, /Users/dovletli/.claude/plans/frontend-tasks-staged-sun.md):
+
+1. Цвет товара (Haryd kartockada renk)
+ backend/__modules__/catalog/utils/constants.js — добавить COLOR_KEYS = ["color","renk","цвет"], COLOR_HEX_KEYS = ["color_hex","hex"]
+ catalog/services/products.js → ProductService.get() — добавить include variants с attributes: ["id","name","attributes"] (сейчас в списке вариантов нет вообще)
+ components/common/ColorSwatches.jsx — новый компонент (точки цветов + +N)
+ Вставить в ProductsPage.jsx (строки ~220–285) и SellerProductsPage.jsx
+ Вынести AttributeEditor из SellerProductVariantPage.jsx:22 в components/common/
+ Добавить <input type="color"> когда ключ атрибута = цвет, писать color_hex
+ ProductDetailPage.jsx:229-232 — заменить JSON-textarea на AttributeEditor
+2. Бренды: поиск + группировка
+ BrandService.getAll — параметры q (iLike по name/name_ru/name_en/slug) и parent_id
+ BrandService.getGrouped(q) — на базе существующего getTree()
+ brand.controller.js — читать q, parent_id, grouped=1
+ routes/seller/brands.js — пробросить q; обновить swagger/paths/brands.js
+ components/common/SearchSelect.jsx — опциональный проп groups (заголовки групп)
+ Подключить в ProductFormPage.jsx:520-531 и SellerProductFormPage.jsx:250-258
+3. Уведомление продавцу о продаже (готово, отдельно от ÖTS)
+ backend/utils/statuses.js — NOT_SALE_COMPLETED = 150
+ services/notifications.js — createForSaleCompleted() (по образцу createForShopApproved, адресат — владелец магазина, не админы)
+ Хук в orders.js:233-237, ветка STATUS_DELIVERED
+ Идемпотентность — проверять существующий Notification по type + target_id (DELIVERED может примениться повторно)
+ Push через существующий PushService.notifyShopOwner
+
+3b. ÖTS (Öz teklibiňi saýla) — торг покупателя с продавцом по цене, план: /Users/dovletli/.claude/plans/update-file-and-start-distributed-sky.md
+ Расширение buyer-requests: buyer_requests.product_id/shop_id (точечный запрос вместо только городской рассылки)
+ Новая таблица buyer_request_offers — раунды предложений (SELLER/BUYER, PENDING→COUNTERED/ACCEPTED/REJECTED/EXPIRED)
+ backend/__modules__/buyer-requests/services/buyer-request-offers.js — createInitialOffer/counterOffer/acceptOffer/rejectOffer/expireStaleOffers
+ backend/routes/seller/buyer-requests.js (новый) + расширение backend/routes/buyer/requests.js
+ orders.js: create() принимает offer_id на позицию — подставляет цену из принятого предложения вместо цены каталога, помечает предложение использованным
+ Заказ по-прежнему оформляется покупателем вручную (не создаётся автоматически при accept)
+ Реализовано — миграция 076_buyer_request_offers.sql
+4. Красные счётчики в админке
+ backend/routes/admin/pending-counts.js — Promise.all счётчиков: products(mod=0), reels(mod=0), shop-applications, kyc, disputes, payouts, shop-type-requests
+ Смонтировать в routes/admin/index.js, фильтровать по правам вызывающего + swagger
+ Баг: catalog/index.js не мапит PATCH → approve/reject проходят без проверки прав. Добавить PATCH: Permissions.PRODUCT_PUT
+ lib/api.js — AdminApi.pendingCounts.get()
+ store/pendingCounts.jsx — провайдер с поллингом 60с, смонтировать в AdminLayout
+ Sidebar.jsx — проп countKey в пунктах меню, красная пилюля в хелпере navLink (L74-91); в свёрнутом виде — точка
+5. Лимиты по тарифу (push + reels)
+ Миграция 067_plan_reel_limit.sql — plans.reel_monthly (NULL=безлимит, 0=недоступно); backfill basic 0 / vip 10 / premium NULL
+ Добавить поле в Plan.model.js, валидатор, swagger/components.js, PlansPage.jsx
+ backend/services/plan-limits.js — assertQuota(plan, key, used) + getUsage()
+ Перевести push на хелпер: push-notifications.js:114 (поведение не менять, sendAsAdmin остаётся без квоты)
+ Квота reels в routes/seller/reels.js POST /; добавить reel_monthly в include seller-middleware.js
+ GET /seller/reels — вернуть used/quota (как в push-роуте)
+6. Синяя галочка у названия магазина
+ ShopService.get()/getById() — include Plan с verified_badge + вычисляемое has_blue_badge
+ products.js — расширить shop include (сейчас только id, name) в L16 и L45
+ components/common/BlueBadge.jsx — новый компонент
+ Применить: ShopsPage.jsx:507, ShopDetailPage, ProductsPage.jsx:242, SellerLayout.jsx:61, TopBar.jsx:21-27
+7. Ревью баннеров и страниц товара/магазина
+ SellerBannersPage.jsx — захардкоженные строки на i18n: L216 'Pozuldy', L232 'Bannerler', L240 'Banner ýok' (×3 локали)
+ Убрать дубли absUrl: BannersPage.jsx:10, SellerProductsPage.jsx:12-13
+ Обе страницы баннеров — перевести самописные модалки на components/ui/dialog.jsx
+ Проверить, что starts_at/ends_at реально применяются в BannerController.getActive
+ Унифицировать распаковку ответа (data.data ?? data.data?.rows ?? []) — один хелпер в lib/api.js
+ Удалить мёртвый pages/admin/PlaceholderPage.jsx
+ Недостающие i18n-ключи в SellerShopPage / PendingPage
+8. Отложено — только заглушки
+ documentation/modules/ai-customer-agent.md — AI-агент для покупателя (чат на Gemini уже есть; ai_credits_monthly не учитывается)
+ documentation/modules/live-stream.md — göni ýaýlym (plans.live_stream_mode уже есть, хук квоты оставить нереализованным)
+ documentation/shared/geography.md — etrap/oba: shops без district_id/village_id, delivery_addresses без village_id, /buyer/locations только regions+cities
+Порядок: 1 → 2 → 6 → 3 → 4 → 5 (нужна миграция) → 7 → 8
+
+[*] Review + comment get gelenok
+[*] Haryt ozune stokda dynsada satmaly toggle gerek
+[*] Shops turbo mumkinchiligi
+[*] Reels share/gorulen sany, yerleshyan yeri boyuncha filter etmek mumkinchiligi
+[*] Buyer AI agent admin zatlaryny aytmazlyk
+[*] ÖTS logikasy — klient özi baha teklip edýär, şoňa görä alyş-beriş (görkez: 3b bendi)
+- 

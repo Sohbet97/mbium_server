@@ -87,6 +87,7 @@ export class AdminApi {
     reject:          (id, data) => http.patch(a(`${PATHS.SHOPS}/${id}/reject`), data),
     submitForReview: (id)       => http.patch(a(`${PATHS.SHOPS}/${id}/submit`)),
     reassignOwner:   (id, ownerId) => http.patch(a(`${PATHS.SHOPS}/${id}/owner`), { owner_id: ownerId }),
+    bulkUpdate:      (data)      => http.patch(a(`${PATHS.SHOPS}/bulk`), data),
   }
   static shopTypes = {
     ...crud(PATHS.SHOP_TYPES),
@@ -99,10 +100,21 @@ export class AdminApi {
     ...crud(PATHS.PRODUCTS),
     approve: (id)       => http.patch(a(`${PATHS.PRODUCTS}/${id}/approve`)),
     reject:  (id, data) => http.patch(a(`${PATHS.PRODUCTS}/${id}/reject`), data),
+    bulkUpdate: (data)  => http.patch(a(`${PATHS.PRODUCTS}/bulk`), data),
     variants: {
       create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/variants`), data),
       update: (productId, variantId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`), data),
       delete: (productId, variantId) => http.delete(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`)),
+      priceTiers: {
+        create: (productId, variantId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}/price-tiers`), data),
+        update: (productId, variantId, tierId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}/price-tiers/${tierId}`), data),
+        delete: (productId, variantId, tierId) => http.delete(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}/price-tiers/${tierId}`)),
+      },
+    },
+    priceTiers: {
+      create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/price-tiers`), data),
+      update: (productId, tierId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/price-tiers/${tierId}`), data),
+      delete: (productId, tierId) => http.delete(a(`${PATHS.PRODUCTS}/${productId}/price-tiers/${tierId}`)),
     },
   }
   static collections = {
@@ -136,11 +148,18 @@ export class AdminApi {
     markAsRead: (id)     => http.patch(a(`${PATHS.NOTIFICATIONS}/${id}/read`)),
     markAllAsRead: ()    => http.patch(a(`${PATHS.NOTIFICATIONS}/read-all`)),
   }
+  static pendingCounts = {
+    get: () => http.get(a('/pending-counts')),
+  }
   static payouts = {
     getBalances:  (params)          => http.get(a('/payouts/balances'), { params }),
     getRequests:  (params)          => http.get(a('/payouts/requests'), { params }),
     getRequest:   (id)              => http.get(a(`/payouts/requests/${id}`)),
     updateStatus: (id, data)        => http.patch(a(`/payouts/requests/${id}/status`), data),
+  }
+  static buyerRequests = {
+    getAll: (params) => http.get(a('/buyer-requests'), { params }),
+    getOne: (id)      => http.get(a(`/buyer-requests/${id}`)),
   }
   static bannerTypes = {
     getAll: ()        => http.get(a(PATHS.BANNER_TYPES)),
@@ -288,6 +307,13 @@ export class AdminApi {
     update:  (id, data)   => http.put(a(`${PATHS.SIZES}/${id}`), data),
     delete:  (id)         => http.delete(a(`${PATHS.SIZES}/${id}`)),
   }
+  static colors = {
+    getAll:  (params)     => http.get(a(`${PATHS.COLORS}`), { params }),
+    getOne:  (id)         => http.get(a(`${PATHS.COLORS}/${id}`)),
+    create:  (data)       => http.post(a(`${PATHS.COLORS}`), data),
+    update:  (id, data)   => http.put(a(`${PATHS.COLORS}/${id}`), data),
+    delete:  (id)         => http.delete(a(`${PATHS.COLORS}/${id}`)),
+  }
   static deliveryTypes = {
     getAll:  (params)     => http.get(a(`${PATHS.DELIVERY_TYPES}`), { params }),
     getOne:  (id)         => http.get(a(`${PATHS.DELIVERY_TYPES}/${id}`)),
@@ -370,6 +396,9 @@ export class SellerApi {
   static dashboard = {
     get: () => http.get(s('/dashboard')),
   }
+  static pendingCounts = {
+    get: () => http.get(s('/pending-counts')),
+  }
   static categories = {
     getAll: (params) => http.get(s('/categories'), { params }),
   }
@@ -383,6 +412,9 @@ export class SellerApi {
   static sizes = {
     getAll: (params) => http.get(s('/sizes'), { params }),
     getTree: () => http.get(s('/sizes/tree')),
+  }
+  static colors = {
+    getAll: (params) => http.get(s('/colors'), { params }),
   }
   static deliveryTypes = {
     getAll: (params) => http.get(s('/delivery-types'), { params }),
@@ -428,6 +460,16 @@ export class SellerApi {
         update: (productId, variantId, sizeRowId, data)  => http.put(s(`/products/${productId}/variants/${variantId}/sizes/${sizeRowId}`), data),
         delete: (productId, variantId, sizeRowId)        => http.delete(s(`/products/${productId}/variants/${variantId}/sizes/${sizeRowId}`)),
       },
+      priceTiers: {
+        create: (productId, variantId, data)            => http.post(s(`/products/${productId}/variants/${variantId}/price-tiers`), data),
+        update: (productId, variantId, tierId, data)     => http.put(s(`/products/${productId}/variants/${variantId}/price-tiers/${tierId}`), data),
+        delete: (productId, variantId, tierId)           => http.delete(s(`/products/${productId}/variants/${variantId}/price-tiers/${tierId}`)),
+      },
+    },
+    priceTiers: {
+      create: (productId, data)         => http.post(s(`/products/${productId}/price-tiers`), data),
+      update: (productId, tierId, data) => http.put(s(`/products/${productId}/price-tiers/${tierId}`), data),
+      delete: (productId, tierId)       => http.delete(s(`/products/${productId}/price-tiers/${tierId}`)),
     },
   }
   static orders = {
@@ -440,6 +482,17 @@ export class SellerApi {
     deleteShipment: (id, shipmentId)              => http.delete(s(`/orders/${id}/shipments/${shipmentId}`)),
     updateItem:     (id, itemId, data)            => http.patch(s(`/orders/${id}/items/${itemId}`), data),
     deleteItem:     (id, itemId)                  => http.delete(s(`/orders/${id}/items/${itemId}`)),
+  }
+  static buyerRequests = {
+    getAll:       (params)             => http.get(s('/buyer-requests'), { params }),
+    getOne:       (id)                 => http.get(s(`/buyer-requests/${id}`)),
+    createOffer:  (id, data)           => http.post(s(`/buyer-requests/${id}/offers`), data),
+    counterOffer: (id, offerId, data)  => http.post(s(`/buyer-requests/${id}/offers/${offerId}/counter`), data),
+    acceptOffer:  (id, offerId)        => http.patch(s(`/buyer-requests/${id}/offers/${offerId}/accept`)),
+    rejectOffer:  (id, offerId)        => http.patch(s(`/buyer-requests/${id}/offers/${offerId}/reject`)),
+    uploadAttachment: (formData)       => http.post(s('/buyer-requests/attachments/upload'), formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   }
   static payouts = {
     getSummary:      ()       => http.get(s('/payouts/summary')),

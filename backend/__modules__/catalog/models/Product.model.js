@@ -136,6 +136,13 @@ module.exports = (sequelize) => {
             allowNull: true,
             references: { model: "suppliers", key: "id" },
         },
+        color_hex: {
+            // The product's overall colour, chosen from the `colors` palette.
+            // Variants may each override it with their own color_hex.
+            type: DataTypes.CHAR(7),
+            allowNull: true,
+            references: { model: "colors", key: "hex" },
+        },
         is_published: {
             type: DataTypes.BOOLEAN,
             allowNull: false,
@@ -192,6 +199,7 @@ module.exports = (sequelize) => {
             { fields: ["price"] },
             { fields: ["moderation_status"] },
             { fields: ["turbo_active", "turbo_boosted_at"] },
+            { fields: ["color_hex"] },
         ]
     });
 
@@ -199,6 +207,7 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.Shop, { foreignKey: "shop_id", as: "shop" });
         Model.belongsTo(db.Category, { foreignKey: "category_id", as: "category" });
         Model.hasMany(db.ProductVariant, { foreignKey: "product_id", as: "variants" });
+        if (db.ProductPriceTier) Model.hasMany(db.ProductPriceTier, { foreignKey: "product_id", as: "priceTiers" });
         if (db.ProductMedia) Model.hasMany(db.ProductMedia, { foreignKey: "product_id", as: "productMedia" });
         if (db.ProductMedia) Model.hasMany(db.ProductMedia, { foreignKey: "product_id", as: "models3d" });
         Model.hasMany(db.Review, { foreignKey: "product_id", as: "reviews" });
@@ -230,6 +239,9 @@ module.exports = (sequelize) => {
         }
         if (db.Supplier) {
             Model.belongsTo(db.Supplier, { foreignKey: "supplier_id", as: "supplier" });
+        }
+        if (db.Color) {
+            Model.belongsTo(db.Color, { foreignKey: "color_hex", targetKey: "hex", as: "color" });
         }
         if (db.DeliveryType && db.ProductDeliveryType) {
             Model.belongsToMany(db.DeliveryType, {
