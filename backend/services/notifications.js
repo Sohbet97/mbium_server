@@ -151,6 +151,43 @@ class NotificationService {
         return record;
     }
 
+    static async createForOfferReceived(offer, io) {
+        const userId = offer.request?.user_id;
+        if (!userId) return;
+        const content = { message: `Sorag #${offer.buyer_request_id} üçin teklip aldyňyz: ${offer.unit_price} ${offer.currency}` };
+        const record = await this.create({ userId, type: STATUSES.NOT_OFFER_RECEIVED, targetId: offer.id, content });
+        if (io) io.to(userId).emit('notification', record);
+        return record;
+    }
+
+    static async createForOfferCountered(offer, io, notifyUserId) {
+        if (!notifyUserId) return;
+        const content = { message: `Teklip #${offer.buyer_request_id} boýunça garşy teklip: ${offer.unit_price} ${offer.currency}` };
+        const record = await this.create({ userId: notifyUserId, type: STATUSES.NOT_OFFER_COUNTERED, targetId: offer.id, content });
+        if (io) io.to(notifyUserId).emit('notification', record);
+        return record;
+    }
+
+    static async createForOfferAccepted(offer, io, notifyUserId) {
+        if (!notifyUserId) return;
+        const existing = await this.getOne({ type: STATUSES.NOT_OFFER_ACCEPTED, target_id: String(offer.id) });
+        if (existing) return existing;
+        const content = { message: `Teklip #${offer.id} kabul edildi — şoňa esaslanyp sargyt beriň` };
+        const record = await this.create({ userId: notifyUserId, type: STATUSES.NOT_OFFER_ACCEPTED, targetId: offer.id, content });
+        if (io) io.to(notifyUserId).emit('notification', record);
+        return record;
+    }
+
+    static async createForOfferRejected(offer, io, notifyUserId) {
+        if (!notifyUserId) return;
+        const existing = await this.getOne({ type: STATUSES.NOT_OFFER_REJECTED, target_id: String(offer.id) });
+        if (existing) return existing;
+        const content = { message: `Teklip #${offer.id} ret edildi` };
+        const record = await this.create({ userId: notifyUserId, type: STATUSES.NOT_OFFER_REJECTED, targetId: offer.id, content });
+        if (io) io.to(notifyUserId).emit('notification', record);
+        return record;
+    }
+
     static async createForShopApproved(shop, io) {
         const name = shop?.name ?? 'Dükan';
         const content = { message: `"${name}" dükanyňyz tassyklandy! Indi söwda edip bilersiňiz.` };

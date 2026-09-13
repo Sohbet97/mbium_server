@@ -165,6 +165,17 @@ router.get('/shops', async (req, res, next) => {
     } catch (e) { next(e); }
 });
 
+// GET /buyer/catalog/shops/top?limit=20
+// Top shops by rating, tie-broken by order count. Must stay registered before
+// '/shops/:id' or Express would match ':id' = "top".
+router.get('/shops/top', async (req, res, next) => {
+    try {
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 20);
+        const data = await ShopService.getTop(limit);
+        return res.status(200).json({ data });
+    } catch (e) { next(e); }
+});
+
 // GET /buyer/catalog/shops/:id
 router.get('/shops/:id', async (req, res, next) => {
     try {

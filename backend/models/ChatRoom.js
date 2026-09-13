@@ -30,6 +30,22 @@ module.exports = (sequelize, Sequelize) => {
                 model: "users",
                 key: "id"
             }
+        },
+        shop_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: "shops",
+                key: "id"
+            }
+        },
+        product_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: "products",
+                key: "id"
+            }
         }
     }, {
         timestamps: true,
@@ -42,6 +58,8 @@ module.exports = (sequelize, Sequelize) => {
         Model.hasMany(db.ChatRoomParticipant, { foreignKey: "chatroom_id", as: "participants" });
         Model.hasMany(db.ChatMessage, { foreignKey: "chatroom_id", as: "messages" });
         Model.belongsTo(db.User, { foreignKey: "createdBy", as: "creator" });
+        Model.belongsTo(db.Shop, { foreignKey: "shop_id", as: "shop" });
+        Model.belongsTo(db.Product, { foreignKey: "product_id", as: "product" });
     };
 
     return Model;

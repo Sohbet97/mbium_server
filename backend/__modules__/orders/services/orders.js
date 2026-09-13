@@ -8,6 +8,8 @@ const PushService   = require("../../../services/push");
 const NotificationService = require("../../../services/notifications");
 const DiscountService = require("../../discounts/services/discounts");
 const ProductService = require("../../catalog/services/products");
+const BuyerRequestOfferService = require("../../buyer-requests/services/buyer-request-offers");
+const { BUYER_REQUEST_OFFER_STATUSES } = require("../../buyer-requests/models/BuyerRequestOffer.model");
 
 const STATUS_PROCESSING = 2;
 const STATUS_DELIVERED = 4;
@@ -131,10 +133,38 @@ class OrderService {
         });
         const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
+        // Batch-fetch any ÖTS offers referenced by items so a negotiated price can override the catalog price.
+        const offerIds = items.map((i) => i.offer_id).filter(Boolean);
+        const offers = offerIds.length
+            ? await db.BuyerRequestOffer.findAll({
+                  where: { id: { [Op.in]: offerIds } },
+                  include: [{ model: db.BuyerRequest, as: "request", attributes: ["id", "user_id"] }],
+              })
+            : [];
+        const offerMap = Object.fromEntries(offers.map((o) => [o.id, o]));
+        const usedOfferIds = [];
+
         let total_price = 0;
         const resolvedItems = items.map((item) => {
             const product = productMap[item.product_id];
             if (!product) throw ApiError.BadRequest(`Haryt #${item.product_id} tapylmady`);
+
+            let offer = null;
+            if (item.offer_id) {
+                offer = offerMap[item.offer_id];
+                if (
+                    !offer ||
+                    offer.status !== BUYER_REQUEST_OFFER_STATUSES.ACCEPTED ||
+                    offer.consumed_at ||
+                    offer.shop_id !== shop_id ||
+                    offer.request?.user_id !== userId ||
+                    (offer.product_id && offer.product_id !== item.product_id) ||
+                    (offer.variant_id && offer.variant_id !== Number(item.variant_id)) ||
+                    (offer.variant_size_id && offer.variant_size_id !== Number(item.variant_size_id))
+                ) {
+                    throw ApiError.BadRequest("Teklip hakyky däl ýa-da ulanylan");
+                }
+            }
 
             // Resolve the effective purchasable unit: size (if the variant has sizes) -> variant -> bare product.
             const activeVariants = product.variants || [];
@@ -161,9 +191,12 @@ class OrderService {
                 );
             }
 
-            const unit_price = ProductService.resolveUnitPrice({ product, variant, variantSize, quantity: item.quantity });
+            const unit_price = offer
+                ? parseFloat(offer.unit_price)
+                : ProductService.resolveUnitPrice({ product, variant, variantSize, quantity: item.quantity });
             const total = unit_price * item.quantity;
             total_price += total;
+            if (offer) usedOfferIds.push(offer.id);
             return {
                 product_id: item.product_id,
                 variant_id: variant?.id ?? null,
@@ -217,6 +250,7 @@ class OrderService {
         }
 
         await db.OrderStatusHistory.create({ order_id: order.id, status: 0, changed_by: userId });
+        await Promise.all(usedOfferIds.map((offerId) => BuyerRequestOfferService.markConsumed(offerId, order.id)));
         PushService.onOrderCreated(order).catch(() => {});
         return order;
     }

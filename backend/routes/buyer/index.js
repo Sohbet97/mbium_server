@@ -41,6 +41,7 @@ router.use('/wallet',    authorizationMiddleware, require('../../__modules__/wal
 router.use('/turbo',     authorizationMiddleware, require('../../__modules__/turbo/routes/turbo.buyer.routes'));
 router.use('/favorites', authorizationMiddleware, require('../../__modules__/favorites/routes/favorite.routes'));
 router.use('/shops',     authorizationMiddleware, require('./shops'));
+router.use('/chats',     authorizationMiddleware, require('../../__modules__/chats/routes/chats.routes'));
 
 // Comments: read public, write requires auth
 const CommentController = require('../../__modules__/comments/controllers/comment.controller')

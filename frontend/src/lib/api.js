@@ -157,6 +157,10 @@ export class AdminApi {
     getRequest:   (id)              => http.get(a(`/payouts/requests/${id}`)),
     updateStatus: (id, data)        => http.patch(a(`/payouts/requests/${id}/status`), data),
   }
+  static buyerRequests = {
+    getAll: (params) => http.get(a('/buyer-requests'), { params }),
+    getOne: (id)      => http.get(a(`/buyer-requests/${id}`)),
+  }
   static bannerTypes = {
     getAll: ()        => http.get(a(PATHS.BANNER_TYPES)),
     create: (data)    => http.post(a(PATHS.BANNER_TYPES), data),
@@ -478,6 +482,17 @@ export class SellerApi {
     deleteShipment: (id, shipmentId)              => http.delete(s(`/orders/${id}/shipments/${shipmentId}`)),
     updateItem:     (id, itemId, data)            => http.patch(s(`/orders/${id}/items/${itemId}`), data),
     deleteItem:     (id, itemId)                  => http.delete(s(`/orders/${id}/items/${itemId}`)),
+  }
+  static buyerRequests = {
+    getAll:       (params)             => http.get(s('/buyer-requests'), { params }),
+    getOne:       (id)                 => http.get(s(`/buyer-requests/${id}`)),
+    createOffer:  (id, data)           => http.post(s(`/buyer-requests/${id}/offers`), data),
+    counterOffer: (id, offerId, data)  => http.post(s(`/buyer-requests/${id}/offers/${offerId}/counter`), data),
+    acceptOffer:  (id, offerId)        => http.patch(s(`/buyer-requests/${id}/offers/${offerId}/accept`)),
+    rejectOffer:  (id, offerId)        => http.patch(s(`/buyer-requests/${id}/offers/${offerId}/reject`)),
+    uploadAttachment: (formData)       => http.post(s('/buyer-requests/attachments/upload'), formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
   }
   static payouts = {
     getSummary:      ()       => http.get(s('/payouts/summary')),

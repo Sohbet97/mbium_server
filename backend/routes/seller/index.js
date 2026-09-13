@@ -27,6 +27,7 @@ router.use('/support',             require('./support'));
 router.use('/analytics',           require('./analytics'));
 router.use('/warehouses',          require('./warehouses'));
 router.use('/reels',               require('./reels'));
+router.use('/buyer-requests',      require('./buyer-requests'));
 router.use('/pending-counts',      require('./pending-counts'));
 
 module.exports = router;

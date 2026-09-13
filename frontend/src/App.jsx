@@ -46,6 +46,7 @@ import SellerOrdersPage from '@/pages/seller/SellerOrdersPage'
 import SellerShopPage from '@/pages/seller/SellerShopPage'
 import SellerDiscountsPage from '@/pages/seller/SellerDiscountsPage'
 import SellerPayoutsPage from '@/pages/seller/SellerPayoutsPage'
+import SellerBuyerRequestsPage from '@/pages/seller/SellerBuyerRequestsPage'
 import SellerCoinsPage from '@/pages/seller/SellerCoinsPage'
 import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
 import SellerProductVariantPage from '@/pages/seller/SellerProductVariantPage'
@@ -74,6 +75,7 @@ import SuppliersPage from '@/pages/admin/SuppliersPage'
 import AdminCommentsPage from '@/pages/admin/AdminCommentsPage'
 import AdminKycPage from '@/pages/admin/AdminKycPage'
 import AdminGiftsPage from '@/pages/admin/AdminGiftsPage'
+import BuyerRequestsPage from '@/pages/admin/BuyerRequestsPage'
 
 const g = (perm, element) => <PermGate perm={perm}>{element}</PermGate>
 
@@ -136,6 +138,7 @@ const router = createBrowserRouter([
           { path: 'gifts',             element: g(Permissions.GIFT_TYPE_GET, <AdminGiftsPage />),             handle: { titleKey: 'gifts.title' } },
           { path: 'comments',         element: g(Permissions.COMMENT_GET, <AdminCommentsPage />),            handle: { titleKey: 'comments.title' } },
           { path: 'kyc',             element: g(Permissions.KYC_GET, <AdminKycPage />),                 handle: { titleKey: 'kyc.title' } },
+          { path: 'buyer-requests', element: <BuyerRequestsPage />, handle: { titleKey: 'nav.buyerRequests' } },
         ],
       }],
       },
@@ -156,6 +159,7 @@ const router = createBrowserRouter([
           { path: 'shop',       element: <SellerShopPage /> },
           { path: 'discounts',  element: <SellerDiscountsPage /> },
           { path: 'payouts',    element: <SellerPayoutsPage /> },
+          { path: 'buyer-requests', element: <SellerBuyerRequestsPage /> },
           { path: 'coins',      element: <SellerCoinsPage /> },
           { path: 'media',        element: <SellerMediaPage /> },
           { path: 'banners',      element: <SellerBannersPage /> },

@@ -109,3 +109,36 @@ exports.avatarUpload = multer({
     else cb(new Error("Only image files are allowed"));
   },
 });
+
+// ── Buyer-request / ÖTS offer attachment upload config ───────────────────────
+// Broader than mediaUpload (which is image/video/3d/360-only): also accepts
+// pdf/excel/word so buyers and sellers can attach quotes, spec sheets, etc.
+const ATTACHMENTS_DIR = path.join(CONSTANTS.PUBLIC_FOLDER, "buyer-request-attachments");
+if (!fs.existsSync(ATTACHMENTS_DIR)) fs.mkdirSync(ATTACHMENTS_DIR, { recursive: true });
+
+const ATTACHMENT_ALLOWED = [
+    'image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'image/gif',
+    'video/mp4', 'video/quicktime', 'video/webm',
+    'application/pdf',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+
+const attachmentStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, ATTACHMENTS_DIR),
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase() || '.bin';
+        cb(null, `${req.user?.id ?? 'unknown'}-${uuidv4()}${ext}`);
+    },
+});
+
+exports.attachmentUpload = multer({
+    storage: attachmentStorage,
+    limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB (covers video)
+    fileFilter: (_req, file, cb) => {
+        if (ATTACHMENT_ALLOWED.includes(file.mimetype)) cb(null, true);
+        else cb(new Error(`Goldanylmaýan faýl görnüşi: ${file.mimetype}`));
+    },
+});

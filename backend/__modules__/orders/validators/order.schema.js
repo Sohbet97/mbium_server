@@ -13,6 +13,7 @@ const orderSchema = yup.object().shape({
                 variant_id: yup.number().integer().nullable().optional(),
                 variant_size_id: yup.number().integer().nullable().optional(),
                 quantity: yup.number().integer().required("Mukdary giriziň").min(1),
+                offer_id: yup.number().integer().nullable().optional(),
             })
         )
         .min(1, "Azyndan bir haryt saýlaň")

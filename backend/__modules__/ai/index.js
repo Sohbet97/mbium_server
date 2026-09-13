@@ -20,7 +20,7 @@ async function handleChat(req, res, next) {
             content: String(content).slice(0, 5000),
         }))
 
-        await AiChatService.streamChat(history, res)
+        await AiChatService.streamChat(history, res, 'admin')
     } catch (e) { next(e) }
 }
 

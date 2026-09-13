@@ -142,6 +142,11 @@ class STATUSES {
     static NOT_DISPUTE        = 130
     static NOT_PAYOUT_REQUEST = 140
     static NOT_SALE_COMPLETED = 150
+    static NOT_BUYER_REQUEST  = 160
+    static NOT_OFFER_RECEIVED  = 161
+    static NOT_OFFER_COUNTERED = 162
+    static NOT_OFFER_ACCEPTED  = 163
+    static NOT_OFFER_REJECTED  = 164
 
     static USER_DOCTOR = 0
     static USER_CASHIER = 10

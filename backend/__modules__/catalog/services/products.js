@@ -41,6 +41,13 @@ class ProductService {
         return product;
     }
 
+    static _withBrandLogo(product) {
+        if (product) {
+            product.setDataValue("brand_logo", product.brand?.logo_url ?? null);
+        }
+        return product;
+    }
+
     static async get(filter = {}, limit, sort = CATALOG_CONSTANTS.PRODUCT_SORT, skip = 0, paranoid = true) {
         const products = await db.Product.findAll({
             where: filter,
@@ -51,6 +58,7 @@ class ProductService {
             include: [
                 { model: db.Category, as: "category", attributes: ["id", "name"] },
                 this._shopInclude(["id", "name"]),
+                { model: db.Brand, as: "brand", attributes: ["id", "logo_url"], required: false },
                 { model: db.DeliveryType, as: "deliveryTypes", required: false, through: { attributes: [] } },
                 { model: db.Color, as: "color", required: false, attributes: ["id", "name", "hex"] },
                 // Attribute-limited on purpose — list views only need each variant's
@@ -77,7 +85,7 @@ class ProductService {
                 },
             ],
         });
-        return products.map((product) => this._withShopBlueBadge(product));
+        return products.map((product) => this._withBrandLogo(this._withShopBlueBadge(product)));
     }
 
     static async getCount(filter = {}, paranoid = true) {
@@ -131,7 +139,7 @@ class ProductService {
                 },
             ],
         });
-        return this._withShopBlueBadge(product);
+        return this._withBrandLogo(this._withShopBlueBadge(product));
     }
 
     static async create(req) {

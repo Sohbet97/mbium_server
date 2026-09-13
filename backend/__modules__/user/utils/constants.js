@@ -24,6 +24,9 @@ class USER_CONSTANTS {
         LOGIN: "LOGIN",
         REGISTER: "REGISTER",
         RESET_PASSWORD: "RESET_PASSWORD",
+        // Phone-only request-otp/verify-otp flow — alongside, not replacing, the
+        // session_id-keyed flow above.
+        PHONE_LOGIN: "PHONE_LOGIN",
     });
 
     static TM_PHONE_REGEX = /^(6[1-5]|71)\d{6}$/;

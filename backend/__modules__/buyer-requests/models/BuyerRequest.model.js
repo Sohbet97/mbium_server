@@ -19,14 +19,21 @@ module.exports = (sequelize) => {
             references: { model: 'cities', key: 'id' },
             onDelete: 'SET NULL',
         },
+        product_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: 'products', key: 'id' },
+            onDelete: 'SET NULL',
+        },
+        shop_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: 'shops', key: 'id' },
+            onDelete: 'SET NULL',
+        },
         text: {
             type: DataTypes.TEXT,
             allowNull: true,
-        },
-        images: {
-            type: DataTypes.ARRAY(DataTypes.TEXT),
-            allowNull: false,
-            defaultValue: [],
         },
         budget: {
             type: DataTypes.DECIMAL(12, 2),
@@ -48,6 +55,8 @@ module.exports = (sequelize) => {
         indexes: [
             { fields: ['user_id'] },
             { fields: ['city_id'] },
+            { fields: ['product_id'] },
+            { fields: ['shop_id'] },
             { fields: ['status'] },
         ],
     })
@@ -55,6 +64,10 @@ module.exports = (sequelize) => {
     Model.associate = (db) => {
         Model.belongsTo(db.User, { foreignKey: 'user_id', as: 'user' })
         if (db.City) Model.belongsTo(db.City, { foreignKey: 'city_id', as: 'city' })
+        if (db.Product) Model.belongsTo(db.Product, { foreignKey: 'product_id', as: 'product' })
+        if (db.Shop) Model.belongsTo(db.Shop, { foreignKey: 'shop_id', as: 'shop' })
+        if (db.BuyerRequestOffer) Model.hasMany(db.BuyerRequestOffer, { foreignKey: 'buyer_request_id', as: 'offers' })
+        if (db.BuyerRequestAttachment) Model.hasMany(db.BuyerRequestAttachment, { foreignKey: 'buyer_request_id', as: 'attachments' })
     }
 
     return Model

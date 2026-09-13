@@ -25,6 +25,7 @@ export default {
     shopApplications: 'Dükan arzalary',
     aiRecommendations: 'AI Maslahatlar',
     myShop: 'Dükanym', payouts: 'Tölegler', subscription: 'Abunalyk',
+    buyerRequests: 'ÖTS',
     adminPanel: 'Admin paneli', sellerPanel: 'Satyjy paneli', shopTypeRequests: 'Görnüş arzalary',
     pushNotifications: 'Push bildirişler',
     auditLogs: 'Audit žurnaly',
@@ -476,6 +477,18 @@ export default {
   },
 
   seller: {
+    otsTitle: 'ÖTS — Müşderi soraglary', otsNoRequests: 'Sorag ýok',
+    otsNoDescription: 'Beýany ýok', otsBudget: 'Býudjet', otsQuantity: 'Mukdar',
+    otsThreadTitle: 'Teklip alyş-berişi', otsNoOffersYet: 'Entek teklip ýok',
+    otsYou: 'Siz', otsBuyer: 'Müşderi',
+    otsPending: 'Garaşylýar', otsCountered: 'Garşy teklip', otsAccepted: 'Kabul edildi',
+    otsRejected: 'Ret edildi', otsExpired: 'Möhleti geçdi',
+    otsAccept: 'Kabul et', otsReject: 'Ret et',
+    otsWaitingForBuyer: 'Müşderiniň jogabyna garaşylýar',
+    otsSendOffer: 'Teklip ugrat', otsCounterOffer: 'Garşy teklip ugrat',
+    otsEnterPrice: 'Bahany giriziň', otsOfferSent: 'Teklip ugradyldy',
+    otsPricePlaceholder: 'Baha (TMT)', otsNotePlaceholder: 'Bellik (islege bagly)',
+
     totalProducts: 'Harytlar', totalOrders: 'Sargytlar (jemi)', pendingOrders: 'Garaşylýan',
     revenueMonth: 'Bu aýky girdeji', balance: 'Balans',
     recentOrders: 'Soňky sargytlar', noOrders: 'Sargyt ýok',

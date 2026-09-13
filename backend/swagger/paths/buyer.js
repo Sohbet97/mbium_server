@@ -210,6 +210,35 @@ module.exports = {
         },
     },
 
+    "/buyer/catalog/shops/top": {
+        get: {
+            tags: ["Buyer — Catalog"],
+            summary: "Top shops by rating",
+            description: "Shops sorted by rating desc, tie-broken by order count desc.",
+            parameters: [
+                { in: "query", name: "limit", schema: { type: "integer", default: 20, maximum: 20 } },
+            ],
+            responses: {
+                200: {
+                    description: "Top shops",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { type: "object", properties: {
+                            id:                       { type: "integer" },
+                            name:                      { type: "string" },
+                            logo:                      { type: "string", nullable: true },
+                            rating:                    { type: "number" },
+                            total_products:            { type: "integer" },
+                            total_orders:              { type: "integer" },
+                            total_product_favorites:   { type: "integer" },
+                            total_reels:                { type: "integer" },
+                            total_comments:            { type: "integer" },
+                        } } },
+                    } } } },
+                },
+            },
+        },
+    },
+
     "/buyer/catalog/shops/{id}": {
         get: {
             tags: ["Buyer — Catalog"],

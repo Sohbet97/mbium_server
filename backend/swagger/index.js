@@ -113,6 +113,8 @@ const swaggerSpec = {
         { name: "Gift Creators",         description: "Admin catalog of gift creators — CRUD, revenue balance and transaction history" },
         { name: "Gift Types",            description: "Admin catalog of purchasable animated gifts, and a read-only audit feed of gifts sent on reels" },
         { name: "Buyer — Requests",      description: "Buyer RFQ/tender posts — create, track, close requests; matching shops are notified" },
+        { name: "Buyer — ÖTS",           description: "Buyer side of the ÖTS offer negotiation thread on their own requests" },
+        { name: "Seller — ÖTS",          description: "Seller side of the ÖTS offer negotiation thread on buyer requests" },
         { name: "Buyer — Notifications", description: "Buyer in-app notification inbox — read, mark, delete" },
         { name: "Buyer Requests",        description: "Admin view of all buyer requests across the platform" },
         { name: "Sizes",                 description: "Structured size catalogue with hierarchical parent/child tree and flat list" },

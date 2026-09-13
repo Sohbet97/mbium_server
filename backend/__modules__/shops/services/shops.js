@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, QueryTypes } = require("sequelize");
 const db = require("../../../models");
 const { FUNCTIONS } = require("../../../utils/functions");
 const { CONSTANTS } = require("../../../config/constants");
@@ -30,6 +30,29 @@ class ShopService {
       ],
     });
     return shops.map((shop) => this._withBlueBadge(shop));
+  }
+
+  // Top shops by rating (ties broken by order count), with the aggregates the
+  // mobile "top sellers" screen needs. Raw SQL — these are per-row subquery
+  // counts across favorites/orders/reels/comments, not a plain Sequelize include.
+  static async getTop(limit = 20) {
+    return db.sequelize.query(
+      `SELECT s.id, s.name, s.logo, COALESCE(s.rating, 0)::float AS rating,
+              (SELECT COUNT(*)::int FROM products p WHERE p.shop_id = s.id AND p."deletedAt" IS NULL) AS total_products,
+              (SELECT COUNT(*)::int FROM orders o WHERE o.shop_id = s.id AND o."deletedAt" IS NULL) AS total_orders,
+              (SELECT COUNT(*)::int FROM favorites f
+                 JOIN products p2 ON p2.id = f.product_id
+                 WHERE p2.shop_id = s.id) AS total_product_favorites,
+              (SELECT COUNT(*)::int FROM reels r WHERE r.shop_id = s.id AND r."deletedAt" IS NULL) AS total_reels,
+              (SELECT COUNT(*)::int FROM comments c
+                 JOIN products p3 ON p3.id = c.product_id
+                 WHERE p3.shop_id = s.id) AS total_comments
+       FROM shops s
+       WHERE s."deletedAt" IS NULL AND s.is_active = true
+       ORDER BY COALESCE(s.rating, 0) DESC, total_orders DESC
+       LIMIT :limit`,
+      { replacements: { limit }, type: QueryTypes.SELECT }
+    );
   }
 
   static async getForFilter() {

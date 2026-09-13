@@ -29,6 +29,10 @@ module.exports = class ApiError extends Error {
     static Conflict(message = "Conflict occurred due to duplicate or existing data!", errors = []) {
         return new ApiError(409, message, errors);
     }
+
+    static TooManyRequests(message = "Too many requests, please slow down.") {
+        return new ApiError(429, message);
+    }
     
     static Locked(message = "Analyse is already taken by another doctor!", takenBy = null) {
         const error = new ApiError(423, message);

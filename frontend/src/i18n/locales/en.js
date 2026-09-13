@@ -26,6 +26,7 @@ export default {
     shopApplications: 'Shop Applications',
     aiRecommendations: 'AI Suggestions',
     myShop: 'My Shop', payouts: 'Payouts', subscription: 'Subscription',
+    buyerRequests: 'ÖTS (Offers)',
     adminPanel: 'Admin panel', sellerPanel: 'Seller panel', shopTypeRequests: 'Type Requests',
     pushNotifications: 'Push Notifications', pushNotificationsAdmin: 'Push Notifications',
     auditLogs: 'Audit Logs',
@@ -477,6 +478,18 @@ export default {
   },
 
   seller: {
+    otsTitle: 'ÖTS — Buyer requests', otsNoRequests: 'No requests',
+    otsNoDescription: 'No description', otsBudget: 'Budget', otsQuantity: 'Qty',
+    otsThreadTitle: 'Offer negotiation', otsNoOffersYet: 'No offers yet',
+    otsYou: 'You', otsBuyer: 'Buyer',
+    otsPending: 'Pending', otsCountered: 'Countered', otsAccepted: 'Accepted',
+    otsRejected: 'Rejected', otsExpired: 'Expired',
+    otsAccept: 'Accept', otsReject: 'Reject',
+    otsWaitingForBuyer: 'Waiting for buyer response',
+    otsSendOffer: 'Send offer', otsCounterOffer: 'Send counter-offer',
+    otsEnterPrice: 'Enter a price', otsOfferSent: 'Offer sent',
+    otsPricePlaceholder: 'Price (TMT)', otsNotePlaceholder: 'Note (optional)',
+
     totalProducts: 'Products', totalOrders: 'Total Orders', pendingOrders: 'Pending',
     revenueMonth: 'Revenue This Month', balance: 'Balance',
     recentOrders: 'Recent Orders', noOrders: 'No orders',

@@ -25,6 +25,7 @@ export default {
     shopApplications: 'Заявки магазинов',
     aiRecommendations: 'AI Предложения',
     myShop: 'Мой магазин', payouts: 'Выплаты', subscription: 'Подписка',
+    buyerRequests: 'ÖTS (Предложения)',
     adminPanel: 'Панель администратора', sellerPanel: 'Панель продавца', shopTypeRequests: 'Запросы типа',
     pushNotifications: 'Push-уведомления',
     auditLogs: 'Журнал аудита',
@@ -476,6 +477,18 @@ export default {
   },
 
   seller: {
+    otsTitle: 'ÖTS — Запросы покупателей', otsNoRequests: 'Запросов нет',
+    otsNoDescription: 'Без описания', otsBudget: 'Бюджет', otsQuantity: 'Кол-во',
+    otsThreadTitle: 'Торг по цене', otsNoOffersYet: 'Предложений пока нет',
+    otsYou: 'Вы', otsBuyer: 'Покупатель',
+    otsPending: 'Ожидает', otsCountered: 'Встречное предложение', otsAccepted: 'Принято',
+    otsRejected: 'Отклонено', otsExpired: 'Истекло',
+    otsAccept: 'Принять', otsReject: 'Отклонить',
+    otsWaitingForBuyer: 'Ожидается ответ покупателя',
+    otsSendOffer: 'Отправить предложение', otsCounterOffer: 'Встречное предложение',
+    otsEnterPrice: 'Введите цену', otsOfferSent: 'Предложение отправлено',
+    otsPricePlaceholder: 'Цена (TMT)', otsNotePlaceholder: 'Комментарий (не обязательно)',
+
     totalProducts: 'Товары', totalOrders: 'Всего заказов', pendingOrders: 'Ожидают',
     revenueMonth: 'Выручка в этом месяце', balance: 'Баланс',
     recentOrders: 'Последние заказы', noOrders: 'Заказов нет',
