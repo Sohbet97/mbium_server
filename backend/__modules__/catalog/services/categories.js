@@ -21,6 +21,22 @@ class CategoryService {
         return db.Category.count({ where: filter, paranoid });
     }
 
+    // Returns [categoryId, ...all descendant ids] at any nesting depth, via a
+    // recursive CTE over the adjacency-list (parent_id) tree.
+    static async getDescendantIds(categoryId) {
+        const rows = await db.sequelize.query(
+            `WITH RECURSIVE descendants AS (
+                SELECT id FROM categories WHERE id = :categoryId
+                UNION ALL
+                SELECT c.id FROM categories c
+                INNER JOIN descendants d ON c.parent_id = d.id
+            )
+            SELECT id FROM descendants`,
+            { replacements: { categoryId }, type: db.Sequelize.QueryTypes.SELECT }
+        );
+        return rows.map((r) => r.id);
+    }
+
     static async getById(id, paranoid = true) {
         if (!id) return null;
         return db.Category.findOne({

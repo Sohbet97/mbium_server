@@ -13,6 +13,7 @@ const SizeService     = require('../../__modules__/sizes/services/SizeService');
 const ColorService    = require('../../__modules__/colors/services/ColorService');
 const SupplierService = require('../../__modules__/suppliers/services/SupplierService');
 const SearchService   = require('../../services/search');
+const CATALOG_CONSTANTS = require('../../__modules__/catalog/utils/constants');
 
 // ── Sort helper ───────────────────────────────────────────────────────────────
 // Maps buyer-facing sort keys to safe Sequelize order tuples.
@@ -32,6 +33,7 @@ const BUYER_SORT_MAP = {
 
 // Turbo-boosted products sort first regardless of the chosen sort, then fall back to it.
 function resolveBuyerSort(param) {
+    if (param === 'random') return [['turbo_active', 'DESC'], ['turbo_boosted_at', 'DESC'], literal('RANDOM()')];
     const base = BUYER_SORT_MAP[param] ?? BUYER_SORT_MAP.newest;
     return [['turbo_active', 'DESC'], ['turbo_boosted_at', 'DESC'], ...base];
 }
@@ -221,7 +223,10 @@ router.get('/products', async (req, res, next) => {
             is_active: true, is_published: true, moderation_status: 1,
             [Op.or]: [{ scheduled_at: null }, { scheduled_at: { [Op.lte]: now } }],
         };
-        if (req.query.category_id) filter.category_id = req.query.category_id;
+        if (req.query.category_id) {
+            const ids = await CategoryService.getDescendantIds(req.query.category_id);
+            filter.category_id = { [Op.in]: ids };
+        }
         if (req.query.shop_id)     filter.shop_id     = req.query.shop_id;
         if (req.query.text) filter[Op.and] = [productTextFilter(req.query.text)]
         if (req.query.min_price) {
@@ -233,6 +238,21 @@ router.get('/products', async (req, res, next) => {
             const maxPrice = parseFloat(req.query.max_price);
             if (isNaN(maxPrice)) throw ApiError.BadRequest('max_price nädogry');
             filter.price = { ...filter.price, [Op.lte]: maxPrice };
+        }
+        // ?brands=1,2,3 — comma-separated brand ids
+        if (req.query.brands) {
+            const ids = String(req.query.brands).split(',').map(Number).filter((n) => !isNaN(n));
+            if (ids.length) filter.brand_id = { [Op.in]: ids };
+        }
+        // ?free_delivery=true
+        if (req.query.free_delivery === 'true') {
+            filter[Op.and] = [...(filter[Op.and] ?? []), literal(
+                `EXISTS (
+                   SELECT 1 FROM product_delivery_types pdt
+                   INNER JOIN delivery_types dt ON dt.id = pdt.delivery_type_id
+                   WHERE pdt.product_id = "products"."id" AND dt.code ILIKE '${CATALOG_CONSTANTS.FREE_DELIVERY_TYPE_CODE_PATTERN}'
+                 )`
+            )];
         }
         // ?color_hex=#ef4444 or a comma-separated list
         const colorFilter = ProductService.colorFilter(req.query.color_hex);

@@ -39,3 +39,17 @@ for f in migrations/073_turbo_shop_boosts.sql; do
   PGPASSWORD='P@ssword*12345' psql -h localhost -p 5432 -U postgres -d mbium -f "$f" || break
 done
 ****
+
+cd backend
+for f in migrations/074_chat_rooms_shop_product.sql migrations/075_otp_session_phone_purpose.sql; do
+  echo "== $f =="
+  PGPASSWORD='P@ssword*12345' psql -h localhost -p 5432 -U postgres -d mbium -f "$f" || break
+done
+****
+
+cd backend
+for f in migrations/076_buyer_request_offers.sql migrations/077_buyer_request_attachments.sql; do
+  echo "== $f =="
+  PGPASSWORD='P@ssword*12345' psql -h localhost -p 5432 -U postgres -d mbium -f "$f" || break
+done
+****

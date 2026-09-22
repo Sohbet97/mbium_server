@@ -37,6 +37,8 @@ const favoritesPaths      = require("./paths/favorites");
 const systemPaths         = require("./paths/system");
 const deliveryTypesPaths  = require("./paths/delivery-types");
 const giftCreatorsPaths   = require("./paths/gift-creators");
+const chatsPaths          = require("./paths/chats");
+const turboPaths          = require("./paths/turbo");
 
 const swaggerSpec = {
     openapi: "3.0.3",
@@ -93,6 +95,8 @@ const swaggerSpec = {
         { name: "Buyer — AI",         description: "AI agent suggestion cards — public" },
         { name: "Buyer — Locations",  description: "Public region/city lookup for address forms — no auth" },
         { name: "Buyer — Banners",    description: "Public active banner feed — no auth" },
+        { name: "Buyer — Chats",      description: "Buyer chat dialogs with support/shops/products — list, open, message, attachments, read receipts" },
+        { name: "Turbo Boost",        description: "Product-level and shop-level turbo boosts — packages, purchase, status, and admin oversight" },
         // Admin — AI
         { name: "AI Recommendations", description: "Admin CRUD for AI agent suggestion cards" },
         { name: "AI Chat",            description: "Streaming AI chat (SSE) and persistent conversation history — admin and buyer" },
@@ -174,6 +178,8 @@ const swaggerSpec = {
         ...systemPaths,
         ...deliveryTypesPaths,
         ...giftCreatorsPaths,
+        ...chatsPaths,
+        ...turboPaths,
     },
 };
 

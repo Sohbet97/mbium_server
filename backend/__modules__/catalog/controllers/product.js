@@ -5,6 +5,8 @@ const db = require("../../../models");
 const { FUNCTIONS } = require("../../../utils/functions");
 const Validator = require("../../../__artefacts__/_validator_");
 const ProductService = require("../services/products");
+const CategoryService = require("../services/categories");
+const CATALOG_CONSTANTS = require("../utils/constants");
 const productSchema = require("../validators/product.schema");
 const priceTierSchema = require("../validators/price-tier.schema");
 
@@ -12,8 +14,9 @@ class ProductController {
     static async get(req, res, next) {
         try {
             const paranoid = !req.query?.paranoid;
-            const filter = this.getFilter(req.query);
-            const { limit, sort, skip } = FUNCTIONS.getQueryParams(req);
+            const filter = await this.getFilter(req.query);
+            const { limit, sort: defaultSort, skip } = FUNCTIONS.getQueryParams(req);
+            const sort = req.query?.sort === "random" ? [literal("RANDOM()")] : defaultSort;
             const [data, count] = await Promise.all([
                 ProductService.get(filter, limit, sort, skip, paranoid),
                 ProductService.getCount(filter, paranoid),
@@ -251,7 +254,7 @@ class ProductController {
 
     // `search` is accepted as an alias of `text` so a client using either name
     // filters instead of silently getting the unfiltered list
-    static getFilter({ text, search, category_id, shop_id, brand_id, color_hex, is_active, status, moderation_status, paranoid } = {}) {
+    static async getFilter({ text, search, category_id, shop_id, brand_id, brands, free_delivery, color_hex, is_active, status, moderation_status, paranoid } = {}) {
         const filter = {};
         const term = text ?? search;
         if (term) {
@@ -272,13 +275,29 @@ class ProductController {
                 ]
             }
         }
-        if (category_id) filter.category_id = category_id;
+        if (category_id) {
+            const ids = await CategoryService.getDescendantIds(category_id);
+            filter.category_id = { [Op.in]: ids };
+        }
         if (shop_id) filter.shop_id = shop_id;
         if (brand_id) filter.brand_id = brand_id;
+        if (brands) {
+            const ids = String(brands).split(",").map(Number).filter((n) => !isNaN(n));
+            if (ids.length) filter.brand_id = { [Op.in]: ids };
+        }
         // Appended to Op.and rather than assigned, so it survives alongside the
         // text search above (which may already own Op.and or Op.or)
         const color = ProductService.colorFilter(color_hex);
         if (color) filter[Op.and] = [...(filter[Op.and] ?? []), color];
+        if (free_delivery === true || free_delivery === "true") {
+            filter[Op.and] = [...(filter[Op.and] ?? []), literal(
+                `EXISTS (
+                   SELECT 1 FROM product_delivery_types pdt
+                   INNER JOIN delivery_types dt ON dt.id = pdt.delivery_type_id
+                   WHERE pdt.product_id = "products"."id" AND dt.code ILIKE '${CATALOG_CONSTANTS.FREE_DELIVERY_TYPE_CODE_PATTERN}'
+                 )`
+            )];
+        }
         if (is_active !== undefined) filter.is_active = is_active;
         if (status !== undefined) filter.status = status;
         if (moderation_status !== undefined) filter.moderation_status = moderation_status;

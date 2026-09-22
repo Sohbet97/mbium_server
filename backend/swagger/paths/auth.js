@@ -29,35 +29,98 @@ module.exports = {
             },
         },
     },
-    "/auth/verify-otp": {
+    "/auth/request-otp": {
         post: {
             tags: [tag],
-            summary: "Verify OTP and receive tokens",
+            summary: "Request an SMS OTP for phone-only login (no session_id)",
+            description:
+                "Phone-only login flow used by the mobile app: no prior register/login call needed. " +
+                "Auto-creates a `NOT_ACTIVATED` user if the phone number isn't registered yet. " +
+                "The OTP is delivered by SMS (relayed via the `otp_sms` service); poll for it and call " +
+                "`POST /auth/verify-otp` with the same `phone_number` + the received code. " +
+                "There is no `session_id` in this flow — to resend, just call this endpoint again after `retry_after_seconds`.",
             requestBody: {
                 required: true,
                 content: {
                     "application/json": {
                         schema: {
                             type: "object",
-                            required: ["session_id", "otp"],
-                            properties: {
-                                session_id: { type: "string" },
-                                otp: { type: "string", example: "123456" },
-                            },
+                            required: ["phone_number"],
+                            properties: { phone_number: { type: "string", example: "61123456" } },
                         },
                     },
                 },
             },
             responses: {
-                200: { description: "Tokens issued", content: { "application/json": { schema: { $ref: "#/components/schemas/AuthResponse" } } } },
+                200: {
+                    description: "OTP sent",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        retry_after_seconds: { type: "integer", example: 60 },
+                        code_ttl_seconds: { type: "integer", example: 300 },
+                    } } } },
+                },
+                400: { description: "Invalid phone_number" },
+            },
+        },
+    },
+    "/auth/verify-otp": {
+        post: {
+            tags: [tag],
+            summary: "Verify OTP and receive tokens",
+            description:
+                "Accepts either of two body shapes: `{ session_id, otp }` — the legacy flow keyed off the " +
+                "session id returned by `POST /auth/login` or `POST /auth/register`'s 2FA step — or " +
+                "`{ phone_number, otp }` — the phone-only flow started by `POST /auth/request-otp`, with no " +
+                "`session_id` involved. The phone-only flow auto-activates the user and also returns " +
+                "`refreshToken` in the response body (in addition to the cookie), since mobile clients can't " +
+                "rely on cookies.",
+            requestBody: {
+                required: true,
+                content: {
+                    "application/json": {
+                        schema: {
+                            oneOf: [
+                                {
+                                    type: "object",
+                                    required: ["session_id", "otp"],
+                                    properties: {
+                                        session_id: { type: "string" },
+                                        otp: { type: "string", example: "123456" },
+                                    },
+                                },
+                                {
+                                    type: "object",
+                                    required: ["phone_number", "otp"],
+                                    properties: {
+                                        phone_number: { type: "string", example: "61123456" },
+                                        otp: { type: "string", example: "123456" },
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                },
+            },
+            responses: {
+                200: {
+                    description: "Tokens issued",
+                    content: { "application/json": { schema: {
+                        allOf: [
+                            { $ref: "#/components/schemas/AuthResponse" },
+                            { type: "object", properties: { refreshToken: { type: "string", description: "Only present for the phone_number+otp flow" } } },
+                        ],
+                    } } },
+                },
                 400: { description: "Invalid or expired OTP" },
+                404: { description: "No active OTP session for this number (phone_number+otp flow)" },
             },
         },
     },
     "/auth/resend-otp": {
         post: {
             tags: [tag],
-            summary: "Resend OTP for existing session",
+            summary: "Resend OTP for existing session (session_id flow only)",
+            description: "For the phone-only flow (no session_id), call POST /auth/request-otp again instead.",
             requestBody: {
                 required: true,
                 content: {
