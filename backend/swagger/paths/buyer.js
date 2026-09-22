@@ -23,6 +23,7 @@ const productSortParam = {
             "name_asc",   // name ASC
             "name_desc",  // name DESC
             "updated",    // updatedAt DESC
+            "random",     // random order (RANDOM())
         ],
     },
 };
@@ -283,8 +284,10 @@ module.exports = {
             parameters: [
                 ...paginationParams,
                 { in: "query", name: "text",        schema: { type: "string" }, description: "Search by name (TK/RU)" },
-                { in: "query", name: "category_id", schema: { type: "integer" } },
+                { in: "query", name: "category_id", schema: { type: "integer" }, description: "Recursively includes products of all child categories, at any nesting depth." },
                 { in: "query", name: "shop_id",     schema: { type: "integer" } },
+                { in: "query", name: "brands",      schema: { type: "string" }, example: "1,2,3", description: "Comma-separated brand ids" },
+                { in: "query", name: "free_delivery", schema: { type: "boolean" }, description: "When true, only products linked to a delivery_types row whose code contains 'mugt' (Turkmen for 'free') — matches the platform's free-delivery types" },
                 { in: "query", name: "min_price",   schema: { type: "number" }, description: "Minimum price filter (inclusive)" },
                 { in: "query", name: "max_price",   schema: { type: "number" }, description: "Maximum price filter (inclusive)" },
                 { in: "query", name: "color_hex",   schema: { type: "string" }, example: "#ef4444,#000000", description: "One hex or a comma-separated list. Matches the product's own colour or any of its variants'. Invalid values are ignored." },
