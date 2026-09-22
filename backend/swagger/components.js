@@ -1348,6 +1348,96 @@ module.exports = {
             },
         },
 
+        // ── Chats (buyer ↔ shop / support) ─────────────────────────────────────────
+        ChatDialogOpenRequest: {
+            type: "object",
+            required: ["type"],
+            description: "`type=support` needs nothing else. `type=shop` needs `shop_id`. `type=product` needs `product_id` (the server resolves the shop from it).",
+            properties: {
+                type:       { type: "string", enum: ["support", "shop", "product"] },
+                shop_id:    { type: "integer", nullable: true },
+                product_id: { type: "integer", nullable: true },
+                message:    { type: "string", nullable: true, description: "Optional first message sent immediately after the dialog is opened/found" },
+            },
+        },
+        ChatDialog: {
+            type: "object",
+            properties: {
+                id:      { type: "integer" },
+                type:    { type: "string", enum: ["support", "shop", "product"] },
+                shop:    { type: "object", nullable: true, properties: { id: { type: "integer" }, name: { type: "string" }, logo: { type: "string", nullable: true } } },
+                product: { type: "object", nullable: true, properties: { id: { type: "integer" }, name: { type: "string" } } },
+                is_new:  { type: "boolean", description: "true if this call just created the dialog, false if an existing one was returned/reused" },
+            },
+        },
+        ChatDialogListItem: {
+            type: "object",
+            properties: {
+                id:      { type: "integer" },
+                type:    { type: "string", enum: ["support", "shop", "product"] },
+                shop:    { type: "object", nullable: true, properties: { id: { type: "integer" }, name: { type: "string" }, logo: { type: "string", nullable: true } } },
+                product: { type: "object", nullable: true, properties: { id: { type: "integer" }, name: { type: "string" }, image: { type: "string", nullable: true } } },
+                last_message: {
+                    type: "object", nullable: true,
+                    properties: {
+                        text:           { type: "string", nullable: true },
+                        attachment_url: { type: "string", nullable: true },
+                        is_mine:        { type: "boolean" },
+                        sent_at:        { type: "string", format: "date-time" },
+                    },
+                },
+                unread_count: { type: "integer" },
+                updated_at:   { type: "string", format: "date-time" },
+            },
+        },
+        ChatDialogList: {
+            type: "object",
+            properties: {
+                items:       { type: "array", items: { $ref: "#/components/schemas/ChatDialogListItem" } },
+                next_cursor: { type: "string", nullable: true, description: "Pass as `cursor` to fetch the next page; null when there are no more" },
+            },
+        },
+        ChatMessage: {
+            type: "object",
+            properties: {
+                id:             { type: "integer" },
+                text:           { type: "string", nullable: true },
+                attachment_url: { type: "string", nullable: true },
+                is_mine:        { type: "boolean" },
+                sent_at:        { type: "string", format: "date-time" },
+                status:         { type: "string", enum: ["sent", "delivered", "read"] },
+            },
+        },
+        ChatMessageList: {
+            type: "object",
+            properties: {
+                items:       { type: "array", items: { $ref: "#/components/schemas/ChatMessage" } },
+                next_cursor: { type: "string", nullable: true, description: "Pass as `before` to fetch older messages; null when there are no more" },
+            },
+        },
+        ChatMessageCreate: {
+            type: "object",
+            description: "At least one of `text` or `attachment_url` must be provided.",
+            properties: {
+                text:           { type: "string", nullable: true },
+                attachment_url: { type: "string", nullable: true, description: "URL returned by POST /buyer/chats/{id}/attachments" },
+            },
+        },
+        ChatMarkRead: {
+            type: "object",
+            properties: {
+                up_to_message_id: { type: "integer", nullable: true, description: "Marks every not-mine message up to and including this id as read; omit to mark everything read" },
+            },
+        },
+        ChatAttachmentUpload: {
+            type: "object",
+            properties: {
+                url:  { type: "string" },
+                type: { type: "string", enum: ["image", "video", "3d", "360"] },
+                size: { type: "integer" },
+            },
+        },
+
         // ── Reel ──────────────────────────────────────────────────────────────────
         Reel: {
             type: "object",
