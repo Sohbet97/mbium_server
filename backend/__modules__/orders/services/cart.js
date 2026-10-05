@@ -104,7 +104,11 @@ class CartService {
     }
 
     static async remove(userId, itemId) {
-        return db.CartItem.destroy({ where: { id: itemId, user_id: userId } });
+        const id = Number(itemId);
+        if (!Number.isInteger(id) || id <= 0) throw ApiError.BadRequest("Nädogry item id");
+        const deleted = await db.CartItem.destroy({ where: { id, user_id: userId } });
+        if (!deleted) throw ApiError.NotFound("Sebet elementi tapylmady");
+        return deleted;
     }
 
     static async clear(userId) {

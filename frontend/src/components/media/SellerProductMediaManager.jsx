@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ImagePlus, Trash2, Star, Loader2, Upload, X, GripVertical, CheckCircle, Scissors, RotateCw, Search } from 'lucide-react'
+import { ImagePlus, Trash2, Star, Loader2, Upload, X, GripVertical, CheckCircle, Scissors, RotateCw, Search, PlayCircle } from 'lucide-react'
 import { SellerApi } from '@/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -27,10 +27,11 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
       const { data } = await SellerApi.media.list({
         limit: PAGE_SIZE,
         skip: pageNum * PAGE_SIZE,
-        type: 'image',
         search: text || undefined,
       })
-      setItems(data.data ?? [])
+      // Product gallery only handles images/videos — 3D models have their own manager.
+      const rows = (data.data ?? []).filter((m) => m.type === 'image' || m.type === 'video')
+      setItems(rows)
       setTotal(data.count ?? 0)
     } finally {
       setLoading(false)
@@ -63,10 +64,10 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
     const files = Array.from(e.target.files ?? [])
     if (!files.length) return
     const [valid, rejected] = files.reduce(
-      ([v, r], f) => f.type.startsWith('image/') ? [[...v, f], r] : [v, [...r, f.name]],
+      ([v, r], f) => (f.type.startsWith('image/') || f.type.startsWith('video/')) ? [[...v, f], r] : [v, [...r, f.name]],
       [[], []]
     )
-    if (rejected.length) toast.error(`Ret edildi (diňe surat): ${rejected.join(', ')}`)
+    if (rejected.length) toast.error(`Ret edildi (diňe surat/wideo): ${rejected.join(', ')}`)
     if (!valid.length) { if (fileRef.current) fileRef.current.value = ''; return }
     setUploading(true)
     try {
@@ -104,7 +105,7 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b dark:border-white/[0.08] shrink-0">
-          <h3 className="font-semibold dark:text-white">Surat saýla</h3>
+          <h3 className="font-semibold dark:text-white">Surat/wideo saýla</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400">
             <X className="h-5 w-5" />
           </button>
@@ -123,7 +124,7 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
             }
             Ýükle
           </button>
-          <input ref={fileRef} type="file" multiple accept="image/*" className="hidden" onChange={handleUpload} />
+          <input ref={fileRef} type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleUpload} />
 
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -135,7 +136,7 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
             />
           </div>
 
-          <span className="text-xs text-slate-400 shrink-0">{total} surat · iň köp {remaining} saýlap bilersiň</span>
+          <span className="text-xs text-slate-400 shrink-0">{total} faýl · iň köp {remaining} saýlap bilersiň</span>
         </div>
 
         {/* Grid */}
@@ -147,11 +148,12 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-40 gap-2 text-slate-400 text-sm">
               <ImagePlus className="h-8 w-8" />
-              <p>{search ? 'Hiç zat tapylmady' : 'Surat ýok — ilki ýükläň'}</p>
+              <p>{search ? 'Hiç zat tapylmady' : 'Surat/wideo ýok — ilki ýükläň'}</p>
             </div>
           ) : (
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
               {items.map((item) => {
+                const isVideo = item.type === 'video'
                 const thumb = item.thumbnail_url
                   ? absUrl(item.thumbnail_url)
                   : absUrl(item.url)
@@ -167,7 +169,18 @@ function SellerMediaPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS
                         : 'border-transparent hover:border-slate-300 dark:hover:border-white/20'
                     )}
                   >
-                    <img src={thumb} alt="" className="w-full h-full object-cover" />
+                    {isVideo && !item.thumbnail_url ? (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                        <PlayCircle className="h-7 w-7 text-white/80" />
+                      </div>
+                    ) : (
+                      <img src={thumb} alt="" className="w-full h-full object-cover" />
+                    )}
+                    {isVideo && (
+                      <span className="absolute bottom-1 right-1 text-[9px] font-medium bg-black/70 text-white rounded px-1 py-0.5">
+                        Wideo
+                      </span>
+                    )}
                     {isSelected && (
                       <div className="absolute inset-0 bg-blue-500/20 flex items-center justify-center">
                         <CheckCircle className="h-6 w-6 text-blue-500 drop-shadow-sm" />
@@ -339,6 +352,7 @@ export function SellerProductMediaManager({ productId, variantId }) {
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
           {items.map((pm, index) => {
             const m = pm.media
+            const isVideo = m.type === 'video'
             const thumb = m.thumbnail_url ? absUrl(m.thumbnail_url) : absUrl(m.url)
             return (
               <div
@@ -350,7 +364,18 @@ export function SellerProductMediaManager({ productId, variantId }) {
                 onDragEnd={onDragEnd}
                 className="relative group rounded-lg overflow-hidden border cursor-grab active:cursor-grabbing select-none dark:border-white/[0.08] border-slate-200 aspect-square bg-slate-100 dark:bg-[#242430]"
               >
-                <img src={thumb} alt={m.original_name} className="w-full h-full object-cover pointer-events-none" />
+                {isVideo && !m.thumbnail_url ? (
+                  <div className="w-full h-full flex items-center justify-center bg-slate-800 pointer-events-none">
+                    <PlayCircle className="h-8 w-8 text-white/80" />
+                  </div>
+                ) : (
+                  <img src={thumb} alt={m.original_name} className="w-full h-full object-cover pointer-events-none" />
+                )}
+                {isVideo && (
+                  <span className="absolute bottom-1 right-1 text-[9px] font-medium bg-black/70 text-white rounded px-1 py-0.5 pointer-events-none">
+                    Wideo
+                  </span>
+                )}
 
                 <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <GripVertical className="h-4 w-4 text-white drop-shadow-md" />
@@ -376,25 +401,29 @@ export function SellerProductMediaManager({ productId, variantId }) {
                       <Star className="h-3.5 w-3.5" />
                     </button>
                   )}
-                  <button
-                    type="button"
-                    onClick={(e) => handleRotate(e, m.id)}
-                    disabled={rotatingId === m.id}
-                    className="p-1.5 rounded-full bg-white/90 hover:bg-white text-blue-600 disabled:opacity-50"
-                    title="Aýla (90°)"
-                  >
-                    {rotatingId === m.id
-                      ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      : <RotateCw className="h-3.5 w-3.5" />}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setBgRemovalMedia(m) }}
-                    className="p-1.5 rounded-full bg-white/90 hover:bg-white text-violet-600"
-                    title="Fon aýyr"
-                  >
-                    <Scissors className="h-3.5 w-3.5" />
-                  </button>
+                  {!isVideo && (
+                    <button
+                      type="button"
+                      onClick={(e) => handleRotate(e, m.id)}
+                      disabled={rotatingId === m.id}
+                      className="p-1.5 rounded-full bg-white/90 hover:bg-white text-blue-600 disabled:opacity-50"
+                      title="Aýla (90°)"
+                    >
+                      {rotatingId === m.id
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <RotateCw className="h-3.5 w-3.5" />}
+                    </button>
+                  )}
+                  {!isVideo && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setBgRemovalMedia(m) }}
+                      className="p-1.5 rounded-full bg-white/90 hover:bg-white text-violet-600"
+                      title="Fon aýyr"
+                    >
+                      <Scissors className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={(e) => handleDetach(e, m.id)}

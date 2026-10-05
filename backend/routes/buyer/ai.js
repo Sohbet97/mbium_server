@@ -12,7 +12,14 @@ router.get('/recommendations', async (req, res, next) => {
     } catch (e) { next(e) }
 })
 
-// POST /buyer/ai/chat  – requires auth
+// GET /buyer/ai/price  – coins charged per chat request
+router.get('/price', authorizationMiddleware, async (req, res, next) => {
+    try {
+        return res.status(200).json({ coins_per_request: await AiChatService.getPrice() })
+    } catch (e) { next(e) }
+})
+
+// POST /buyer/ai/chat  – requires auth, costs coins
 router.post('/chat', authorizationMiddleware, async (req, res, next) => {
     try {
         const { messages } = req.body
@@ -24,7 +31,7 @@ router.post('/chat', authorizationMiddleware, async (req, res, next) => {
             content: String(content).slice(0, 5000),
         }))
 
-        await AiChatService.streamChat(history, res, 'buyer')
+        await AiChatService.streamBuyerChat(req.user.id, history, res)
     } catch (e) { next(e) }
 })
 

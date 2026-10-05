@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Pencil, Trash2, GripVertical, ToggleLeft, ToggleRight, Loader2, CalendarDays, ExternalLink } from 'lucide-react'
+import { Plus, Pencil, Trash2, GripVertical, Loader2, CalendarDays, ExternalLink, Check, X, Settings2 } from 'lucide-react'
 import { AdminApi } from '@/lib/api'
+import { usePendingCounts } from '@/store/pendingCounts'
 import { MediaPicker } from '@/components/media/MediaPicker'
 import { toast } from 'sonner'
-import { cn, absUrl } from '@/lib/utils'
+import { cn, absUrl, bannerTypeName } from '@/lib/utils'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 
 // ── Banner Form Modal ─────────────────────────────────────────────────────────
 
@@ -17,7 +19,7 @@ const EMPTY = {
 }
 
 function BannerFormModal({ banner, types, shops, onClose, onSaved }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [form, setForm] = useState(banner ? {
     title:          banner.title          ?? '',
     subtitle:       banner.subtitle       ?? '',
@@ -115,7 +117,7 @@ function BannerFormModal({ banner, types, shops, onClose, onSaved }) {
               className="w-full h-9 px-3 rounded-lg text-sm border dark:bg-[#242430] dark:border-white/[0.08] dark:text-white bg-white border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40">
               <option value="">{t('banners.selectType')}</option>
               {types.map((tp) => (
-                <option key={tp.id} value={tp.id}>{tp.name_eng || tp.name}</option>
+                <option key={tp.id} value={tp.id}>{bannerTypeName(tp, i18n.language)}</option>
               ))}
             </select>
           </div>
@@ -215,16 +217,182 @@ function BannerFormModal({ banner, types, shops, onClose, onSaved }) {
   )
 }
 
+// ── Moderation modals ─────────────────────────────────────────────────────────
+
+const INPUT = 'w-full h-9 px-3 rounded-lg text-sm border dark:bg-[#242430] dark:border-white/[0.08] dark:text-white bg-white border-slate-200 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/40'
+const LBL = 'block text-xs font-medium dark:text-slate-400 text-slate-500 mb-1.5'
+
+function toLocalInput(d) {
+  const x = new Date(d)
+  x.setMinutes(x.getMinutes() - x.getTimezoneOffset())
+  return x.toISOString().slice(0, 16)
+}
+
+function ApproveModal({ banner, types, onClose, onDone }) {
+  const { t, i18n } = useTranslation()
+  const start0 = new Date()
+  const end0 = new Date(start0.getTime() + (banner.duration_days || 7) * 86400000)
+  const [typeId, setTypeId] = useState(banner.banner_type_id ?? '')
+  const [startsAt, setStartsAt] = useState(toLocalInput(start0))
+  const [endsAt, setEndsAt] = useState(toLocalInput(end0))
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit() {
+    setError(''); setSaving(true)
+    try {
+      await AdminApi.banners.approve(banner.id, {
+        banner_type_id: typeId || undefined,
+        starts_at: new Date(startsAt).toISOString(),
+        ends_at: new Date(endsAt).toISOString(),
+      })
+      toast.success(t('banners.approved_msg'))
+      onDone()
+    } catch (e) { setError(e.response?.data?.message ?? t('toast.error')) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>{t('banners.approveTitle')}: {banner.title}</DialogTitle></DialogHeader>
+        <DialogBody>
+          {error && <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 rounded p-2">{error}</p>}
+          <p className="text-xs text-slate-500">
+            {banner.shop?.name} · {t('banners.daysBought', { n: banner.duration_days ?? '—' })} · {t('banners.paid')}: {banner.paid_amount ?? 0} {banner.currency}
+          </p>
+          <div>
+            <label className={LBL}>{t('banners.placement')}</label>
+            <select value={typeId} onChange={(e) => setTypeId(e.target.value)} className={INPUT}>
+              <option value="">{t('banners.selectType')}</option>
+              {types.map((tp) => <option key={tp.id} value={tp.id}>{bannerTypeName(tp, i18n.language)}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={LBL}>{t('banners.startsAt')}</label>
+              <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} className={INPUT} />
+            </div>
+            <div>
+              <label className={LBL}>{t('banners.endsAt')}</label>
+              <input type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} className={INPUT} />
+            </div>
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={submit} disabled={saving || !typeId || !startsAt || !endsAt}>
+            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}{t('banners.approve')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function RejectModal({ banner, onClose, onDone }) {
+  const { t, i18n } = useTranslation()
+  const [reason, setReason] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function submit() {
+    setSaving(true)
+    try {
+      await AdminApi.banners.reject(banner.id, reason.trim() || undefined)
+      toast.success(t('banners.rejected_msg'))
+      onDone()
+    } catch (e) { toast.error(e.response?.data?.message ?? t('toast.error')) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader><DialogTitle>{t('banners.reject')}: {banner.title}</DialogTitle></DialogHeader>
+        <DialogBody>
+          <label className={LBL}>{t('banners.rejectReason')}</label>
+          <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3}
+            className="w-full px-3 py-2 rounded-lg text-sm border dark:bg-[#242430] dark:border-white/[0.08] dark:text-white bg-white border-slate-200 text-slate-900" />
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button variant="destructive" onClick={submit} disabled={saving}>
+            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}{t('banners.reject')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function PricingModal({ types, onClose, onSaved }) {
+  const { t, i18n } = useTranslation()
+  const [rows, setRows] = useState(types.map((tp) => ({
+    id: tp.id, name: bannerTypeName(tp, i18n.language),
+    price_per_day_tmt: tp.price_per_day_tmt ?? '', price_per_day_coin: tp.price_per_day_coin ?? '', max_days: tp.max_days ?? '',
+  })))
+  const [saving, setSaving] = useState(false)
+  const setRow = (i, k, v) => setRows((r) => r.map((x, j) => j === i ? { ...x, [k]: v } : x))
+
+  async function save() {
+    setSaving(true)
+    try {
+      await Promise.all(rows.map((r) => AdminApi.bannerTypes.update(r.id, {
+        price_per_day_tmt:  r.price_per_day_tmt  === '' ? null : Number(r.price_per_day_tmt),
+        price_per_day_coin: r.price_per_day_coin === '' ? null : Number(r.price_per_day_coin),
+        max_days:           r.max_days           === '' ? null : Number(r.max_days),
+      })))
+      toast.success(t('banners.pricingSaved'))
+      onSaved()
+    } catch (e) { toast.error(e.response?.data?.message ?? t('toast.error')) }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader><DialogTitle>{t('banners.pricing')}</DialogTitle></DialogHeader>
+        <DialogBody>
+          <div className="space-y-3">
+            {rows.map((r, i) => (
+              <div key={r.id} className="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
+                <div className="text-sm font-medium dark:text-white self-center">{r.name}</div>
+                <div><label className={LBL}>{t('banners.pricePerDayTmt')}</label>
+                  <input type="number" min={0} value={r.price_per_day_tmt} onChange={(e) => setRow(i, 'price_per_day_tmt', e.target.value)} className={INPUT} /></div>
+                <div><label className={LBL}>{t('banners.pricePerDayCoin')}</label>
+                  <input type="number" min={0} value={r.price_per_day_coin} onChange={(e) => setRow(i, 'price_per_day_coin', e.target.value)} className={INPUT} /></div>
+                <div><label className={LBL}>{t('banners.maxDaysField')}</label>
+                  <input type="number" min={0} value={r.max_days} onChange={(e) => setRow(i, 'max_days', e.target.value)} className={INPUT} /></div>
+              </div>
+            ))}
+          </div>
+        </DialogBody>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button onClick={save} disabled={saving}>
+            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}{t('common.save')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // ── Banners Page ──────────────────────────────────────────────────────────────
 
 export default function BannersPage() {
-  const { t } = useTranslation()
+  const { refresh: refreshPendingCounts } = usePendingCounts() ?? {}
+  const { t, i18n } = useTranslation()
   const [banners, setBanners] = useState([])
   const [types, setTypes] = useState([])
   const [shops, setShops] = useState([])
   const [typeFilter, setTypeFilter] = useState('')
   const [loading, setLoading] = useState(false)
   const [modal, setModal] = useState(null) // null | 'create' | banner-object
+  const [statusFilter, setStatusFilter] = useState('') // '' | 'PENDING'
+  const [approving, setApproving] = useState(null)
+  const [rejecting, setRejecting] = useState(null)
+  const [pricingOpen, setPricingOpen] = useState(false)
   const dragSrc = useRef(null)
   const bannersRef = useRef(banners)
   useEffect(() => { bannersRef.current = banners }, [banners])
@@ -233,6 +401,7 @@ export default function BannersPage() {
     setLoading(true)
     try {
       const params = { limit: 200 }
+      if (statusFilter) params.status = statusFilter
       if (type) params.banner_type_id = types.find((t) => t.slug === type)?.id
       const { data } = await AdminApi.banners.getAll(params)
       setBanners(data.data ?? [])
@@ -255,7 +424,7 @@ export default function BannersPage() {
   }
 
   useEffect(() => { loadTypes(); loadShops() }, [])
-  useEffect(() => { load() }, [typeFilter, types.length])
+  useEffect(() => { load() }, [typeFilter, types.length, statusFilter])
 
   async function handleToggle(banner) {
     try {
@@ -295,7 +464,7 @@ export default function BannersPage() {
     } catch { toast.error(t('toast.error')) }
   }
 
-  const filteredTypes = [{ slug: '', name_eng: 'All', name: 'Hemmesi' }, ...types]
+  const filteredTypes = [{ slug: '', name_eng: 'All', name_ru: 'Все', name: 'Hemmesi' }, ...types]
 
   return (
     <div className="space-y-4">
@@ -305,11 +474,30 @@ export default function BannersPage() {
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{t('banners.title')}</h2>
           <p className="text-sm text-slate-500 mt-0.5">{t('banners.subtitle_page', { count: banners.length })}</p>
         </div>
-        <button
-          onClick={() => setModal('create')}
-          className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">
-          <Plus className="h-4 w-4" /> {t('banners.create')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPricingOpen(true)}
+            className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium dark:bg-white/[0.06] bg-slate-100 dark:text-slate-300 text-slate-600 dark:hover:bg-white/[0.1] hover:bg-slate-200 transition-colors">
+            <Settings2 className="h-4 w-4" /> {t('banners.pricing')}
+          </button>
+          <button
+            onClick={() => setModal('create')}
+            className="flex items-center gap-1.5 px-3 h-9 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors">
+            <Plus className="h-4 w-4" /> {t('banners.create')}
+          </button>
+        </div>
+      </div>
+
+      {/* Moderation filter */}
+      <div className="flex items-center gap-1">
+        {[['', t('banners.filterAll')], ['PENDING', t('banners.filterPending')]].map(([v, label]) => (
+          <button key={v} onClick={() => setStatusFilter(v)}
+            className={cn('px-3 h-8 rounded-lg text-sm font-medium transition-colors',
+              statusFilter === v ? 'bg-amber-500 text-white'
+                : 'dark:bg-white/[0.06] bg-slate-100 dark:text-slate-300 text-slate-600 dark:hover:bg-white/[0.1] hover:bg-slate-200')}>
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* Type filter tabs */}
@@ -322,7 +510,7 @@ export default function BannersPage() {
                 ? 'bg-blue-600 text-white'
                 : 'dark:bg-white/[0.06] bg-slate-100 dark:text-slate-300 text-slate-600 dark:hover:bg-white/[0.1] hover:bg-slate-200'
             )}>
-            {tp.name_eng || tp.name}
+            {bannerTypeName(tp, i18n.language)}
           </button>
         ))}
       </div>
@@ -344,7 +532,7 @@ export default function BannersPage() {
             const thumb = banner.media
               ? absUrl(banner.media.thumbnail_url || banner.media.url)
               : banner.image_url || null
-            const typeName = banner.banner_type?.name_eng || banner.banner_type?.name || '—'
+            const typeName = bannerTypeName(banner.banner_type, i18n.language) || '—'
 
             return (
               <div
@@ -374,7 +562,14 @@ export default function BannersPage() {
                     <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-white/[0.08] dark:text-slate-400 text-slate-500">
                       {typeName}
                     </span>
+                    {banner.status === 'PENDING' && <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700">{t('banners.statusPending')}</span>}
+                    {banner.status === 'REJECTED' && <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">{t('banners.statusRejected')}</span>}
                   </div>
+                  {banner.shop?.name && banner.duration_days && (
+                    <p className="text-xs dark:text-slate-500 text-slate-400 mt-0.5">
+                      {banner.shop.name} · {t('banners.daysBought', { n: banner.duration_days })} · {banner.paid_amount} {banner.currency}
+                    </p>
+                  )}
                   {banner.subtitle && <p className="text-xs dark:text-slate-500 text-slate-400 truncate mt-0.5">{banner.subtitle}</p>}
                   {(banner.starts_at || banner.ends_at) && (
                     <p className="text-xs dark:text-slate-600 text-slate-400 mt-0.5">
@@ -386,20 +581,52 @@ export default function BannersPage() {
                   )}
                 </div>
 
+                {/* Live status switch (only meaningful once approved) */}
+                <label
+                  className={cn(
+                    'flex items-center gap-2 shrink-0 rounded-full border px-2.5 py-1.5 transition-colors',
+                    banner.status === 'APPROVED'
+                      ? banner.is_active
+                        ? 'border-green-300 bg-green-50 dark:border-green-500/30 dark:bg-green-500/10'
+                        : 'border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-white/[0.04]'
+                      : 'border-transparent opacity-40'
+                  )}
+                  title={banner.status === 'APPROVED' ? (banner.is_active ? t('common.deactivate') : t('common.activate')) : undefined}
+                >
+                  <Switch
+                    checked={!!banner.is_active}
+                    disabled={banner.status !== 'APPROVED'}
+                    onCheckedChange={() => handleToggle(banner)}
+                    className="data-[state=checked]:bg-green-500"
+                  />
+                  <span className={cn(
+                    'w-14 text-xs font-medium',
+                    banner.is_active ? 'text-green-700 dark:text-green-400' : 'dark:text-slate-400 text-slate-500'
+                  )}>
+                    {banner.is_active ? t('common.active') : t('common.inactive')}
+                  </span>
+                </label>
+
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
+                  {banner.status === 'PENDING' && (
+                    <>
+                      <button onClick={() => setApproving(banner)} title={t('banners.approve')}
+                        className="p-1.5 rounded-lg dark:hover:bg-white/[0.08] hover:bg-slate-100 text-green-600 transition-colors">
+                        <Check className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => setRejecting(banner)} title={t('banners.reject')}
+                        className="p-1.5 rounded-lg dark:hover:bg-white/[0.08] hover:bg-slate-100 text-red-500 transition-colors">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
                   {banner.link_url && (
                     <a href={banner.link_url} target="_blank" rel="noreferrer"
                       className="p-1.5 rounded-lg dark:hover:bg-white/[0.08] hover:bg-slate-100 dark:text-slate-400 text-slate-500 transition-colors">
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   )}
-                  <button onClick={() => handleToggle(banner)} title={banner.is_active ? t('common.deactivate') : t('common.activate')}
-                    className="p-1.5 rounded-lg dark:hover:bg-white/[0.08] hover:bg-slate-100 transition-colors">
-                    {banner.is_active
-                      ? <ToggleRight className="h-4 w-4 text-blue-500" />
-                      : <ToggleLeft  className="h-4 w-4 dark:text-slate-500 text-slate-400" />}
-                  </button>
                   <button onClick={() => setModal(banner)}
                     className="p-1.5 rounded-lg dark:hover:bg-white/[0.08] hover:bg-slate-100 dark:text-slate-400 text-slate-500 transition-colors">
                     <Pencil className="h-3.5 w-3.5" />
@@ -414,6 +641,10 @@ export default function BannersPage() {
           })}
         </div>
       )}
+
+      {approving && <ApproveModal banner={approving} types={types} onClose={() => setApproving(null)} onDone={() => { setApproving(null); load(); refreshPendingCounts?.() }} />}
+      {rejecting && <RejectModal banner={rejecting} onClose={() => setRejecting(null)} onDone={() => { setRejecting(null); load(); refreshPendingCounts?.() }} />}
+      {pricingOpen && <PricingModal types={types} onClose={() => setPricingOpen(false)} onSaved={() => { setPricingOpen(false); loadTypes() }} />}
 
       {modal && (
         <BannerFormModal

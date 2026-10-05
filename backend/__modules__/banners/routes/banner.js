@@ -15,6 +15,8 @@ router.post('/',               BannerController.create.bind(BannerController))
 router.put('/:id',             BannerController.update.bind(BannerController))
 router.delete('/:id',          BannerController.delete.bind(BannerController))
 router.delete('/:id/force',    BannerController.forceDelete.bind(BannerController))
+router.post('/:id/approve',    BannerController.approve.bind(BannerController))
+router.post('/:id/reject',     BannerController.reject.bind(BannerController))
 router.post('/:id/restore',    BannerController.restore.bind(BannerController))
 
 module.exports = router

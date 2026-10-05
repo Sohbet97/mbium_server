@@ -16,8 +16,12 @@ function BoostStatusBadge({ status, t }) {
   return <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls}`}>{status === 'ACTIVE' ? t('turbo.statusActive', 'Active') : t('turbo.statusExpired', 'Expired')}</span>
 }
 
-function BoostsTab() {
+function BoostsTab({ scope = 'product' }) {
   const { t } = useTranslation()
+  const isShop = scope === 'shop'
+  const getBoosts   = isShop ? AdminApi.turbo.getShopBoosts   : AdminApi.turbo.getBoosts
+  const cancelBoost = isShop ? AdminApi.turbo.cancelShopBoost : AdminApi.turbo.cancelBoost
+
   const [rows, setRows]         = useState([])
   const [count, setCount]       = useState(0)
   const [page, setPage]         = useState(0)
@@ -27,20 +31,20 @@ function BoostsTab() {
 
   const load = useCallback((p = 0) => {
     setLoading(true)
-    AdminApi.turbo.getBoosts({ status: status || undefined, page: p + 1, limit: BOOSTS_PAGE })
+    getBoosts({ status: status || undefined, page: p + 1, limit: BOOSTS_PAGE })
       .then(({ data }) => { setRows(data.data ?? []); setCount(data.count ?? 0) })
       .catch(() => toast.error(t('toast.error')))
       .finally(() => setLoading(false))
-  }, [status, t])
+  }, [status, t, getBoosts])
 
-  useEffect(() => { setPage(0); load(0) }, [status])
+  useEffect(() => { setPage(0); load(0) }, [status, scope])
   useEffect(() => { load(page) }, [page])
 
   async function handleCancel(id) {
     if (!window.confirm(t('turbo.confirmCancel', 'End this Turbo boost early? The seller will not be refunded.'))) return
     setCancelling(id)
     try {
-      await AdminApi.turbo.cancelBoost(id)
+      await cancelBoost(id)
       toast.success(t('toast.updated'))
       load(page)
     } catch (e) {
@@ -74,7 +78,7 @@ function BoostsTab() {
           <table className="w-full text-sm">
             <thead className="text-xs opacity-50 border-b dark:border-white/[0.06] border-black/[0.06]">
               <tr>
-                <th className="text-left px-4 py-2">{t('turbo.colProduct', 'Product')}</th>
+                {!isShop && <th className="text-left px-4 py-2">{t('turbo.colProduct', 'Product')}</th>}
                 <th className="text-left px-4 py-2">{t('turbo.colShop', 'Shop')}</th>
                 <th className="text-right px-4 py-2">{t('turbo.colTier', 'Tier')}</th>
                 <th className="text-right px-4 py-2">{t('turbo.colPaid', 'Paid')}</th>
@@ -86,7 +90,7 @@ function BoostsTab() {
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="border-b dark:border-white/[0.04] border-black/[0.04] last:border-0 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-medium">{r.product?.name ?? `#${r.product_id}`}</td>
+                  {!isShop && <td className="px-4 py-3 font-medium">{r.product?.name ?? `#${r.product_id}`}</td>}
                   <td className="px-4 py-3 opacity-70">{r.shop?.name ?? `#${r.shop_id}`}</td>
                   <td className="px-4 py-3 text-right">Turbo {r.tier_hours}</td>
                   <td className="px-4 py-3 text-right font-mono">
@@ -128,8 +132,11 @@ function BoostsTab() {
 
 const EMPTY = { tier_hours: '', price_tmt: '', price_coin: '', duration_days: 7, is_active: true }
 
-function PackageModal({ pkg, onClose, onSaved }) {
+function PackageModal({ pkg, scope = 'product', onClose, onSaved }) {
   const { t } = useTranslation()
+  const isShop = scope === 'shop'
+  const createPackage = isShop ? AdminApi.turbo.createShopPackage : AdminApi.turbo.createPackage
+  const updatePackage = isShop ? AdminApi.turbo.updateShopPackage : AdminApi.turbo.updatePackage
   const [form, setForm] = useState(pkg ? { ...pkg } : { ...EMPTY })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -151,9 +158,9 @@ function PackageModal({ pkg, onClose, onSaved }) {
         is_active: form.is_active,
       }
       if (pkg) {
-        await AdminApi.turbo.updatePackage(pkg.id, payload)
+        await updatePackage(pkg.id, payload)
       } else {
-        await AdminApi.turbo.createPackage(payload)
+        await createPackage(payload)
       }
       toast.success(pkg ? t('toast.updated') : t('toast.created'))
       onSaved()
@@ -212,27 +219,30 @@ function PackageModal({ pkg, onClose, onSaved }) {
   )
 }
 
-export default function AdminTurboPage() {
+function PackagesTab({ scope = 'product' }) {
   const { t } = useTranslation()
+  const isShop = scope === 'shop'
+  const getPackages    = isShop ? AdminApi.turbo.getShopPackages    : AdminApi.turbo.getPackages
+  const deletePackage  = isShop ? AdminApi.turbo.deleteShopPackage  : AdminApi.turbo.deletePackage
+
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(null) // null | 'add' | package object
-  const [tab, setTab] = useState('packages') // 'packages' | 'boosts'
 
   const load = useCallback(() => {
     setLoading(true)
-    AdminApi.turbo.getPackages()
+    getPackages()
       .then(({ data }) => setRows(data.data ?? []))
       .catch(() => toast.error(t('toast.error')))
       .finally(() => setLoading(false))
-  }, [t])
+  }, [t, getPackages])
 
   useEffect(() => { load() }, [load])
 
   async function handleDelete(id) {
     if (!window.confirm(t('common.confirmDelete'))) return
     try {
-      await AdminApi.turbo.deletePackage(id)
+      await deletePackage(id)
       toast.success(t('toast.deleted'))
       setRows((prev) => prev.filter((r) => r.id !== id))
     } catch (e) {
@@ -241,32 +251,7 @@ export default function AdminTurboPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-indigo-600/10 flex items-center justify-center">
-          <Zap size={18} className="text-indigo-500" />
-        </div>
-        <h1 className="text-xl font-semibold dark:text-white">{t('turbo.title', 'Turbo Packages')}</h1>
-      </div>
-
-      <div className="flex items-center gap-1 border-b dark:border-white/[0.06] border-black/[0.06]">
-        {['packages', 'boosts'].map((tb) => (
-          <button
-            key={tb}
-            onClick={() => setTab(tb)}
-            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              tab === tb
-                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                : 'border-transparent opacity-50 hover:opacity-80'
-            }`}
-          >
-            {tb === 'packages' ? t('turbo.tabPackages', 'Packages') : t('turbo.tabBoosts', 'Boosted products')}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'boosts' ? <BoostsTab /> : (
-      <>
+    <>
       <div className="flex items-center justify-between">
         <p className="text-sm opacity-50">{rows.length} {t('turbo.packagesLower', 'packages')}</p>
         <button onClick={() => setModal('add')}
@@ -324,12 +309,53 @@ export default function AdminTurboPage() {
       {modal && (
         <PackageModal
           pkg={modal === 'add' ? null : modal}
+          scope={scope}
           onClose={() => setModal(null)}
           onSaved={() => { setModal(null); load() }}
         />
       )}
-      </>
-      )}
+    </>
+  )
+}
+
+const TABS = [
+  { key: 'packages',      scope: 'product', kind: 'packages', label: 'turbo.tabPackages',      fallback: 'Packages' },
+  { key: 'boosts',        scope: 'product', kind: 'boosts',   label: 'turbo.tabBoosts',         fallback: 'Boosted products' },
+  { key: 'shop-packages', scope: 'shop',    kind: 'packages', label: 'turbo.tabShopPackages',   fallback: 'Shop packages' },
+  { key: 'shop-boosts',   scope: 'shop',    kind: 'boosts',   label: 'turbo.tabShopBoosts',     fallback: 'Boosted shops' },
+]
+
+export default function AdminTurboPage() {
+  const { t } = useTranslation()
+  const [tab, setTab] = useState('packages')
+  const active = TABS.find((tb) => tb.key === tab) ?? TABS[0]
+
+  return (
+    <div className="p-6 space-y-6">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-indigo-600/10 flex items-center justify-center">
+          <Zap size={18} className="text-indigo-500" />
+        </div>
+        <h1 className="text-xl font-semibold dark:text-white">{t('turbo.title', 'Turbo Packages')}</h1>
+      </div>
+
+      <div className="flex items-center gap-1 border-b dark:border-white/[0.06] border-black/[0.06] flex-wrap">
+        {TABS.map((tb) => (
+          <button
+            key={tb.key}
+            onClick={() => setTab(tb.key)}
+            className={`px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === tb.key
+                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                : 'border-transparent opacity-50 hover:opacity-80'
+            }`}
+          >
+            {t(tb.label, tb.fallback)}
+          </button>
+        ))}
+      </div>
+
+      {active.kind === 'boosts' ? <BoostsTab scope={active.scope} /> : <PackagesTab scope={active.scope} />}
     </div>
   )
 }

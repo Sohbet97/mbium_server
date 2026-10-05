@@ -48,8 +48,8 @@ async function run() {
         // console.log('\n[14/17] Notifications');
         // await require('./11-notifications')(fullDb);
 
-        // console.log('\n[15/17] Banner Types');
-        // await require('./12-banner-types')(fullDb);
+        console.log('\n[15/17] Banner Types');
+        await require('./12-banner-types')(fullDb);
 
         // console.log('\n[16/19] Subscription Plans');
         // await require('./13-plans')(fullDb);

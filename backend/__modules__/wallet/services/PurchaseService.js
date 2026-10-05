@@ -50,6 +50,22 @@ class PurchaseService {
         });
     }
 
+    // Reverses a COMPLETED purchase (e.g. a rejected banner): credits the same wallet that
+    // was charged and flags the ledger row REFUNDED. No-op if already refunded.
+    static async refund(walletTransactionId, note = null) {
+        const tx = await db.WalletTransaction.findByPk(walletTransactionId);
+        if (!tx) throw ApiError.NotFound("Wallet transaction not found");
+        if (tx.status !== "COMPLETED") return tx;
+
+        if (tx.currency === "COIN") {
+            await CoinService.credit(tx.user_id, Math.round(Number(tx.amount)), `${tx.feature}_REFUND`, tx.reference_id, note);
+        } else {
+            await PayoutService.refundPurchase(tx.shop_id, tx.amount, tx.reference_id, note);
+        }
+        await tx.update({ status: "REFUNDED" });
+        return tx;
+    }
+
     static async getTransactions(filter = {}, limit = 20, skip = 0) {
         return db.WalletTransaction.findAndCountAll({
             where: filter,

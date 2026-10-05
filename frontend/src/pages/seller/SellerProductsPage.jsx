@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { SellerApi, BuyerApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -183,6 +183,7 @@ function TurboModal({ product, onClose, onBoosted }) {
 export default function SellerProductsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts]   = useState([])
   const [count, setCount]         = useState(0)
   const [categories, setCategories] = useState([])
@@ -191,7 +192,18 @@ export default function SellerProductsPage() {
   const [statusFilter, setStatus] = useState('')
   const [colorFilter, setColorFilter] = useState([])
   const [colors, setColors]       = useState([])
-  const [page, setPage]           = useState(0)
+  // Kept in the URL (?page=) rather than plain state so that navigating to a
+  // product's edit page and back restores the page instead of resetting to 0.
+  const page = parseInt(searchParams.get('page') || '0', 10) || 0
+  const setPage = (updater) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      const current = parseInt(prev.get('page') || '0', 10) || 0
+      const value = typeof updater === 'function' ? updater(current) : updater
+      next.set('page', String(value))
+      return next
+    })
+  }
   const [loading, setLoading]     = useState(true)
   const [deleting, setDeleting]   = useState(null)
   const [toggling, setToggling]   = useState(null)

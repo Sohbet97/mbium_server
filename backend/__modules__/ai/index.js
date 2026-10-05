@@ -94,6 +94,20 @@ router.use(routeGuard({
     DELETE: Permissions.AI_DELETE,
 }))
 
+// GET /admin/ai-settings
+router.get('/ai-settings', async (req, res, next) => {
+    try {
+        return res.status(200).json({ coins_per_request: await AiChatService.getPrice() })
+    } catch (e) { next(e) }
+})
+
+// PUT /admin/ai-settings
+router.put('/ai-settings', async (req, res, next) => {
+    try {
+        return res.status(200).json(await AiChatService.setPrice(req.body.coins_per_request))
+    } catch (e) { next(e) }
+})
+
 // GET /admin/ai-recommendations
 router.get('/ai-recommendations', async (req, res, next) => {
     try {

@@ -1,10 +1,10 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift, Palette, Handshake,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift, Palette, Handshake, Search, X,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
@@ -16,6 +16,22 @@ export function Sidebar({ collapsed, onToggle }) {
   const { t } = useTranslation()
   const [catalogOpen, setCatalogOpen] = useState(true)
   const { counts: pendingCounts } = usePendingCounts() ?? {}
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+  const searchRef = useRef(null)
+
+  // Cmd/Ctrl+K focuses the sidebar search (expanding the sidebar if collapsed)
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        if (collapsed) onToggle()
+        setTimeout(() => searchRef.current?.focus(), 0)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [collapsed, onToggle])
 
   const topNav = [
     { to: '/admin', label: t('nav.dashboard'), icon: LayoutDashboard, end: true, perm: null },
@@ -28,7 +44,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/reviews', label: t('nav.reviews'), icon: Star, perm: Permissions.REVIEW_GET },
     { to: '/admin/discounts', label: t('nav.discounts'), icon: Percent, perm: Permissions.DISCOUNT_GET },
     { to: '/admin/payouts', label: t('nav.payouts'), icon: CreditCard, perm: Permissions.PAYOUT_GET, countKey: 'payoutRequests' },
-    { to: '/admin/banners', label: t('nav.banners'), icon: LayoutTemplate, perm: Permissions.BANNER_GET },
+    { to: '/admin/banners', label: t('nav.banners'), icon: LayoutTemplate, perm: Permissions.BANNER_GET, countKey: 'banners' },
     { to: '/admin/ai-recommendations', label: t('nav.aiRecommendations'),   icon: Bot, perm: Permissions.AI_GET },
     { to: '/admin/push-notifications', label: t('nav.pushNotifications'),   icon: Bell, perm: Permissions.PUSH_NOTIF_GET },
     { to: '/admin/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2, perm: Permissions.ANALYTICS_GET },
@@ -64,6 +80,12 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/audit-logs', label: t('nav.auditLogs'), icon: ScrollText, perm: Permissions.AUDIT_GET },
     { to: '/admin/settings', label: t('nav.settings'), icon: Settings, perm: null },
   ].filter((item) => hasPerm(user, item.perm))
+
+  const q = query.trim().toLowerCase()
+  const matches = (item) => item.label.toLowerCase().includes(q)
+  const searchResults = q
+    ? [...topNav, ...catalogNav, ...bottomNav].filter((item, i, arr) => matches(item) && arr.findIndex((x) => x.to === item.to) === i)
+    : []
 
   const itemBase = cn(
     'flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-[13px] font-medium transition-all duration-150 w-full',
@@ -136,8 +158,54 @@ export function Sidebar({ collapsed, onToggle }) {
         </button>
       </div>
 
+      {/* Search */}
+      <div className="shrink-0 px-2 pt-2">
+        {collapsed ? (
+          <button
+            onClick={() => { onToggle(); setTimeout(() => searchRef.current?.focus(), 0) }}
+            title={t('common.search')}
+            className={cn(itemBase, itemInactive)}
+          >
+            <Search className="h-[18px] w-[18px] opacity-60" />
+          </button>
+        ) : (
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 dark:text-[#5a5a6a] text-[#8c9196]" />
+            <input
+              ref={searchRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') { setQuery(''); e.currentTarget.blur() }
+                if (e.key === 'Enter' && searchResults[0]) { navigate(searchResults[0].to); setQuery(''); e.currentTarget.blur() }
+              }}
+              placeholder={`${t('common.search')}…`}
+              className={cn(
+                'w-full rounded-lg border py-1.5 pl-8 pr-14 text-[13px] outline-none transition-colors',
+                'dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white dark:placeholder:text-[#5a5a6a] dark:focus:border-white/20',
+                'border-black/[0.08] bg-white text-[#202223] placeholder:text-[#8c9196] focus:border-black/25',
+              )}
+            />
+            {query ? (
+              <button onClick={() => setQuery('')} className="absolute right-2 top-1/2 -translate-y-1/2 dark:text-[#a0a0ab] text-[#6d7175]">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ) : (
+              <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded border px-1 text-[10px] dark:border-white/10 border-black/10 dark:text-[#5a5a6a] text-[#8c9196]">
+                {navigator.platform?.includes('Mac') ? '⌘K' : 'Ctrl K'}
+              </kbd>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-0.5">
+        {q ? (
+          searchResults.length > 0
+            ? searchResults.map(({ to, label, icon, end, countKey }) => navLink(to, label, icon, end, pendingCounts?.[countKey]))
+            : <p className="px-2.5 py-3 text-[13px] dark:text-[#5a5a6a] text-[#8c9196]">{t('common.noResults')}</p>
+        ) : (<>
         {topNav.map(({ to, label, icon, end, countKey }) => navLink(to, label, icon, end, pendingCounts?.[countKey]))}
 
         {/* Catalog section */}
@@ -173,6 +241,7 @@ export function Sidebar({ collapsed, onToggle }) {
           {bottomNav.map(({ to, label, icon }) => navLink(to, label, icon))}
         </div>
         )}
+        </>)}
       </nav>
 
       {/* Footer */}

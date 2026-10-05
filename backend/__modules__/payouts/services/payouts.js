@@ -193,6 +193,24 @@ class PayoutService {
         });
     }
 
+    // Returns a previously debited purchase amount to the shop's available balance.
+    static async refundPurchase(shopId, amount, referenceId = null, note = null) {
+        const amt = parseFloat(amount);
+        await db.SellerBalance.update(
+            { available_balance: db.sequelize.literal(`available_balance + ${amt}`) },
+            { where: { shop_id: shopId } }
+        );
+        const balance = await this.getBalanceByShop(shopId);
+        return db.SellerTransaction.create({
+            shop_id: shopId,
+            type: SELLER_TRANSACTION_TYPES.PURCHASE_REFUND,
+            amount: amt,
+            status: SELLER_TRANSACTION_STATUSES.AVAILABLE,
+            balance_after: balance.available_balance,
+            note: note ?? `Purchase refund - ${referenceId ?? ""}`,
+        });
+    }
+
     static async getTransactions(shopId, limit, skip = 0) {
         return db.SellerTransaction.findAll({
             where: { shop_id: shopId },

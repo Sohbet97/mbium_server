@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { SellerApi } from '@/lib/api'
+import { SellerApi, BuyerApi } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Camera, FileText, Upload, CheckCircle2, Clock, XCircle, Star, CreditCard, Video, FileImage, Loader2, Tag, RefreshCw, ChevronDown, ChevronRight, LayoutGrid, List, Eye, ExternalLink, Truck } from 'lucide-react'
+import { Camera, FileText, Upload, CheckCircle2, Clock, XCircle, Star, CreditCard, Video, FileImage, Loader2, Tag, RefreshCw, ChevronDown, ChevronRight, LayoutGrid, List, Eye, ExternalLink, Truck, Zap, X } from 'lucide-react'
 import { cn, absUrl as imgUrl } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 
@@ -359,6 +359,186 @@ function ShopTypeSection({ shop }) {
   )
 }
 
+function fmtDate(s) {
+  if (!s) return ''
+  return new Date(s).toLocaleString()
+}
+
+// ── Shop turbo boost ──────────────────────────────────────────────────────────
+function ShopTurboModal({ onClose, onBoosted }) {
+  const { t } = useTranslation()
+  const [packages, setPackages] = useState([])
+  const [status, setStatus]     = useState(undefined) // undefined = loading, null = none, object = active
+  const [tier, setTier]         = useState(null)
+  const [currency, setCurrency] = useState('COIN')
+  const [purchasing, setPurchasing] = useState(false)
+  const [error, setError]       = useState('')
+
+  useEffect(() => {
+    Promise.all([
+      BuyerApi.turbo.shop.getPackages(),
+      BuyerApi.turbo.shop.getStatus(),
+    ]).then(([pkgRes, statusRes]) => {
+      const pkgs = pkgRes.data?.data ?? []
+      setPackages(pkgs)
+      setStatus(statusRes.data ?? null)
+      if (pkgs.length) setTier(pkgs[0].tier_hours)
+    }).catch(() => { setPackages([]); setStatus(null) })
+  }, [])
+
+  async function handlePurchase() {
+    if (!tier) return
+    setError(''); setPurchasing(true)
+    try {
+      await BuyerApi.turbo.shop.purchase({ tier_hours: tier, currency })
+      toast.success(t('seller.turboBoosted', 'Turbo boost activated'))
+      onBoosted()
+    } catch (e) {
+      setError(e.response?.data?.message ?? t('toast.error'))
+    } finally { setPurchasing(false) }
+  }
+
+  const selectedPkg = packages.find((p) => p.tier_hours === tier)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md dark:bg-[#1a1a1f] bg-white rounded-xl shadow-2xl flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-white/[0.08] border-black/[0.08]">
+          <h2 className="text-base font-semibold dark:text-white text-slate-900 flex items-center gap-2">
+            <Zap size={16} className="text-indigo-500" />
+            {t('seller.turboShopTitle', 'Boost shop')}
+          </h2>
+          <button onClick={onClose} className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10"><X size={16} /></button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {status === undefined ? (
+            <div className="flex justify-center py-6"><Loader2 className="animate-spin opacity-40" size={20} /></div>
+          ) : status ? (
+            <div className="rounded-lg border dark:border-indigo-500/20 border-indigo-200 bg-indigo-50 dark:bg-indigo-500/10 px-3 py-2.5 text-sm">
+              <p className="font-medium text-indigo-700 dark:text-indigo-300">{t('seller.turboActiveTitle', 'Turbo is already active')}</p>
+              <p className="text-xs opacity-70 mt-1">
+                {t('seller.turboTier', 'Tier')}: Turbo {status.tier_hours} · {t('seller.turboExpires', 'Expires')}: {fmtDate(status.expires_at)}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-xs font-medium mb-1.5 dark:text-slate-300 text-slate-600">{t('turbo.tierHours', 'Refresh interval (hours)')}</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {packages.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setTier(p.tier_hours)}
+                      className={cn(
+                        'rounded-lg border px-2 py-2 text-xs text-center transition-colors',
+                        tier === p.tier_hours
+                          ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-400'
+                          : 'dark:border-white/10 border-slate-200 hover:border-indigo-300'
+                      )}
+                    >
+                      <div className="font-semibold dark:text-white">Turbo {p.tier_hours}</div>
+                      <div className="opacity-60 mt-0.5">{p.duration_days}d</div>
+                    </button>
+                  ))}
+                </div>
+                {packages.length === 0 && <p className="text-xs opacity-50">{t('turbo.noPackages', 'No Turbo packages')}</p>}
+              </div>
+
+              {selectedPkg && (
+                <div>
+                  <label className="block text-xs font-medium mb-1.5 dark:text-slate-300 text-slate-600">{t('seller.payWith', 'Pay with')}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setCurrency('COIN')}
+                      className={cn('rounded-lg border px-3 py-2 text-sm flex flex-col items-center', currency === 'COIN'
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-400'
+                        : 'dark:border-white/10 border-slate-200')}
+                    >
+                      <span className="font-semibold dark:text-white">{Number(selectedPkg.price_coin).toLocaleString()}</span>
+                      <span className="opacity-60 text-xs">{t('seller.coinBalance', 'Coin')}</span>
+                    </button>
+                    <button
+                      onClick={() => setCurrency('TMT')}
+                      className={cn('rounded-lg border px-3 py-2 text-sm flex flex-col items-center', currency === 'TMT'
+                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 dark:border-indigo-400'
+                        : 'dark:border-white/10 border-slate-200')}
+                    >
+                      <span className="font-semibold dark:text-white">{Number(selectedPkg.price_tmt).toLocaleString()} TMT</span>
+                      <span className="opacity-60 text-xs">{t('seller.shopWallet', 'Shop wallet')}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {error && <p className="text-xs text-red-500">{error}</p>}
+            </>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 px-5 py-4 border-t dark:border-white/[0.08] border-black/[0.08]">
+          <button onClick={onClose} className="px-4 py-2 text-sm rounded-lg dark:hover:bg-white/5 hover:bg-black/5">{t('common.cancel')}</button>
+          {!status && (
+            <button onClick={handlePurchase} disabled={purchasing || !tier || packages.length === 0}
+              className="px-4 py-2 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 flex items-center gap-2">
+              {purchasing && <Loader2 size={14} className="animate-spin" />}{t('seller.boostNow', 'Boost now')}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ShopTurboSection() {
+  const { t } = useTranslation()
+  const [status, setStatus] = useState(undefined) // undefined = loading, null = none, object = active
+  const [open, setOpen]     = useState(false)
+
+  const fetchStatus = () => {
+    BuyerApi.turbo.shop.getStatus()
+      .then(({ data }) => setStatus(data ?? null))
+      .catch(() => setStatus(null))
+  }
+  useEffect(fetchStatus, [])
+
+  return (
+    <>
+      <Card>
+        <CardContent className="p-5 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center shrink-0">
+              <Zap className="h-4 w-4 text-indigo-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-slate-900 dark:text-white">{t('seller.turboShopTitle', 'Boost shop')}</p>
+              {status === undefined ? (
+                <p className="text-xs text-slate-400">{t('common.loading')}</p>
+              ) : status ? (
+                <p className="text-xs text-indigo-600 dark:text-indigo-300">
+                  {t('seller.turboActiveTitle', 'Turbo is already active')} — Turbo {status.tier_hours} · {t('seller.turboExpires', 'Expires')}: {fmtDate(status.expires_at)}
+                </p>
+              ) : (
+                <p className="text-xs text-slate-400">{t('seller.turboShopHint', 'Boost your whole shop to appear first in listings')}</p>
+              )}
+            </div>
+          </div>
+          <Button type="button" size="sm" variant="outline" disabled={status === undefined} onClick={() => setOpen(true)} className="gap-1.5 shrink-0">
+            <Zap className="h-3.5 w-3.5" />
+            {status ? t('common.view', 'View') : t('seller.boostNow', 'Boost now')}
+          </Button>
+        </CardContent>
+      </Card>
+      {open && (
+        <ShopTurboModal
+          onClose={() => setOpen(false)}
+          onBoosted={() => { setOpen(false); fetchStatus() }}
+        />
+      )}
+    </>
+  )
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SellerShopPage() {
   const { t } = useTranslation()
@@ -591,6 +771,9 @@ export default function SellerShopPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Turbo boost ────────────────────────────────────────────────────── */}
+      <ShopTurboSection />
 
       {/* ── Tabs ───────────────────────────────────────────────────────────── */}
       <Tabs defaultValue="info">

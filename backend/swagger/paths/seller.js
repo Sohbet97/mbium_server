@@ -897,29 +897,40 @@ module.exports = {
         },
         post: {
             tags: ["Seller"],
-            summary: "Create banner",
+            summary: "Buy a banner (charges the seller, created as PENDING until an admin approves it)",
             security,
             parameters: [shopHeader],
             requestBody: {
                 required: true,
-                content: { "application/json": { schema: { type: "object", required: ["title"], properties: {
-                    title:      { type: "string" },
-                    subtitle:   { type: "string", nullable: true },
-                    image_url:  { type: "string", nullable: true },
-                    link_url:   { type: "string", nullable: true },
-                    btn_label:  { type: "string", nullable: true },
-                    starts_at:  { type: "string", format: "date", nullable: true },
-                    ends_at:    { type: "string", format: "date", nullable: true },
-                    is_active:  { type: "boolean" },
+                content: { "application/json": { schema: { type: "object", required: ["title", "banner_type_id", "duration_days", "currency"], properties: {
+                    title:          { type: "string" },
+                    banner_type_id: { type: "integer", description: "Placement, from GET /seller/banners/types" },
+                    duration_days:  { type: "integer", description: "1..type.max_days" },
+                    currency:       { type: "string", enum: ["COIN", "TMT"] },
+                    subtitle:       { type: "string", nullable: true },
+                    media_id:       { type: "string", nullable: true },
+                    image_url:      { type: "string", nullable: true },
+                    link_url:       { type: "string", nullable: true },
+                    button_text:    { type: "string", nullable: true },
+                    button_url:     { type: "string", nullable: true },
                 } } } },
             },
-            responses: { 201: { description: "Created" } },
+            responses: { 201: { description: "Created (status PENDING)" }, 400: { description: "Invalid input or insufficient balance" } },
+        },
+    },
+    "/seller/banners/types": {
+        get: {
+            tags: ["Seller"],
+            summary: "Banner placements the seller can buy, with per-day prices and max days",
+            security,
+            parameters: [shopHeader],
+            responses: { 200: { description: "Banner types" } },
         },
     },
     "/seller/banners/{id}": {
         put: {
             tags: ["Seller"],
-            summary: "Update own banner",
+            summary: "Update own banner content (placement/days/price are fixed; editing an approved banner returns it to moderation)",
             security,
             parameters: [idParam, shopHeader],
             requestBody: {

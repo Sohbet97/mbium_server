@@ -98,6 +98,18 @@ module.exports = {
     "/admin/banners/{id}/force": {
         delete: { tags: [tag], summary: "Permanently delete banner", security, parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Deleted permanently" } } },
     },
+    "/admin/banners/{id}/approve": {
+        post: { tags: [tag], summary: "Approve a pending banner; optional overrides for placement and dates", security, parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            requestBody: { content: { "application/json": { schema: { type: "object", properties: {
+                banner_type_id: { type: "integer" }, starts_at: { type: "string", format: "date-time" }, ends_at: { type: "string", format: "date-time" },
+            } } } } },
+            responses: { 200: { description: "Approved and active" } } },
+    },
+    "/admin/banners/{id}/reject": {
+        post: { tags: [tag], summary: "Reject a pending banner and refund the seller", security, parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            requestBody: { content: { "application/json": { schema: { type: "object", properties: { reason: { type: "string" } } } } } },
+            responses: { 200: { description: "Rejected and refunded" } } },
+    },
     "/admin/banners/{id}/restore": {
         post: { tags: [tag], summary: "Restore soft-deleted banner", security, parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }], responses: { 200: { description: "Restored" } } },
     },

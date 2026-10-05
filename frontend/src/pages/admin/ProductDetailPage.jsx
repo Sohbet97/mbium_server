@@ -818,7 +818,7 @@ export default function ProductDetailPage() {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-start gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/catalog/products')} className="mt-1">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="mt-1">
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-4 flex-1">

@@ -191,7 +191,8 @@ module.exports = {
             summary: "Stream an AI chat response (buyer / mobile app)",
             description:
                 "Same SSE streaming interface as the admin endpoint but accessible to authenticated buyers. " +
-                "Responses are contextualised for shoppers (product search, order help, marketplace FAQs).",
+                "Responses are contextualised for shoppers (product search, order help, marketplace FAQs). " +
+                "Each request costs coins (see GET /buyer/ai/price); refunded automatically if the AI call fails.",
             security,
             requestBody: {
                 required: true,
@@ -210,9 +211,37 @@ module.exports = {
             },
             responses: {
                 200: { description: "SSE stream", content: { "text/event-stream": { schema: { type: "string" } } } },
-                400: { description: "messages[] missing or empty" },
+                400: { description: "messages[] missing or empty, or insufficient coin balance (JSON, no stream started)" },
                 401: { description: "Unauthorized" },
             },
+        },
+    },
+
+    "/buyer/ai/price": {
+        get: {
+            tags: ["Buyer — AI"],
+            summary: "Coins charged per AI chat request",
+            security,
+            responses: {
+                200: { description: "OK", content: { "application/json": { schema: { type: "object", properties: { coins_per_request: { type: "integer" } } } } } },
+                401: { description: "Unauthorized" },
+            },
+        },
+    },
+
+    "/admin/ai-settings": {
+        get: {
+            tags: ["AI Chat"],
+            summary: "Get AI billing settings",
+            security,
+            responses: { 200: { description: "{ coins_per_request }" } },
+        },
+        put: {
+            tags: ["AI Chat"],
+            summary: "Set coins charged per buyer AI request (0 = free)",
+            security,
+            requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["coins_per_request"], properties: { coins_per_request: { type: "integer", minimum: 0 } } } } } },
+            responses: { 200: { description: "{ coins_per_request }" }, 400: { description: "Invalid value" } },
         },
     },
 

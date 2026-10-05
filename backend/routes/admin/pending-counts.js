@@ -2,6 +2,7 @@ const router = require('express').Router();
 const db = require('../../models');
 const Permissions = require('../../utils/permissions');
 const { DISPUTE_STATUSES } = require('../../__modules__/disputes/models/Dispute.model');
+const { BANNER_STATUSES } = require('../../__modules__/banners/models/Banner.model');
 const { PAYOUT_REQUEST_STATUSES } = require('../../__modules__/payouts/models/PayoutRequest.model');
 
 // GET /admin/pending-counts — per-resource pending counts for the sidebar's
@@ -31,6 +32,9 @@ router.get('/', async (req, res, next) => {
         }
         if (has(Permissions.PAYOUT_GET)) {
             jobs.push(db.PayoutRequest.count({ where: { status: PAYOUT_REQUEST_STATUSES.PENDING } }).then((n) => { counts.payoutRequests = n; }));
+        }
+        if (has(Permissions.BANNER_GET)) {
+            jobs.push(db.Banner.count({ where: { status: BANNER_STATUSES.PENDING } }).then((n) => { counts.banners = n; }));
         }
 
         await Promise.all(jobs);

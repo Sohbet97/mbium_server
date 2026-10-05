@@ -21,13 +21,24 @@ import { toast } from 'sonner'
 export default function ProductsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [products, setProducts] = useState([])
   const [shops, setShops] = useState([])
   const [categories, setCategories] = useState([])
   const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
+  // Kept in the URL (?page=) rather than plain state so that navigating to a
+  // product's detail page and back restores the page instead of resetting to 1.
+  const page = parseInt(searchParams.get('page') || '1', 10) || 1
+  const setPage = (updater) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      const current = parseInt(prev.get('page') || '1', 10) || 1
+      const value = typeof updater === 'function' ? updater(current) : updater
+      next.set('page', String(value))
+      return next
+    })
+  }
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [shopFilter, setShopFilter] = useState(searchParams.get('shop_id') ?? '')

@@ -218,7 +218,7 @@ export default function SellerProductFormPage() {
     <div className="max-w-3xl space-y-5">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <button onClick={() => navigate('/seller/products')} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+        <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <h1 className="text-xl font-semibold dark:text-white">
@@ -509,7 +509,7 @@ export default function SellerProductFormPage() {
 
         {/* ── Footer actions ─────────────────────────────────────────────── */}
         <div className="flex items-center justify-between gap-3 pb-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/seller/products')}>
+          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
             Yza
           </Button>
           <Button type="submit" disabled={saving}>

@@ -53,3 +53,10 @@ for f in migrations/076_buyer_request_offers.sql migrations/077_buyer_request_at
   PGPASSWORD='P@ssword*12345' psql -h localhost -p 5432 -U postgres -d mbium -f "$f" || break
 done
 ****
+
+cd backend
+for f in migrations/078_banner_placements_payment.sql migrations/079_ai_settings.sql; do
+  echo "== $f =="
+  PGPASSWORD='P@ssword*12345' psql -h localhost -p 5432 -U postgres -d mbium -f "$f" || break
+done
+****

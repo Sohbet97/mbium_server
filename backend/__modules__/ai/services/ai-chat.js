@@ -1,4 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai')
+const db = require('../../../models')
+const ApiError = require('../../../exceptions/api-error')
+const CoinService = require('../../coins/services/CoinService')
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
 
@@ -72,13 +75,57 @@ class AiChatService {
         const chat = model.startChat({ history })
         const result = await chat.sendMessageStream(lastMessage)
 
+        let produced = false
         for await (const chunk of result.stream) {
             const text = chunk.text()
-            if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`)
+            if (text) {
+                produced = true
+                res.write(`data: ${JSON.stringify({ text })}\n\n`)
+            }
         }
 
         res.write('data: [DONE]\n\n')
         res.end()
+        return { produced }
+    }
+
+    static async getPrice() {
+        const row = await db.AiSetting.findOne({ order: [['id', 'ASC']] })
+        return row ? row.coins_per_request : 1
+    }
+
+    static async setPrice(coinsPerRequest) {
+        const n = Number(coinsPerRequest)
+        if (!Number.isInteger(n) || n < 0) throw ApiError.BadRequest('coins_per_request must be an integer >= 0')
+        const row = await db.AiSetting.findOne({ order: [['id', 'ASC']] })
+        if (row) await row.update({ coins_per_request: n })
+        else await db.AiSetting.create({ coins_per_request: n })
+        return { coins_per_request: n }
+    }
+
+    /**
+     * Buyer chat: debits coins before streaming (so an insufficient balance is a normal
+     * JSON 400) and refunds them if Gemini fails or produces nothing.
+     */
+    static async streamBuyerChat(userId, messages, res) {
+        const price = await this.getPrice()
+        if (price > 0) await CoinService.debit(userId, price, 'AI', null, 'AI chat request')
+
+        const refund = () => price > 0
+            ? CoinService.credit(userId, price, 'AI_REFUND', null, 'AI chat request failed').catch(() => {})
+            : null
+
+        let outcome
+        try {
+            outcome = await this.streamChat(messages, res, 'buyer')
+        } catch (e) {
+            await refund()
+            if (!res.headersSent) throw e
+            res.write(`data: ${JSON.stringify({ error: 'AI request failed, coins refunded' })}\n\n`)
+            res.end()
+            return
+        }
+        if (!outcome.produced) await refund()
     }
 }
 

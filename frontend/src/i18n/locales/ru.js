@@ -70,6 +70,7 @@ export default {
     activityPlaceholder: 'Журнал активности скоро появится.',
     systemStatus: 'Состояние системы', apiServer: 'API-сервер',
     database: 'База данных', socketIO: 'Socket.IO',
+    rangeDays: 'Последние {{count}} дн.', needsAttention: 'Требует внимания', allClear: 'Всё в порядке — на проверке ничего нет', aProducts: 'Товары на модерации', aReels: 'Рилсы на модерации', aShopApps: 'Заявки магазинов', aShopTypes: 'Смена типа магазина', aKyc: 'KYC-документы', aDisputes: 'Открытые споры', aPayouts: 'Запросы на выплату', aBanners: 'Баннеры на одобрение', kRevenue: 'Выручка', kOrders: 'Заказы', kNewUsers: 'Новые пользователи', kActiveShops: 'Активные магазины', vsPrev: 'к предыдущему периоду', ofTotal: 'из {{total}} всего', chartTitle: 'Выручка и заказы', revenue: 'Выручка', orders: 'Заказы', byStatus: 'Заказы по статусам', topShops: 'Топ магазинов', coinEconomy: 'Экономика монет', coinsInCirculation: 'Монет в обращении', coinsSpent: 'Потрачено за период', noData: 'Нет данных за период', viewAll: 'Смотреть все', apiOnline: 'API доступен', apiOffline: 'API недоступен', statusClosed: 'Закрыт', greeting: 'С возвращением', srcBANNER: 'Баннеры', srcAI: 'AI-чат', srcTURBO_SHOP_BOOST: 'Буст магазина', srcOther: 'Другое',
   },
 
   users: {
@@ -358,6 +359,17 @@ export default {
     empty: 'Баннеры не созданы', createFirst: 'Создайте первый баннер',
     shop: 'Магазин (пусто = глобальный)', globalBanner: 'Глобальный (все магазины)',
     sortOrder: 'Порядок отображения',
+    placement: 'Размещение', selectPlacement: 'Выберите размещение', days: 'Дней', maxDays: 'макс. {{n}}',
+    payWith: 'Оплата', coins: 'Монеты', tmt: 'TMT', total: 'Итого', yourBalance: 'Ваш баланс',
+    perDay: '{{price}} / день', payAndSubmit: 'Оплатить и отправить', noPlacements: 'Пока нет доступных размещений',
+    paidNote: 'Оплата списывается сразу. Баннер будет опубликован после одобрения администратором.',
+    status: 'Статус', statusPending: 'На модерации', statusApproved: 'Одобрен', statusRejected: 'Отклонён',
+    rejectedReason: 'Отклонён: {{reason}}', daysBought: '{{n}} дн.', paid: 'Оплачено',
+    approve: 'Одобрить', reject: 'Отклонить', rejectReason: 'Причина отказа (оплата будет возвращена)',
+    approveTitle: 'Одобрить баннер', approved_msg: 'Баннер одобрен', rejected_msg: 'Баннер отклонён, оплата возвращена',
+    seller: 'Продавец', filterPending: 'На модерации', filterAll: 'Все',
+    pricing: 'Размещения и цены', pricePerDayTmt: 'Цена / день (TMT)', pricePerDayCoin: 'Цена / день (монеты)',
+    maxDaysField: 'Макс. дней (пусто = не продаётся)', pricingSaved: 'Сохранено',
   },
 
   shopApplications: {
@@ -410,6 +422,8 @@ export default {
   },
 
   aiRecommendations: {
+    pricePerRequest: 'Коинов за AI-запрос',
+    pricePerRequestHint: 'Списывается с покупателя за каждое сообщение AI-чата. 0 = бесплатно. Возвращается автоматически, если запрос к AI не удался.',
     title: 'AI Предложения',
     subtitle: 'Карточки предложений на экране AI Агента мобильного приложения',
     create: 'Новое предложение',
@@ -597,6 +611,7 @@ export default {
     turboFor: 'Turbo-продвижение', turboActive: 'Turbo', turboActiveTitle: 'Turbo уже активен',
     turboTier: 'Тариф', turboExpires: 'Истекает', turboBoosted: 'Turbo-продвижение активировано',
     payWith: 'Оплатить', shopWallet: 'Кошелёк магазина', boostNow: 'Активировать',
+    turboShopTitle: 'Продвижение магазина', turboShopHint: 'Продвиньте весь магазин, чтобы быть первым в списках',
 
     subscriptionTitle: 'Подписка и планы',
     subscriptionSubtitle: 'Текущий статус подписки и доступные планы',
@@ -884,6 +899,7 @@ export default {
     durationDays: 'Срок действия (дней)', noPackages: 'Пакетов Turbo пока нет',
     fieldsRequired: 'Интервал, цена в TMT и цена в Coin обязательны',
     tabPackages: 'Пакеты', tabBoosts: 'Продвигаемые товары',
+    tabShopPackages: 'Пакеты для магазинов', tabShopBoosts: 'Продвигаемые магазины',
     boostsLower: 'продвижений', allStatuses: 'Все статусы',
     statusActive: 'Активно', statusExpired: 'Истекло', noBoosts: 'Продвижений Turbo пока нет',
     colProduct: 'Товар', colShop: 'Магазин', colTier: 'Тариф', colPaid: 'Оплачено',

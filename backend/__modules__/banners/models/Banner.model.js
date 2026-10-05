@@ -1,5 +1,11 @@
 const { DataTypes } = require('sequelize')
 
+const BANNER_STATUSES = {
+    PENDING: 'PENDING',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+}
+
 module.exports = (sequelize) => {
     const Model = sequelize.define('banners', {
         id:             { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
@@ -16,6 +22,12 @@ module.exports = (sequelize) => {
         starts_at:      { type: DataTypes.DATE },
         ends_at:        { type: DataTypes.DATE },
         is_active:      { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        status:         { type: DataTypes.STRING(20), allowNull: false, defaultValue: BANNER_STATUSES.APPROVED },
+        duration_days:  { type: DataTypes.SMALLINT },
+        currency:       { type: DataTypes.STRING(10) },
+        paid_amount:    { type: DataTypes.DECIMAL(12, 2) },
+        wallet_transaction_id: { type: DataTypes.INTEGER, allowNull: true, references: { model: 'wallet_transactions', key: 'id' }, onDelete: 'SET NULL' },
+        reject_reason:  { type: DataTypes.TEXT },
     }, {
         timestamps: true,
         paranoid: true,
@@ -24,6 +36,7 @@ module.exports = (sequelize) => {
             { fields: ['shop_id'] },
             { fields: ['media_id'] },
             { fields: ['is_active'] },
+            { fields: ['status'] },
             { fields: ['"order"'] },
         ],
     })
@@ -36,3 +49,5 @@ module.exports = (sequelize) => {
 
     return Model
 }
+
+module.exports.BANNER_STATUSES = BANNER_STATUSES

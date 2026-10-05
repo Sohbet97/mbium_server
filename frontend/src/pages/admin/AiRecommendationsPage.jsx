@@ -152,6 +152,8 @@ export default function AiRecommendationsPage() {
   const [loading, setLoading]     = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing]     = useState(null)
+  const [price, setPrice]         = useState('')
+  const [savingPrice, setSavingPrice] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -162,6 +164,19 @@ export default function AiRecommendationsPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    AdminApi.aiSettings.get().then(({ data }) => setPrice(String(data.coins_per_request ?? 1))).catch(() => {})
+  }, [])
+
+  async function savePrice() {
+    setSavingPrice(true)
+    try {
+      await AdminApi.aiSettings.update({ coins_per_request: Number(price) })
+      toast.success(t('aiRecommendations.saved'))
+    } catch (e) {
+      toast.error(e?.response?.data?.message || t('aiRecommendations.error'))
+    } finally { setSavingPrice(false) }
+  }
 
   function openCreate() { setEditing(null); setModalOpen(true) }
   function openEdit(rec) { setEditing(rec); setModalOpen(true) }
@@ -191,6 +206,20 @@ export default function AiRecommendationsPage() {
           <Plus className="h-4 w-4 mr-1" />{t('aiRecommendations.create')}
         </Button>
       </div>
+
+      {/* Price per buyer AI request */}
+      <Card>
+        <CardContent className="py-4 flex flex-wrap items-end gap-3">
+          <div className="space-y-1">
+            <label className="text-sm font-medium dark:text-white">{t('aiRecommendations.pricePerRequest')}</label>
+            <Input type="number" min="0" step="1" className="w-32" value={price} onChange={(e) => setPrice(e.target.value)} />
+          </div>
+          <Button size="sm" onClick={savePrice} disabled={savingPrice || price === ''}>
+            {savingPrice ? t('aiRecommendations.saving') : t('aiRecommendations.save')}
+          </Button>
+          <p className="text-xs text-slate-500 dark:text-slate-400 basis-full">{t('aiRecommendations.pricePerRequestHint')}</p>
+        </CardContent>
+      </Card>
 
       {/* List */}
       {loading ? (

@@ -71,6 +71,7 @@ export default {
     activityPlaceholder: 'Activity log coming soon.',
     systemStatus: 'System Status', apiServer: 'API Server',
     database: 'Database', socketIO: 'Socket.IO',
+    rangeDays: 'Last {{count}} days', needsAttention: 'Needs attention', allClear: 'All clear — nothing is waiting for review', aProducts: 'Products to moderate', aReels: 'Reels to moderate', aShopApps: 'Shop applications', aShopTypes: 'Shop type requests', aKyc: 'KYC documents', aDisputes: 'Open disputes', aPayouts: 'Payout requests', aBanners: 'Banners to approve', kRevenue: 'Revenue', kOrders: 'Orders', kNewUsers: 'New users', kActiveShops: 'Active shops', vsPrev: 'vs previous period', ofTotal: 'of {{total}} total', chartTitle: 'Revenue & orders', revenue: 'Revenue', orders: 'Orders', byStatus: 'Orders by status', topShops: 'Top shops', coinEconomy: 'Coin economy', coinsInCirculation: 'Coins in circulation', coinsSpent: 'Spent in period', noData: 'No data for this period', viewAll: 'View all', apiOnline: 'API online', apiOffline: 'API unreachable', statusClosed: 'Closed', greeting: 'Welcome back', srcBANNER: 'Banners', srcAI: 'AI chat', srcTURBO_SHOP_BOOST: 'Shop boost', srcOther: 'Other',
   },
 
   users: {
@@ -359,6 +360,17 @@ export default {
     empty: 'No banners yet', createFirst: 'Create your first banner',
     shop: 'Store (leave empty for global)', globalBanner: 'Global (all stores)',
     sortOrder: 'Display order',
+    placement: 'Placement', selectPlacement: 'Select placement', days: 'Days', maxDays: 'max {{n}}',
+    payWith: 'Pay with', coins: 'Coins', tmt: 'TMT', total: 'Total', yourBalance: 'Your balance',
+    perDay: '{{price}} / day', payAndSubmit: 'Pay & submit', noPlacements: 'No placements available yet',
+    paidNote: 'Payment is charged now. The banner goes live after admin approval.',
+    status: 'Status', statusPending: 'Pending', statusApproved: 'Approved', statusRejected: 'Rejected',
+    rejectedReason: 'Rejected: {{reason}}', daysBought: '{{n}} days', paid: 'Paid',
+    approve: 'Approve', reject: 'Reject', rejectReason: 'Rejection reason (payment will be refunded)',
+    approveTitle: 'Approve banner', approved_msg: 'Banner approved', rejected_msg: 'Banner rejected and refunded',
+    seller: 'Seller', filterPending: 'Pending', filterAll: 'All',
+    pricing: 'Placements & prices', pricePerDayTmt: 'Price / day (TMT)', pricePerDayCoin: 'Price / day (Coins)',
+    maxDaysField: 'Max days (empty = not for sale)', pricingSaved: 'Saved',
   },
 
   shopApplications: {
@@ -411,6 +423,8 @@ export default {
   },
 
   aiRecommendations: {
+    pricePerRequest: 'Coins per AI request',
+    pricePerRequestHint: 'Charged to the buyer for every AI chat message. 0 = free. Refunded automatically if the AI call fails.',
     title: 'AI Suggestions',
     subtitle: 'Suggestion cards shown on the mobile AI Agent screen',
     create: 'New suggestion',
@@ -598,6 +612,7 @@ export default {
     turboFor: 'Turbo boost', turboActive: 'Turbo', turboActiveTitle: 'Turbo is already active',
     turboTier: 'Tier', turboExpires: 'Expires', turboBoosted: 'Turbo boost activated',
     payWith: 'Pay with', shopWallet: 'Shop wallet', boostNow: 'Boost now',
+    turboShopTitle: 'Boost shop', turboShopHint: 'Boost your whole shop to appear first in listings',
 
     subscriptionTitle: 'Subscription & Plans',
     subscriptionSubtitle: 'Current subscription status and available plans',
@@ -885,6 +900,7 @@ export default {
     durationDays: 'Duration (days)', noPackages: 'No Turbo packages',
     fieldsRequired: 'Tier hours, TMT price and Coin price are required',
     tabPackages: 'Packages', tabBoosts: 'Boosted products',
+    tabShopPackages: 'Shop packages', tabShopBoosts: 'Boosted shops',
     boostsLower: 'boosts', allStatuses: 'All statuses',
     statusActive: 'Active', statusExpired: 'Expired', noBoosts: 'No Turbo boosts',
     colProduct: 'Product', colShop: 'Shop', colTier: 'Tier', colPaid: 'Paid',

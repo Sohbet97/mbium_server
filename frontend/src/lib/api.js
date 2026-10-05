@@ -151,6 +151,9 @@ export class AdminApi {
   static pendingCounts = {
     get: () => http.get(a('/pending-counts')),
   }
+  static dashboard = {
+    get: (params) => http.get(a('/dashboard'), { params }),
+  }
   static payouts = {
     getBalances:  (params)          => http.get(a('/payouts/balances'), { params }),
     getRequests:  (params)          => http.get(a('/payouts/requests'), { params }),
@@ -183,6 +186,10 @@ export class AdminApi {
     remove:           (id)          => http.delete(a(`${PATHS.SHOP_SUBSCRIPTIONS}/${id}`)),
   }
   static aiRecommendations = crud(PATHS.AI_RECOMMENDATIONS)
+  static aiSettings = {
+    get:    ()     => http.get(a('/ai-settings')),
+    update: (data) => http.put(a('/ai-settings'), data),
+  }
   static aiConversations = {
     getAll:  ()         => http.get(a('/ai/conversations')),
     getOne:  (id)       => http.get(a(`/ai/conversations/${id}`)),
@@ -198,6 +205,8 @@ export class AdminApi {
     delete:  (id)     => http.delete(a(`${PATHS.BANNERS}/${id}`)),
     reorder: (items)  => http.post(a(`${PATHS.BANNERS}/reorder`), { items }),
     toggleActive: (id, is_active) => http.put(a(`${PATHS.BANNERS}/${id}`), { is_active }),
+    approve: (id, data) => http.post(a(`${PATHS.BANNERS}/${id}/approve`), data ?? {}),
+    reject:  (id, reason) => http.post(a(`${PATHS.BANNERS}/${id}/reject`), { reason }),
   }
   static media = {
     upload:    (formData, mediaType) =>
@@ -282,6 +291,13 @@ export class AdminApi {
     deletePackage: (id)    => http.delete(a(`/turbo/packages/${id}`)),
     getBoosts: (params)    => http.get(a('/turbo/boosts'), { params }),
     cancelBoost: (id)      => http.post(a(`/turbo/boosts/${id}/cancel`)),
+
+    getShopPackages: ()        => http.get(a('/turbo/shop-packages')),
+    createShopPackage: (data)  => http.post(a('/turbo/shop-packages'), data),
+    updateShopPackage: (id, data) => http.put(a(`/turbo/shop-packages/${id}`), data),
+    deleteShopPackage: (id)    => http.delete(a(`/turbo/shop-packages/${id}`)),
+    getShopBoosts: (params)    => http.get(a('/turbo/shop-boosts'), { params }),
+    cancelShopBoost: (id)      => http.post(a(`/turbo/shop-boosts/${id}/cancel`)),
   }
   static catalog = {
     getTags:      (params)     => http.get(a(`${PATHS.PRODUCT_TAGS}`), { params }),
@@ -387,6 +403,11 @@ export class BuyerApi {
     getPackages: ()                     => http.get(b('/turbo/packages')),
     purchase:    (productId, data)      => http.post(b(`/turbo/products/${productId}/purchase`), data),
     getStatus:   (productId)            => http.get(b(`/turbo/products/${productId}/status`)),
+    shop: {
+      getPackages: ()     => http.get(b('/turbo/shop-packages')),
+      purchase:    (data) => http.post(b('/turbo/shop/purchase'), data),
+      getStatus:   ()     => http.get(b('/turbo/shop/status')),
+    },
   }
 }
 
@@ -515,6 +536,7 @@ export class SellerApi {
   }
   static banners = {
     getAll:  ()             => http.get(s('/banners')),
+    getTypes: ()            => http.get(s('/banners/types')),
     create:  (data)         => http.post(s('/banners'), data),
     update:  (id, data)     => http.put(s(`/banners/${id}`), data),
     delete:  (id)           => http.delete(s(`/banners/${id}`)),

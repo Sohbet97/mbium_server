@@ -1,31 +1,36 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { SellerApi } from '@/lib/api'
+import { SellerApi, BuyerApi } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogBody, DialogFooter } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Eye, EyeOff, ImagePlus, X, Loader2 } from 'lucide-react'
-import { cn, absUrl } from '@/lib/utils'
+import { cn, absUrl, bannerTypeName } from '@/lib/utils'
 import { InlineMediaPicker } from '@/components/media/InlineMediaPicker'
 
 const EMPTY = {
   title: '', subtitle: '', link_url: '', button_text: '', button_url: '',
-  starts_at: '', ends_at: '', is_active: true, media_id: '', image_url: '',
+  is_active: true, media_id: '', image_url: '',
+  banner_type_id: '', duration_days: 7, currency: 'COIN',
+}
+
+const STATUS_STYLE = {
+  PENDING:  'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
+  APPROVED: 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400',
+  REJECTED: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
 }
 
 // ── Banner form modal ─────────────────────────────────────────────────────────
 function BannerFormModal({ banner, onClose, onSaved }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [form, setForm] = useState(banner ? {
     title:       banner.title       ?? '',
     subtitle:    banner.subtitle    ?? '',
     link_url:    banner.link_url    ?? '',
     button_text: banner.button_text ?? '',
     button_url:  banner.button_url  ?? '',
-    starts_at:   banner.starts_at   ? banner.starts_at.slice(0, 10) : '',
-    ends_at:     banner.ends_at     ? banner.ends_at.slice(0, 10)   : '',
     is_active:   banner.is_active   ?? true,
     media_id:    banner.media_id    ?? '',
     image_url:   banner.image_url   ?? '',
@@ -33,6 +38,22 @@ function BannerFormModal({ banner, onClose, onSaved }) {
   const [media, setMedia]         = useState(banner?.media ?? null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [saving, setSaving]       = useState(false)
+  const [types, setTypes]         = useState([])
+  const [balances, setBalances]   = useState({ COIN: null, TMT: null })
+  const isNew = !banner
+
+  useEffect(() => {
+    if (!isNew) return
+    SellerApi.banners.getTypes().then(({ data }) => setTypes(data.data ?? [])).catch(() => {})
+    BuyerApi.coins.getBalance().then(({ data }) => setBalances((b) => ({ ...b, COIN: Number(data?.balance ?? 0) }))).catch(() => {})
+    SellerApi.payouts.getSummary().then(({ data }) => setBalances((b) => ({ ...b, TMT: Number(data?.model?.available_balance ?? 0) }))).catch(() => {})
+  }, [isNew])
+
+  const type = types.find((x) => String(x.id) === String(form.banner_type_id))
+  const perDay = type ? Number(form.currency === 'COIN' ? type.price_per_day_coin : type.price_per_day_tmt) || 0 : 0
+  const days = Number(form.duration_days) || 0
+  const total = perDay * days
+  const balance = balances[form.currency]
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
@@ -50,12 +71,15 @@ function BannerFormModal({ banner, onClose, onSaved }) {
 
   async function handleSave() {
     if (!form.title.trim()) { toast.error(t('seller.titleRequired')); return }
+    if (isNew) {
+      if (!type) { toast.error(t('banners.selectPlacement')); return }
+      if (days < 1 || days > type.max_days) { toast.error(t('banners.maxDays', { n: type.max_days })); return }
+      if (!(perDay > 0)) { toast.error(t('toast.error')); return }
+    }
     setSaving(true)
     try {
       const payload = {
         ...form,
-        starts_at: form.starts_at || null,
-        ends_at:   form.ends_at   || null,
         media_id:  form.media_id  || null,
       }
       const { data } = banner
@@ -142,34 +166,72 @@ function BannerFormModal({ banner, onClose, onSaved }) {
             </div>
           </div>
 
-          {/* Dates */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="mb-1 block">{t('banners.startsAt')}</Label>
-              <Input type="date" value={form.starts_at} onChange={(e) => set('starts_at', e.target.value)} className="dark:[color-scheme:dark]" />
+          {/* Placement + duration + payment (new banners only) */}
+          {isNew && (
+            <div className="space-y-3 rounded-xl border dark:border-white/[0.08] border-slate-200 p-3">
+              <div>
+                <Label className="mb-1 block">{t('banners.placement')}</Label>
+                <select
+                  value={form.banner_type_id}
+                  onChange={(e) => set('banner_type_id', e.target.value)}
+                  className="w-full h-9 px-3 rounded-lg text-sm border dark:bg-[#242430] dark:border-white/[0.08] dark:text-white bg-white border-slate-200 text-slate-900"
+                >
+                  <option value="">{t('banners.selectPlacement')}</option>
+                  {types.map((tp) => <option key={tp.id} value={tp.id}>{bannerTypeName(tp, i18n.language)}</option>)}
+                </select>
+                {types.length === 0 && <p className="text-xs text-slate-400 mt-1">{t('banners.noPlacements')}</p>}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className="mb-1 block">
+                    {t('banners.days')}{type ? ` (${t('banners.maxDays', { n: type.max_days })})` : ''}
+                  </Label>
+                  <Input type="number" min={1} max={type?.max_days || undefined} value={form.duration_days}
+                    onChange={(e) => set('duration_days', e.target.value)} />
+                </div>
+                <div>
+                  <Label className="mb-1 block">{t('banners.payWith')}</Label>
+                  <div className="flex gap-1">
+                    {['COIN', 'TMT'].map((c) => (
+                      <button key={c} type="button" onClick={() => set('currency', c)}
+                        className={cn('flex-1 h-9 rounded-lg text-sm font-medium border transition-colors',
+                          form.currency === c ? 'bg-blue-600 text-white border-blue-600'
+                            : 'dark:border-white/[0.08] border-slate-200 dark:text-slate-300 text-slate-600')}>
+                        {c === 'COIN' ? t('banners.coins') : t('banners.tmt')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="text-sm space-y-0.5">
+                {type && <div className="text-slate-400">{t('banners.perDay', { price: perDay })} {form.currency === 'COIN' ? t('banners.coins') : 'TMT'}</div>}
+                <div className="dark:text-white font-medium">{t('banners.total')}: {total} {form.currency === 'COIN' ? t('banners.coins') : 'TMT'}</div>
+                {balance !== null && (
+                  <div className={cn('text-xs', total > balance ? 'text-red-500' : 'text-slate-400')}>
+                    {t('banners.yourBalance')}: {balance}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-slate-400">{t('banners.paidNote')}</p>
             </div>
-            <div>
-              <Label className="mb-1 block">{t('banners.endsAt')}</Label>
-              <Input type="date" value={form.ends_at} onChange={(e) => set('ends_at', e.target.value)} className="dark:[color-scheme:dark]" />
-            </div>
-          </div>
+          )}
 
           {/* Active */}
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          {!isNew && <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <div className="relative">
               <input type="checkbox" className="sr-only" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} />
               <div className={cn('w-9 h-5 rounded-full transition-colors', form.is_active ? 'bg-blue-600' : 'bg-slate-200 dark:bg-white/20')} />
               <div className={cn('absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform', form.is_active ? 'translate-x-4' : '')} />
             </div>
             <span className="text-sm dark:text-white">{t('common.active')}</span>
-          </label>
+          </label>}
         </DialogBody>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
-            {t('common.save')}
+            {isNew ? t('banners.payAndSubmit') : t('common.save')}
           </Button>
         </DialogFooter>
 
@@ -185,7 +247,7 @@ function BannerFormModal({ banner, onClose, onSaved }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SellerBannersPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [banners, setBanners] = useState([])
   const [loading, setLoading] = useState(true)
   const [editTarget, setEditTarget] = useState(undefined) // undefined=closed, null=new, obj=edit
@@ -277,6 +339,15 @@ export default function SellerBannersPage() {
                   {b.subtitle && (
                     <div className="text-xs text-slate-400 truncate mt-0.5">{b.subtitle}</div>
                   )}
+                  {b.status === 'REJECTED' && b.reject_reason && (
+                    <div className="text-xs text-red-500 mt-0.5 truncate">{t('banners.rejectedReason', { reason: b.reject_reason })}</div>
+                  )}
+                  {(b.banner_type || b.duration_days) && (
+                    <div className="text-xs text-slate-400 mt-0.5">
+                      {bannerTypeName(b.banner_type, i18n.language)}
+                      {b.duration_days ? ` · ${t('banners.daysBought', { n: b.duration_days })}` : ''}
+                    </div>
+                  )}
                   {(b.starts_at || b.ends_at) && (
                     <div className="text-xs text-slate-400 mt-0.5">
                       {b.starts_at ? new Date(b.starts_at).toLocaleDateString('ru-RU') : '…'}
@@ -289,28 +360,32 @@ export default function SellerBannersPage() {
                 {/* Status */}
                 <span className={cn(
                   'text-xs px-2 py-0.5 rounded-full font-medium shrink-0',
-                  b.is_active
-                    ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400'
-                    : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
+                  b.status && b.status !== 'APPROVED'
+                    ? STATUS_STYLE[b.status]
+                    : b.is_active
+                      ? STATUS_STYLE.APPROVED
+                      : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
                 )}>
-                  {b.is_active ? t('common.active') : t('common.inactive')}
+                  {b.status === 'PENDING' ? t('banners.statusPending')
+                    : b.status === 'REJECTED' ? t('banners.statusRejected')
+                    : b.is_active ? t('common.active') : t('common.inactive')}
                 </span>
 
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
-                  <button
+                  {b.status === 'APPROVED' && <button
                     onClick={() => handleToggle(b)}
                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors"
                     title={b.is_active ? t('common.deactivate') : t('common.activate')}
                   >
                     {b.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                  <button
+                  </button>}
+                  {b.status !== 'REJECTED' && <button
                     onClick={() => setEditTarget(b)}
                     className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors"
                   >
                     <Pencil className="h-4 w-4" />
-                  </button>
+                  </button>}
                   <button
                     onClick={() => handleDelete(b.id)}
                     disabled={deleting === b.id}

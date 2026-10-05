@@ -9,6 +9,10 @@ module.exports = (sequelize) => {
         slug:        { type: DataTypes.STRING(60),  allowNull: false, unique: true },
         description: { type: DataTypes.TEXT },
         is_active:   { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true },
+        // Seller pricing; null price/max_days = not purchasable by sellers
+        price_per_day_tmt:  { type: DataTypes.DECIMAL(10, 2) },
+        price_per_day_coin: { type: DataTypes.INTEGER },
+        max_days:           { type: DataTypes.SMALLINT },
     }, {
         timestamps: true,
         paranoid: false,

@@ -70,6 +70,7 @@ export default {
     activityPlaceholder: 'Işjeňlik žurnaly ýakynda gelýär.',
     systemStatus: 'Ulgamyň ýagdaýy', apiServer: 'API-serwer',
     database: 'Maglumat bazasy', socketIO: 'Socket.IO',
+    rangeDays: 'Soňky {{count}} gün', needsAttention: 'Üns bermeli', allClear: 'Ählisi ýerinde — barlaga hiç zat garaşmaýar', aProducts: 'Moderasiýa garaşýan harytlar', aReels: 'Moderasiýa garaşýan reelsler', aShopApps: 'Dükan arzalary', aShopTypes: 'Dükan görnüşi üýtgetme', aKyc: 'KYC resminamalary', aDisputes: 'Açyk jedeller', aPayouts: 'Töleg haýyşlary', aBanners: 'Tassyklanmaly banerler', kRevenue: 'Girdeji', kOrders: 'Sargytlar', kNewUsers: 'Täze ulanyjylar', kActiveShops: 'Işjeň dükanlar', vsPrev: 'öňki döwre garanyňda', ofTotal: 'jemi {{total}} içinden', chartTitle: 'Girdeji we sargytlar', revenue: 'Girdeji', orders: 'Sargytlar', byStatus: 'Ýagdaýy boýunça sargytlar', topShops: 'Iň gowy dükanlar', coinEconomy: 'Teňňe ykdysadyýeti', coinsInCirculation: 'Aýlawdaky teňňeler', coinsSpent: 'Döwürde sarp edildi', noData: 'Bu döwür üçin maglumat ýok', viewAll: 'Hemmesini görkez', apiOnline: 'API elýeterli', apiOffline: 'API elýeterli däl', statusClosed: 'Ýapyk', greeting: 'Hoş geldiňiz', srcBANNER: 'Banerler', srcAI: 'AI çat', srcTURBO_SHOP_BOOST: 'Dükan boost', srcOther: 'Başga',
   },
 
   users: {
@@ -358,6 +359,17 @@ export default {
     empty: 'Banner ýok', createFirst: 'Ilkinji banneri döret',
     shop: 'Dükan (boş = umumy)', globalBanner: 'Umumy (ähli dükanlara)',
     sortOrder: 'Görkeziliş tertibi',
+    placement: 'Ýerleşdiriş', selectPlacement: 'Ýerleşdirişi saýlaň', days: 'Gün', maxDays: 'iň köp {{n}}',
+    payWith: 'Töleg', coins: 'Teňňe', tmt: 'TMT', total: 'Jemi', yourBalance: 'Balansyňyz',
+    perDay: '{{price}} / gün', payAndSubmit: 'Töle we ugrat', noPlacements: 'Elýeterli ýerleşdiriş ýok',
+    paidNote: 'Töleg şu wagt çykdajy edilýär. Banner administrator tassyklandan soň çykar.',
+    status: 'Ýagdaýy', statusPending: 'Garaşylýar', statusApproved: 'Tassyklandy', statusRejected: 'Ret edildi',
+    rejectedReason: 'Ret edildi: {{reason}}', daysBought: '{{n}} gün', paid: 'Tölenen',
+    approve: 'Tassykla', reject: 'Ret et', rejectReason: 'Ret etmegiň sebäbi (töleg yzyna gaýtarylar)',
+    approveTitle: 'Banneri tassykla', approved_msg: 'Banner tassyklandy', rejected_msg: 'Banner ret edildi, töleg gaýtaryldy',
+    seller: 'Satyjy', filterPending: 'Garaşylýar', filterAll: 'Hemmesi',
+    pricing: 'Ýerleşdirişler we bahalar', pricePerDayTmt: 'Baha / gün (TMT)', pricePerDayCoin: 'Baha / gün (teňňe)',
+    maxDaysField: 'Iň köp gün (boş = satylmaýar)', pricingSaved: 'Ýazdyryldy',
   },
 
   shopApplications: {
@@ -410,6 +422,8 @@ export default {
   },
 
   aiRecommendations: {
+    pricePerRequest: 'AI soragy üçin coin',
+    pricePerRequestHint: 'Alyjydan her AI çat habary üçin alynýar. 0 = mugt. AI soragy şowsuz bolsa awtomatiki gaýtarylýar.',
     title: 'AI Maslahatlar',
     subtitle: 'Mobil AI Agentinde görünýän teklip kartlary',
     create: 'Täze maslahat',
@@ -597,6 +611,7 @@ export default {
     turboFor: 'Turbo çykaryş', turboActive: 'Turbo', turboActiveTitle: 'Turbo eýýäm işjeň',
     turboTier: 'Derejesi', turboExpires: 'Möhleti', turboBoosted: 'Turbo çykaryş işjeňleşdirildi',
     payWith: 'Töle', shopWallet: 'Dükan gapjygy', boostNow: 'Häzir çykar',
+    turboShopTitle: 'Dükany turbo çykar', turboShopHint: 'Sanawlarda ilkinji bolup görünmek üçin tutuş dükanyňyzy turbo çykaryň',
 
     subscriptionTitle: 'Abunalyk we Planlar',
     subscriptionSubtitle: 'Häzirki abunalyk ýagdaýy we elýeterli planlar',
@@ -884,6 +899,7 @@ export default {
     durationDays: 'Möhleti (gün)', noPackages: 'Heniz Turbo paketi ýok',
     fieldsRequired: 'Sagat, TMT bahasy we Coin bahasy hökmany',
     tabPackages: 'Paketler', tabBoosts: 'Çykarylan harytlar',
+    tabShopPackages: 'Dükan paketleri', tabShopBoosts: 'Çykarylan dükanlar',
     boostsLower: 'çykaryş', allStatuses: 'Ähli statuslar',
     statusActive: 'Işjeň', statusExpired: 'Möhleti dolan', noBoosts: 'Heniz Turbo çykaryş ýok',
     colProduct: 'Haryt', colShop: 'Dükan', colTier: 'Derejesi', colPaid: 'Tölendi',

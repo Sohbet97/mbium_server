@@ -28,8 +28,8 @@ class BannerController {
 
     static async getActive(req, res, next) {
         try {
-            const { shop_id, banner_type_id } = req.query
-            const data = await BannerService.getActive({ shop_id, banner_type_id })
+            const { shop_id, banner_type_id, type } = req.query
+            const data = await BannerService.getActive({ shop_id, banner_type_id, type })
             return res.status(200).json({ data })
         } catch (e) { next(e) }
     }
@@ -46,6 +46,20 @@ class BannerController {
             const existing = await BannerService.getById(req.params.id)
             if (!existing) throw ApiError.NotFound('Banner tapylmady')
             const model = await BannerService.update(req.params.id, req.body)
+            return res.status(200).json({ model })
+        } catch (e) { next(e) }
+    }
+
+    static async approve(req, res, next) {
+        try {
+            const model = await BannerService.approve(req.params.id, req.body ?? {})
+            return res.status(200).json({ model })
+        } catch (e) { next(e) }
+    }
+
+    static async reject(req, res, next) {
+        try {
+            const model = await BannerService.reject(req.params.id, req.body?.reason)
             return res.status(200).json({ model })
         } catch (e) { next(e) }
     }

@@ -466,7 +466,9 @@ module.exports = {
             parameters: [{ in: "path", name: "itemId", required: true, schema: { type: "integer" } }],
             responses: {
                 200: { description: "Item removed" },
+                400: { description: "Invalid item id" },
                 401: { description: "Unauthorized" },
+                404: { description: "Cart item not found (wrong id, or it belongs to another user)" },
             },
         },
     },
@@ -755,8 +757,9 @@ module.exports = {
         get: {
             tags: ["Buyer — Banners"],
             summary: "List active banners (public)",
-            description: "Returns banners where `is_active` is true and the current time falls within `starts_at`/`ends_at` (when set). Excludes soft-deleted banners.",
+            description: "Returns APPROVED banners where `is_active` is true and the current time falls within `starts_at`/`ends_at` (when set). Excludes soft-deleted banners. Filter by placement with `type` (stable code, e.g. `main_page`, `shop_page`, `category_page`, `search_page`, `popup`) and/or `shop_id`.",
             parameters: [
+                { in: "query", name: "type",           schema: { type: "string", enum: ["main_page", "shop_page", "category_page", "search_page", "popup"] }, description: "Placement code (banner_types.slug)" },
                 { in: "query", name: "shop_id",        schema: { type: "integer" }, description: "Filter by shop, or 'null' for platform-wide banners" },
                 { in: "query", name: "banner_type_id", schema: { type: "integer" } },
             ],
