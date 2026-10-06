@@ -112,6 +112,51 @@ module.exports = {
         },
     },
 
+    "/buyer/catalog/search/image": {
+        post: {
+            tags: ["Buyer — Catalog"],
+            summary: "Search products by photo",
+            description:
+                "Sends the photo to Google Cloud Vision (`LABEL_DETECTION`), takes the English labels " +
+                "and searches products with the existing full-text search (any label may match; " +
+                "`name_eng` is part of the search vector). Same response shape as `/buyer/catalog/search` " +
+                "plus the detected `labels` and the Turkmen/Russian/English search `keywords` (Gemini expands the Vision labels; products must match a `primary` word, `extra` words only rank). The Google keys are stored on the server only. " +
+                "Max file size 8 MB, image types only.",
+            requestBody: {
+                required: true,
+                content: { "multipart/form-data": { schema: {
+                    type: "object",
+                    required: ["image"],
+                    properties: {
+                        image: { type: "string", format: "binary" },
+                        page:  { type: "integer", default: 1 },
+                        limit: { type: "integer", default: 20, maximum: 50 },
+                    },
+                }}},
+            },
+            responses: {
+                200: {
+                    description: "Products matching the photo",
+                    content: { "application/json": { schema: {
+                        type: "object",
+                        properties: {
+                            labels:     { type: "array", items: { type: "string" }, description: "Labels detected on the photo" },
+                            query:      { type: "string" },
+                            page:       { type: "integer" },
+                            limit:      { type: "integer" },
+                            products:   { type: "array", items: { $ref: "#/components/schemas/Product" } },
+                            categories: { type: "array", items: { $ref: "#/components/schemas/Category" } },
+                            shops:      { type: "array", items: { $ref: "#/components/schemas/Shop" } },
+                        },
+                    }}},
+                },
+                400: { description: "`image` is missing" },
+                502: { description: "Google Vision request failed" },
+                503: { description: "Photo search is not configured (no API key)" },
+            },
+        },
+    },
+
     // ── Catalog — Categories ──────────────────────────────────────────────────────
 
     "/buyer/catalog/categories": {

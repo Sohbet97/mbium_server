@@ -32,6 +32,8 @@ const reelsPaths          = require("./paths/reels");
 const buyerRequestsPaths  = require("./paths/buyer-requests");
 const sizesPaths          = require("./paths/sizes");
 const colorsPaths         = require("./paths/colors");
+const guidePaths          = require("./paths/guide");
+const panelChatsPaths     = require("./paths/panel-chats");
 const coinsPaths          = require("./paths/coins");
 const favoritesPaths      = require("./paths/favorites");
 const systemPaths         = require("./paths/system");
@@ -81,6 +83,7 @@ const swaggerSpec = {
         { name: "Disputes",      description: "Order dispute management" },
         { name: "Delivers",      description: "Platform delivery driver management" },
         { name: "Plans",         description: "Subscription plans and shop subscription management" },
+        { name: "Guide",         description: "Video instructions (Справочник)" },
         { name: "Notifications", description: "Admin in-app notification inbox" },
         { name: "Locations",     description: "Countries, regions, districts, villages, and cities" },
         // Seller panel
@@ -173,6 +176,8 @@ const swaggerSpec = {
         ...buyerRequestsPaths,
         ...sizesPaths,
         ...colorsPaths,
+        ...guidePaths,
+        ...panelChatsPaths,
         ...coinsPaths,
         ...favoritesPaths,
         ...systemPaths,

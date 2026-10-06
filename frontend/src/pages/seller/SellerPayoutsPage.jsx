@@ -21,6 +21,7 @@ const TXN_TYPE_COLOR = {
   COMMISSION:      'text-slate-500 dark:text-slate-400',
   PAYOUT_DEBIT:    'text-red-600 dark:text-red-400',
   PAYOUT_REVERSAL: 'text-slate-500 dark:text-slate-400',
+  EXTERNAL_DEBIT:  'text-red-600 dark:text-red-400',
 }
 
 const PAGE_SIZE = 20
@@ -40,6 +41,7 @@ export default function SellerPayoutsPage() {
     COMMISSION:      t('seller.txnCommission'),
     PAYOUT_DEBIT:    t('seller.txnPayoutDebit'),
     PAYOUT_REVERSAL: t('seller.txnPayoutReversal'),
+    EXTERNAL_DEBIT:  t('seller.txnExternalDebit'),
   }
 
   const [summary, setSummary]     = useState(null)

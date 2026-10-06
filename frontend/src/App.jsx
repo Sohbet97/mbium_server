@@ -37,6 +37,7 @@ import DeliveriesPage from '@/pages/admin/DeliveriesPage'
 import PlansPage from '@/pages/admin/PlansPage'
 import ShopApplicationsPage from '@/pages/admin/ShopApplicationsPage'
 import ShopTypeRequestsPage from '@/pages/admin/ShopTypeRequestsPage'
+import TariffRequestsPage from '@/pages/admin/TariffRequestsPage'
 import AdminPayoutsPage from '@/pages/admin/PayoutsPage'
 import AiRecommendationsPage from '@/pages/admin/AiRecommendationsPage'
 // Seller pages
@@ -59,6 +60,8 @@ import AdminAuditPage from '@/pages/admin/AdminAuditPage'
 import AdminAnalyticsPage from '@/pages/admin/AdminAnalyticsPage'
 import WarehousesPage from '@/pages/admin/WarehousesPage'
 import SellerPushNotificationsPage from '@/pages/seller/SellerPushNotificationsPage'
+import SellerChatsPage from '@/pages/seller/SellerChatsPage'
+import AdminChatsPage from '@/pages/admin/AdminChatsPage'
 import SellerAnalyticsPage from '@/pages/seller/SellerAnalyticsPage'
 import SellerWarehousesPage from '@/pages/seller/SellerWarehousesPage'
 import SellerAccountPage from '@/pages/admin/AccountPage'
@@ -69,6 +72,7 @@ import ProductTagsPage from '@/pages/admin/ProductTagsPage'
 import BrandsPage from '@/pages/admin/BrandsPage'
 import SizesPage from '@/pages/admin/SizesPage'
 import ColorsPage from '@/pages/admin/ColorsPage'
+import GuidePage from '@/pages/admin/GuidePage'
 import DeliveryTypesPage from '@/pages/admin/DeliveryTypesPage'
 import ShopTypesPage from '@/pages/admin/ShopTypesPage'
 import SuppliersPage from '@/pages/admin/SuppliersPage'
@@ -117,6 +121,7 @@ const router = createBrowserRouter([
           { path: 'delivers', element: g(Permissions.DELIVER_GET, <DeliveriesPage />), handle: { titleKey: 'delivers.title' } },
           { path: 'plans', element: g(Permissions.PLAN_GET, <PlansPage />), handle: { titleKey: 'plans.title' } },
           { path: 'shop-applications', element: g(Permissions.SHOP_GET, <ShopApplicationsPage />), handle: { titleKey: 'shopApplications.title' } },
+          { path: 'tariff-requests', element: g(Permissions.PLAN_GET, <TariffRequestsPage />), handle: { titleKey: 'tariffRequests.title' } },
           { path: 'shop-type-requests', element: <ShopTypeRequestsPage />, handle: { titleKey: 'nav.shopTypeRequests' } },
           { path: 'shop-types', element: <ShopTypesPage />, handle: { titleKey: 'shopTypes.title' } },
           { path: 'payouts', element: g(Permissions.PAYOUT_GET, <AdminPayoutsPage />), handle: { titleKey: 'nav.payouts' } },
@@ -131,6 +136,8 @@ const router = createBrowserRouter([
           { path: 'catalog/tags',       element: g(Permissions.PRODUCT_GET, <ProductTagsPage />),              handle: { titleKey: 'productTags.title' } },
           { path: 'catalog/brands',    element: g(Permissions.BRAND_GET, <BrandsPage />),                   handle: { titleKey: 'brands.title' } },
           { path: 'catalog/sizes',     element: g(Permissions.SIZE_GET, <SizesPage />),                    handle: { titleKey: 'sizes.title' } },
+          { path: 'chats', element: g(Permissions.CHAT_GET, <AdminChatsPage />), handle: { titleKey: 'chats.title' } },
+          { path: 'guide', element: g(Permissions.GUIDE_GET, <GuidePage />), handle: { titleKey: 'guide.title' } },
           { path: 'catalog/colors',    element: g(Permissions.COLOR_GET, <ColorsPage />),                  handle: { titleKey: 'colors.title' } },
           { path: 'catalog/delivery-types', element: g(Permissions.DELIVERY_TYPE_GET, <DeliveryTypesPage />),       handle: { titleKey: 'deliveryTypes.title' } },
           { path: 'catalog/suppliers', element: g(Permissions.SUPPLIER_GET, <SuppliersPage />),                handle: { titleKey: 'suppliers.title' } },
@@ -166,6 +173,7 @@ const router = createBrowserRouter([
           { path: 'reels',        element: <SellerReelsPage /> },
           { path: 'subscription',       element: <SellerSubscriptionPage /> },
           { path: 'push-notifications', element: <SellerPushNotificationsPage /> },
+          { path: 'chats', element: <SellerChatsPage /> },
           { path: 'account',            element: <SellerAccountPage /> },
           { path: 'analytics',          element: <SellerAnalyticsPage /> },
           { path: 'warehouses',         element: <SellerWarehousesPage /> },

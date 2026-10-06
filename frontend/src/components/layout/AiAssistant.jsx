@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { X, Send, Bot, Loader2, MessageCircle, ChevronLeft, History, Plus, Pencil, Trash2, Search, User } from 'lucide-react'
+import { X, Send, Bot, Loader2, MessageCircle, ChevronLeft, History, Plus, Pencil, Trash2, Search, User, MessagesSquare, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAiAssistant } from '@/store/aiAssistant'
 import { useAuth } from '@/store/auth'
 import { useNotifications } from '@/store/notifications'
 import { AdminApi, SellerApi } from '@/lib/api'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { Permissions, hasPerm } from '@/lib/permissions'
+import { usePendingCounts } from '@/store/pendingCounts'
+import { useSellerPendingCounts } from '@/store/sellerPendingCounts'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? ''
 
@@ -707,18 +710,93 @@ function AdminSupportTab({ socketRef }) {
   )
 }
 
+// ── Chats tab (buyer ↔ shop dialogs + support; full view on the Chats page) ──
+function ChatsTab({ base, api, socketRef, onNavigate }) {
+  const { t } = useTranslation()
+  const [items, setItems]     = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const load = useCallback(() => {
+    api.list({ limit: 15 })
+      .then(({ data }) => setItems(data.items ?? []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [api])
+
+  useEffect(() => {
+    load()
+    const id = setInterval(load, 20_000)
+    return () => clearInterval(id)
+  }, [load])
+
+  useEffect(() => {
+    const socket = socketRef?.current
+    if (!socket) return
+    socket.on('message.new', load)
+    return () => socket.off('message.new', load)
+  }, [socketRef, load])
+
+  const name = (c) => [c.customer?.name, c.customer?.surname].filter(Boolean).join(' ') || '—'
+  const sub  = (c) => c.type === 'product' ? c.product?.name : c.type === 'shop' ? c.shop?.name : t('chats.support')
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="py-10 text-center text-sm text-slate-400">…</div>
+        ) : items.length === 0 ? (
+          <div className="py-10 text-center text-sm text-slate-400">{t('chats.empty')}</div>
+        ) : items.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => onNavigate(`${base}/chats?chat=${c.id}`)}
+            className="w-full text-left px-4 py-3 border-b dark:border-white/[0.06] border-black/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-[13px] font-medium truncate dark:text-white text-slate-900">{name(c)}</p>
+              {c.unread_count > 0 && (
+                <span className="shrink-0 min-w-5 h-5 px-1.5 rounded-full bg-red-500 text-white text-[11px] font-semibold flex items-center justify-center">
+                  {c.unread_count}
+                </span>
+              )}
+            </div>
+            {sub(c) && <p className="text-[11px] text-slate-500 truncate">{sub(c)}</p>}
+            <p className="text-[12px] text-slate-400 truncate mt-0.5">
+              {c.last_message ? (c.last_message.text ?? t('chats.attachment')) : '—'}
+            </p>
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => onNavigate(`${base}/chats`)}
+        className="shrink-0 flex items-center justify-center gap-1.5 py-3 border-t dark:border-white/[0.08] border-black/[0.08] text-[12px] font-medium text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-white/[0.04]"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+        {t('chats.openPage')}
+      </button>
+    </div>
+  )
+}
+
 // ── Main panel ────────────────────────────────────────────────────────────────
 export function AiAssistant() {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const { open, close, activeTab, setActiveTab } = useAiAssistant()
   const { socketRef } = useNotifications()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const adminCounts  = usePendingCounts()?.counts
+  const sellerCounts = useSellerPendingCounts()?.counts
 
   const inAdmin  = pathname.startsWith('/admin')
   const inSeller = pathname.startsWith('/seller')
+  const canChats = inSeller || (inAdmin && hasPerm(user, Permissions.CHAT_GET))
+  const unreadChats = (inAdmin ? adminCounts?.chats : sellerCounts?.chats) ?? 0
 
   const tabs = [
     { key: 'support', label: t('support.tab'), icon: MessageCircle },
+    ...(canChats ? [{ key: 'chats', label: t('chats.title'), icon: MessagesSquare, badge: unreadChats }] : []),
     ...(inAdmin ? [{ key: 'ai', label: t('aiAssistant.tab'), icon: Bot }] : []),
   ]
 
@@ -755,7 +833,7 @@ export function AiAssistant() {
         {/* Tabs */}
         {tabs.length > 1 && (
           <div className="flex border-b dark:border-white/[0.08] border-black/[0.08] shrink-0">
-            {tabs.map(({ key, label, icon: Icon }) => (
+            {tabs.map(({ key, label, icon: Icon, badge }) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
@@ -768,6 +846,9 @@ export function AiAssistant() {
               >
                 <Icon className="h-3.5 w-3.5" />
                 {label}
+                {badge > 0 && (
+                  <span className="min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">{badge}</span>
+                )}
               </button>
             ))}
           </div>
@@ -777,6 +858,14 @@ export function AiAssistant() {
         {activeTab === 'support' && (inAdmin
           ? <AdminSupportTab socketRef={socketRef} />
           : <SellerSupportTab socketRef={socketRef} />
+        )}
+        {activeTab === 'chats' && canChats && (
+          <ChatsTab
+            base={inAdmin ? '/admin' : '/seller'}
+            api={inAdmin ? AdminApi.chat : SellerApi.chat}
+            socketRef={socketRef}
+            onNavigate={(to) => { close(); navigate(to) }}
+          />
         )}
         {activeTab === 'ai' && inAdmin && <AiTab />}
       </aside>

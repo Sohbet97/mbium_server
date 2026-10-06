@@ -21,6 +21,7 @@ const adminRouter  = require("../routes/admin");
 const authRouter   = require("../routes/auth/auth");
 const sellerRouter = require("../routes/seller");
 const buyerRouter  = require("../routes/buyer");
+const GuideController = require("../__modules__/guide/controllers/GuideController");
 
 const { CONSTANTS } = require("./constants");
 
@@ -161,6 +162,7 @@ app.use(["/auth",   "/api/auth"],   authRouter);
 app.use(["/admin",  "/api/admin"],  adminRouter);
 app.use(["/seller", "/api/seller"], sellerRouter);
 app.use(["/buyer",  "/api/buyer"],  buyerRouter);
+app.get(["/guide", "/api/guide"], GuideController.listPublished);
 app.use(errorMiddleware);
 
 module.exports = { app };

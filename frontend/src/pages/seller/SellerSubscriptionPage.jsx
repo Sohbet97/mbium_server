@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
 import { SellerApi } from '@/lib/api'
 import { useAuth } from '@/store/auth'
+import { useSellerPendingCounts } from '@/store/sellerPendingCounts'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Check, X, Crown, Clock, AlertTriangle, ExternalLink } from 'lucide-react'
+import { Check, X, Crown, Clock, AlertTriangle, Send } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 
@@ -33,7 +38,7 @@ function FeatRow({ label, value, isBool, t }) {
 }
 
 // ── Plan card ─────────────────────────────────────────────────────────────────
-function PlanCard({ plan, isCurrent, t }) {
+function PlanCard({ plan, isCurrent, canRequest, onRequest, t }) {
   const free = Number(plan.price_monthly) === 0
   const LIVE_LABELS = [t('seller.liveNone'), t('seller.liveViewOnly'), t('seller.liveLimited'), t('seller.liveUnlimited')]
 
@@ -93,13 +98,15 @@ function PlanCard({ plan, isCurrent, t }) {
 
       {!isCurrent && (
         <div className="p-4 pt-3">
-          <a
-            href="mailto:support@mbium.tm?subject=Plan üýtgetmek haýyşy"
-            className="flex items-center justify-center gap-1.5 w-full text-sm px-4 py-2 rounded-lg border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors"
+          <button
+            type="button"
+            disabled={!canRequest}
+            onClick={() => onRequest(plan)}
+            className="flex items-center justify-center gap-1.5 w-full text-sm px-4 py-2 rounded-lg border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <ExternalLink className="h-3.5 w-3.5" />
-            {t('seller.contactSupport')}
-          </a>
+            <Send className="h-3.5 w-3.5" />
+            {t('tariffRequests.request')}
+          </button>
         </div>
       )}
     </Card>
@@ -289,7 +296,42 @@ function SubscriptionHistory({ history, t }) {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Tariff requests ───────────────────────────────────────────────────────────
+const REQ_STATUS_CLS = {
+  pending:  'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  approved: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  rejected: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+}
+
+function TariffRequests({ requests, t }) {
+  if (requests.length === 0) return null
+  return (
+    <div>
+      <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
+        {t('tariffRequests.myRequests')}
+      </h2>
+      <div className="rounded-xl border dark:border-white/[0.06] divide-y dark:divide-white/[0.06]">
+        {requests.map((r) => (
+          <div key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium dark:text-white">{r.plan?.display_name_tm || r.plan?.name || `#${r.plan_id}`}</p>
+              {r.comment && <p className="text-xs text-slate-400 italic">“{r.comment}”</p>}
+              {r.admin_comment && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t('tariffRequests.adminComment')}: {r.admin_comment}</p>
+              )}
+            </div>
+            <span className="text-xs text-slate-400">{fmtDate(r.createdAt)}</span>
+            <span className={cn('text-[10px] px-2 py-0.5 rounded-full font-semibold', REQ_STATUS_CLS[r.status])}>
+              {t(`tariffRequests.${r.status}`)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────
 export default function SellerSubscriptionPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
@@ -297,12 +339,21 @@ export default function SellerSubscriptionPage() {
   const [sub, setSub]         = useState(undefined)
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
+  const [requests, setRequests] = useState([])
+  const [target, setTarget]     = useState(null)
+  const [comment, setComment]   = useState('')
+  const [sending, setSending]   = useState(false)
+  const pendingCounts = useSellerPendingCounts()
+
+  const loadRequests = () =>
+    SellerApi.tariffRequests.getAll().then(({ data }) => setRequests(data.data ?? [])).catch(() => {})
 
   useEffect(() => {
     Promise.all([
       SellerApi.plans.getAll(),
       SellerApi.plans.getSubscription(),
       SellerApi.plans.getHistory(),
+      loadRequests(),
     ])
       .then(([plansRes, subRes, historyRes]) => {
         setPlans(plansRes.data.data ?? [])
@@ -312,6 +363,25 @@ export default function SellerSubscriptionPage() {
       .catch(() => { setSub(null) })
       .finally(() => setLoading(false))
   }, [])
+
+  const pendingRequest = requests.find((r) => r.status === 'pending')
+
+  async function sendRequest() {
+    if (!target) return
+    setSending(true)
+    try {
+      await SellerApi.tariffRequests.create({ tariff_id: target.id, comment: comment.trim() || undefined })
+      toast.success(t('tariffRequests.sent'))
+      setTarget(null)
+      setComment('')
+      await loadRequests()
+      pendingCounts?.refresh?.()
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? t('toast.error'))
+    } finally {
+      setSending(false)
+    }
+  }
 
   if (loading) return (
     <div className="flex justify-center items-center h-40">
@@ -335,11 +405,20 @@ export default function SellerSubscriptionPage() {
       {/* Current subscription banner */}
       <SubscriptionBanner sub={sub} t={t} />
 
+      {pendingRequest && (
+        <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-950/20 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
+          <Clock className="h-4 w-4 shrink-0" />
+          {t('tariffRequests.pendingBanner', { plan: pendingRequest.plan?.display_name_tm || pendingRequest.plan?.name })}
+        </div>
+      )}
+
       {/* Current plan key metrics */}
       {sub?.plan && <CurrentPlanMetrics plan={sub.plan} t={t} />}
 
       {/* Subscription history */}
       <SubscriptionHistory history={history} t={t} />
+
+      <TariffRequests requests={requests} t={t} />
 
       {/* Plans comparison */}
       {plans.length > 0 && (
@@ -353,6 +432,8 @@ export default function SellerSubscriptionPage() {
                 key={plan.id}
                 plan={plan}
                 isCurrent={plan.id === currentPlanId}
+                canRequest={!pendingRequest}
+                onRequest={(p) => { setTarget(p); setComment('') }}
                 t={t}
               />
             ))}
@@ -365,6 +446,30 @@ export default function SellerSubscriptionPage() {
           </p>
         </div>
       )}
+
+      <Dialog open={!!target} onOpenChange={(v) => !v && setTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('tariffRequests.requestTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-slate-500">
+              {t('tariffRequests.change')}:{' '}
+              <span className="font-medium text-slate-800 dark:text-white">{target?.display_name_tm || target?.name}</span>
+            </p>
+            <Textarea
+              placeholder={t('tariffRequests.comment')}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setTarget(null)}>{t('common.cancel', 'Cancel')}</Button>
+            <Button disabled={sending} onClick={sendRequest}>{t('tariffRequests.send')}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

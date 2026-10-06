@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Package, ShoppingCart, Store,
-  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell, BarChart2, Building2, Coins, Clapperboard, Handshake,
+  Percent, Wallet, LogOut, PanelLeftClose, PanelLeftOpen, Images, LayoutTemplate, Crown, ShieldCheck, Bell, BarChart2, Building2, Coins, Clapperboard, Handshake, MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/store/auth'
@@ -24,6 +24,7 @@ function SellerSidebar({ collapsed, onToggle }) {
     { to: '/seller',          label: t('nav.dashboard'),    icon: LayoutDashboard, end: true },
     { to: '/seller/products', label: t('nav.products'),     icon: Package, countKey: 'products' },
     { to: '/seller/orders',   label: t('nav.orders'),       icon: ShoppingCart },
+    { to: '/seller/chats',    label: t('chats.title'),      icon: MessageSquare, countKey: 'chats' },
     { to: '/seller/shop',     label: t('nav.myShop'),       icon: Store, countKey: 'shopTypeRequests' },
     { to: '/seller/discounts',label: t('nav.discounts'),    icon: Percent },
     { to: '/seller/buyer-requests', label: t('nav.buyerRequests'), icon: Handshake },
@@ -32,7 +33,7 @@ function SellerSidebar({ collapsed, onToggle }) {
     { to: '/seller/media',    label: t('nav.media'),        icon: Images },
     { to: '/seller/banners',  label: t('nav.banners'),      icon: LayoutTemplate },
     { to: '/seller/reels',    label: t('nav.reels', 'Reels'), icon: Clapperboard, countKey: 'reels' },
-    { to: '/seller/subscription',       label: t('nav.subscription'),       icon: Crown },
+    { to: '/seller/subscription',       label: t('nav.subscription'),       icon: Crown, countKey: 'tariffRequests' },
     { to: '/seller/push-notifications', label: t('nav.pushNotifications'),  icon: Bell },
     { to: '/seller/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2 },
     { to: '/seller/warehouses',         label: t('nav.warehouses', 'Warehouses'), icon: Building2 },

@@ -186,6 +186,14 @@ class Permissions {
     static COLOR_POST   = 361
     static COLOR_PUT    = 362
     static COLOR_DELETE = 363
+
+    static GUIDE_GET    = 364
+    static GUIDE_POST   = 365
+    static GUIDE_PUT    = 366
+    static GUIDE_DELETE = 367
+
+    static CHAT_GET  = 368
+    static CHAT_POST = 369
 }
 
 module.exports = Permissions

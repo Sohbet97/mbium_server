@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift, Palette, Handshake, Search, X,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift, Palette, Film, Handshake, Search, X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -39,6 +39,9 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/shops', label: t('nav.shops'), icon: Store, perm: Permissions.SHOP_GET },
     { to: '/admin/shop-applications', label: t('nav.shopApplications', 'Dükan arzalary'), icon: ClipboardList, perm: Permissions.SHOP_GET, countKey: 'shopApplications' },
     { to: '/admin/shop-type-requests', label: t('nav.shopTypeRequests'), icon: Tag, perm: null, countKey: 'shopTypeRequests' },
+    { to: '/admin/chats', label: t('chats.title'), icon: MessageSquare, perm: Permissions.CHAT_GET, countKey: 'chats' },
+    { to: '/admin/guide', label: t('guide.title'), icon: Film, perm: Permissions.GUIDE_GET },
+    { to: '/admin/tariff-requests', label: t('tariffRequests.title'), icon: ClipboardList, perm: Permissions.PLAN_GET, countKey: 'tariffRequests' },
     { to: '/admin/shop-types', label: t('nav.shopTypes'), icon: Store, perm: null },
     { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart, perm: Permissions.ORDER_GET },
     { to: '/admin/reviews', label: t('nav.reviews'), icon: Star, perm: Permissions.REVIEW_GET },

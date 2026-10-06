@@ -130,6 +130,7 @@ export default {
   },
 
   products: {
+    photoSearch: 'Поиск по фото', photoLabels: 'Поиск по фото', photoClear: 'Сбросить', photoNoLabels: 'На фото ничего не распознано',
     title: 'Товары', totalCount: '{{count}} товаров',
     addProduct: 'Добавить товар', editProduct: 'Редактировать товар', createProduct: 'Создать товар',
     searchPlaceholder: 'Поиск товаров…',
@@ -376,6 +377,36 @@ export default {
     title: 'Заявки магазинов',
   },
 
+  guide: {
+    title: 'Справочник', add: 'Добавить запись', edit: 'Редактировать запись', titleField: 'Название', description: 'Описание',
+    video: 'Видео', thumbnail: 'Превью', order: 'Порядок', status: 'Статус',
+    draft: 'Неактивно', published: 'Активно', empty: 'Записей пока нет',
+    chooseVideo: 'Выбрать / загрузить видео', changeVideo: 'Сменить видео',
+    chooseImage: 'Выбрать / загрузить изображение', changeImage: 'Сменить изображение', remove: 'Убрать',
+    titleRequired: 'Укажите название', deleteConfirm: 'Удалить эту запись?',
+  },
+
+  chats: {
+    title: 'Чаты', tab_all: 'Все', tab_shop: 'Магазин', tab_product: 'Товар', tab_support: 'Поддержка',
+    empty: 'Чатов пока нет', selectChat: 'Выберите чат', placeholder: 'Напишите ответ…',
+    loadOlder: 'Загрузить более ранние', readOnly: 'Этот чат доступен администратору только для чтения',
+    support: 'Поддержка', you: 'Вы', attachment: 'Вложение', openPage: 'Открыть страницу чатов',
+  },
+
+  tariffRequests: {
+    title: 'Заявки на тариф',
+    pending: 'На рассмотрении', approved: 'Одобрено', rejected: 'Отклонено', all: 'Все',
+    shop: 'Магазин', change: 'Смена тарифа', date: 'Дата',
+    approve: 'Одобрить', reject: 'Отклонить', comment: 'Комментарий (необязательно)', reason: 'Причина (необязательно)',
+    noRequests: 'Заявок на тариф нет', rejectTitle: 'Отклонить заявку', approveTitle: 'Одобрить заявку',
+    approveText: 'Магазину будет установлен запрошенный тариф.',
+    approvedMsg: 'Заявка одобрена', rejectedMsg: 'Заявка отклонена',
+    request: 'Подать заявку на тариф', requestTitle: 'Заявка на смену тарифа', send: 'Отправить заявку',
+    sent: 'Заявка отправлена', myRequests: 'Мои заявки',
+    pendingBanner: 'Ваша заявка на тариф «{{plan}}» ожидает рассмотрения',
+    adminComment: 'Комментарий администратора',
+  },
+
   shopTypeRequests: {
     title: 'Запросы на тип магазина',
     pending: 'Ожидает', approved: 'Одобрен', rejected: 'Отклонён',
@@ -591,7 +622,7 @@ export default {
     statsToday: 'Сегодня', statsWeek: 'На этой неделе', statsMonth: 'В этом месяце',
     ordersCount: '{{count}} заказов',
     transactionHistory: 'История операций', noTransactions: 'Операций пока нет',
-    txnOrderCredit: 'Оплата заказа', txnCommission: 'Комиссия Mbium', txnPayoutDebit: 'Выплата отправлена', txnPayoutReversal: 'Заказ отменён - средства возвращены',
+    txnOrderCredit: 'Оплата заказа', txnCommission: 'Комиссия Mbium', txnPayoutDebit: 'Выплата отправлена', txnPayoutReversal: 'Заказ отменён - средства возвращены', txnExternalDebit: 'Live / оплата сервиса',
     payoutMethod: 'Способ выплаты', methodCard: 'Карта', methodCash: 'Наличные',
     cardNumber: 'Номер карты', cardNumberPlaceholder: '9999 9999 9999 9999',
     enterCardNumber: 'Введите номер карты',

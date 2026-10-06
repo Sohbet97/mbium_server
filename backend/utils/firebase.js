@@ -59,20 +59,30 @@ function urlToPath(publicUrl) {
     return match ? `media/${match[1]}` : publicUrl
 }
 
+// FCM error codes meaning the token will never work again and should be dropped
+const INVALID_TOKEN_CODES = new Set([
+    'messaging/registration-token-not-registered',
+    'messaging/invalid-registration-token',
+    'messaging/invalid-argument',
+])
+
 /**
  * Send a push notification to multiple FCM tokens via multicast.
  * Automatically chunks into batches of 500 (FCM limit).
  * @param {string[]} tokens
  * @param {{ title: string, body: string, imageUrl?: string }} notification
  * @param {object} [data]  Extra key-value pairs (all values must be strings)
- * @returns {Promise<{ successCount: number, failureCount: number }>}
+ * @returns {Promise<{ successCount: number, failureCount: number, invalidTokens: string[], errors: string[] }>}
  */
 async function sendMulticastNotification(tokens, notification, data = {}) {
-    if (!tokens.length) return { successCount: 0, failureCount: 0 }
+    tokens = [...new Set((tokens || []).filter(t => typeof t === 'string' && t.trim()))]
+    if (!tokens.length) return { successCount: 0, failureCount: 0, invalidTokens: [], errors: [] }
 
     const CHUNK = 500
     let successCount = 0
     let failureCount = 0
+    const invalidTokens = []
+    const errors = []
 
     const messaging = getMessaging()
     const stringData = Object.fromEntries(
@@ -92,9 +102,21 @@ async function sendMulticastNotification(tokens, notification, data = {}) {
         })
         successCount += res.successCount
         failureCount += res.failureCount
+
+        res.responses.forEach((r, idx) => {
+            if (r.success) return
+            const code = r.error?.code || 'unknown'
+            errors.push(code)
+            if (INVALID_TOKEN_CODES.has(code)) invalidTokens.push(chunk[idx])
+        })
     }
 
-    return { successCount, failureCount }
+    if (errors.length) {
+        const summary = errors.reduce((acc, c) => ({ ...acc, [c]: (acc[c] || 0) + 1 }), {})
+        console.warn('[FCM] delivery errors:', JSON.stringify(summary))
+    }
+
+    return { successCount, failureCount, invalidTokens, errors }
 }
 
 module.exports = { uploadBuffer, deleteFile, urlToPath, sendMulticastNotification }

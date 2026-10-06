@@ -34,6 +34,12 @@ export const Permissions = {
   GIFT_CREATOR_GET: 352,
   GIFT_TYPE_GET: 356,
   COLOR_GET: 360,
+  GUIDE_GET: 364,
+  GUIDE_POST: 365,
+  GUIDE_PUT: 366,
+  GUIDE_DELETE: 367,
+  CHAT_GET: 368,
+  CHAT_POST: 369,
 }
 
 // Required permission per /admin/* page. `null` = any logged-in admin.
@@ -71,6 +77,7 @@ export const ADMIN_PAGE_PERMISSIONS = {
   brands: Permissions.BRAND_GET,
   sizes: Permissions.SIZE_GET,
   colors: Permissions.COLOR_GET,
+  guide: Permissions.GUIDE_GET,
   deliveryTypes: Permissions.DELIVERY_TYPE_GET,
   suppliers: Permissions.SUPPLIER_GET,
   comments: Permissions.COMMENT_GET,

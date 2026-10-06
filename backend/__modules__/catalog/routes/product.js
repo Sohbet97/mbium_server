@@ -1,7 +1,9 @@
 const ProductController = require("../controllers/product");
 const router = require("express").Router();
+const { searchImageUpload } = require("../../../utils/upload");
 
 router.get("/", ProductController.get.bind(ProductController));
+router.post("/image-labels", searchImageUpload.single("image"), ProductController.imageLabels.bind(ProductController));
 router.get("/:id", ProductController.getById.bind(ProductController));
 router.post("/", ProductController.create.bind(ProductController));
 router.put("/:id", ProductController.update.bind(ProductController));

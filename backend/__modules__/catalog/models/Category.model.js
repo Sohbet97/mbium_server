@@ -39,6 +39,10 @@ module.exports = (sequelize) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
+        thumbnail: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
         order: {
             type: DataTypes.SMALLINT,
             allowNull: true

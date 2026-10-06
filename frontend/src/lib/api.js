@@ -101,6 +101,7 @@ export class AdminApi {
     approve: (id)       => http.patch(a(`${PATHS.PRODUCTS}/${id}/approve`)),
     reject:  (id, data) => http.patch(a(`${PATHS.PRODUCTS}/${id}/reject`), data),
     bulkUpdate: (data)  => http.patch(a(`${PATHS.PRODUCTS}/bulk`), data),
+    imageLabels: (formData) => http.post(a(`${PATHS.PRODUCTS}/image-labels`), formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
     variants: {
       create: (productId, data) => http.post(a(`${PATHS.PRODUCTS}/${productId}/variants`), data),
       update: (productId, variantId, data) => http.put(a(`${PATHS.PRODUCTS}/${productId}/variants/${variantId}`), data),
@@ -171,6 +172,17 @@ export class AdminApi {
     delete: (id)      => http.delete(a(`${PATHS.BANNER_TYPES}/${id}`)),
   }
   static delivers = crud(PATHS.DELIVERS)
+  static guide = crud('/guide')
+  static chat = {
+    list:     (params)       => http.get(a('/chat'), { params }),
+    messages: (id, params)   => http.get(a(`/chat/${id}/messages`), { params }),
+    send:     (id, data)     => http.post(a(`/chat/${id}/messages`), data),
+    read:     (id)           => http.put(a(`/chat/${id}/read`), {}),
+  }
+  static tariffRequests = {
+    getAll: (params)       => http.get(a('/tariff/request'), { params }),
+    review: (id, data)     => http.put(a(`/tariff/request/${id}`), data),
+  }
   static plans = {
     getAll:  (params) => http.get(a(PATHS.PLANS), { params }),
     getOne:  (id)     => http.get(a(`${PATHS.PLANS}/${id}`)),
@@ -541,6 +553,10 @@ export class SellerApi {
     update:  (id, data)     => http.put(s(`/banners/${id}`), data),
     delete:  (id)           => http.delete(s(`/banners/${id}`)),
   }
+  static tariffRequests = {
+    getAll: (params) => http.get(s('/tariff/request'), { params }),
+    create: (data)   => http.post(s('/tariff/request'), data),
+  }
   static plans = {
     getAll:          () => http.get(s('/plans')),
     getSubscription: () => http.get(s('/plans/subscription')),
@@ -563,6 +579,12 @@ export class SellerApi {
     attachToProduct:    (productId, data, variantId) => http.post(s(`/media/product/${productId}`), { ...data, variant_id: variantId ?? undefined }),
     updateProductMedia: (productId, mediaId, data, variantId) => http.patch(s(`/media/product/${productId}/${mediaId}`), { ...data, variant_id: variantId ?? undefined }),
     detachFromProduct:  (productId, mediaId, variantId)   => http.delete(s(`/media/product/${productId}/${mediaId}`), { params: variantId != null ? { variant_id: variantId } : {} }),
+  }
+  static chat = {
+    list:     (params)       => http.get(s('/chat'), { params }),
+    messages: (id, params)   => http.get(s(`/chat/${id}/messages`), { params }),
+    send:     (id, data)     => http.post(s(`/chat/${id}/messages`), data),
+    read:     (id)           => http.put(s(`/chat/${id}/read`), {}),
   }
   static support = {
     getRoom:     ()     => http.get(s('/support/room')),

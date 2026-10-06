@@ -1,5 +1,6 @@
 const { Op, literal } = require("sequelize");
-const { buildTsQuery } = require("../../../services/search");
+const { buildTsQuery, keywordSql, NAME_COL } = require("../../../services/search");
+const ImageSearchService = require("../../../services/image-search");
 const ApiError = require("../../../exceptions/api-error");
 const db = require("../../../models");
 const { FUNCTIONS } = require("../../../utils/functions");
@@ -10,18 +11,33 @@ const CATALOG_CONSTANTS = require("../utils/constants");
 const productSchema = require("../validators/product.schema");
 const priceTierSchema = require("../validators/price-tier.schema");
 
+
 class ProductController {
     static async get(req, res, next) {
         try {
             const paranoid = !req.query?.paranoid;
             const filter = await this.getFilter(req.query);
             const { limit, sort: defaultSort, skip } = FUNCTIONS.getQueryParams(req);
-            const sort = req.query?.sort === "random" ? [literal("RANDOM()")] : defaultSort;
+            let sort = req.query?.sort === "random" ? [literal("RANDOM()")] : defaultSort;
+            // Photo search: most relevant first (product-type matches weigh more than extra words)
+            if (req.query?.labels && !req.query?.sort) {
+                const kw = keywordSql(String(req.query.labels).split(","), String(req.query.labels_extra ?? "").split(","), NAME_COL('"products"'))
+                if (kw) sort = [[literal(`(${kw.score})`), "DESC"], ...defaultSort]
+            }
             const [data, count] = await Promise.all([
                 ProductService.get(filter, limit, sort, skip, paranoid),
                 ProductService.getCount(filter, paranoid),
             ]);
             return res.status(200).json({ data, count });
+        } catch (e) { next(e); }
+    }
+
+    // POST /admin/products/image-labels — photo -> English labels, to feed the list's `labels` filter
+    static async imageLabels(req, res, next) {
+        try {
+            if (!req.file) throw ApiError.BadRequest("image is required");
+            const { labels, primary, extra } = await ImageSearchService.detectKeywords(req.file.buffer, req.file.mimetype);
+            return res.status(200).json({ labels, primary, extra });
         } catch (e) { next(e); }
     }
 
@@ -254,7 +270,7 @@ class ProductController {
 
     // `search` is accepted as an alias of `text` so a client using either name
     // filters instead of silently getting the unfiltered list
-    static async getFilter({ text, search, category_id, shop_id, brand_id, brands, free_delivery, color_hex, is_active, status, moderation_status, paranoid } = {}) {
+    static async getFilter({ text, search, labels, labels_extra, category_id, shop_id, brand_id, brands, free_delivery, color_hex, is_active, status, moderation_status, paranoid } = {}) {
         const filter = {};
         const term = text ?? search;
         if (term) {
@@ -274,6 +290,12 @@ class ProductController {
                     { sku:     { [Op.iLike]: `%${term}%` } },
                 ]
             }
+        }
+        // Photo search: a product must contain ANY of the `labels` (product-type words) in its name/SKU,
+        // as a substring — so "phone" finds "Iphone". `labels_extra` only affects ordering (see get()).
+        if (labels) {
+            const kw = keywordSql(String(labels).split(","), [], NAME_COL('"products"'))
+            if (kw) filter[Op.and] = [...(filter[Op.and] ?? []), literal(kw.where)]
         }
         if (category_id) {
             const ids = await CategoryService.getDescendantIds(category_id);

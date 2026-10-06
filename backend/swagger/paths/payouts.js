@@ -68,6 +68,36 @@ module.exports = {
             responses: { 200: { description: "Balance list", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/SellerBalance" } } } } } } } },
         },
     },
+    "/seller/balance/debit": {
+        post: {
+            tags: [tag],
+            summary: "Debit the shop balance (called by the Live project)",
+            description:
+                "Charges the authenticated seller's own shop (`available_balance`). " +
+                "Idempotent per `reference_id`: a repeated request returns the first result and does not debit again " +
+                "(a different `amount` with a used `reference_id` returns 409). " +
+                "Insufficient balance returns 400 and the balance is unchanged (never negative). " +
+                "Every debit is recorded in the shop's transaction history as `EXTERNAL_DEBIT`.",
+            security,
+            requestBody: {
+                required: true,
+                content: { "application/json": { schema: {
+                    type: "object",
+                    required: ["amount", "reason", "reference_id"],
+                    properties: {
+                        amount:       { type: "number", example: 50, description: "Positive amount" },
+                        reason:       { type: "string", example: "live", maxLength: 50 },
+                        reference_id: { type: "string", example: "live-8f3a2c", maxLength: 100 },
+                    },
+                }}},
+            },
+            responses: {
+                200: { description: "Debited (or the original result of a repeated request)", content: { "application/json": { schema: { type: "object", properties: { balance: { type: "number", example: 450 }, transaction_id: { type: "integer", example: 10231 } } } } } },
+                400: { description: "Validation error or insufficient balance" },
+                409: { description: "reference_id already used with a different amount" },
+            },
+        },
+    },
     "/admin/seller-balance/{shopId}": {
         get: {
             tags: [tag],

@@ -130,6 +130,7 @@ export default {
   },
 
   products: {
+    photoSearch: 'Surat boýunça gözleg', photoLabels: 'Surat gözlegi', photoClear: 'Arassala', photoNoLabels: 'Suratda hiç zat tanalmady',
     title: 'Harytlar', totalCount: '{{count}} haryt',
     addProduct: 'Haryt goş', editProduct: 'Haryt üýtgetmek', createProduct: 'Haryt döret',
     searchPlaceholder: 'Haryt gözle…',
@@ -376,6 +377,36 @@ export default {
     title: 'Dükan arzalary',
   },
 
+  guide: {
+    title: 'Gollanma', add: 'Gollanma goş', edit: 'Gollanmany üýtget', titleField: 'Ady', description: 'Beýany',
+    video: 'Wideo', thumbnail: 'Prewýu', order: 'Tertip', status: 'Ýagdaýy',
+    draft: 'Aktiw däl', published: 'Aktiw', empty: 'Entek gollanma ýok',
+    chooseVideo: 'Wideo saýla / ýükle', changeVideo: 'Wideony çalyş',
+    chooseImage: 'Surat saýla / ýükle', changeImage: 'Suraty çalyş', remove: 'Aýyr',
+    titleRequired: 'Ady hökman', deleteConfirm: 'Bu gollanma pozulsynmy?',
+  },
+
+  chats: {
+    title: 'Çatlar', tab_all: 'Hemmesi', tab_shop: 'Dükan', tab_product: 'Haryt', tab_support: 'Goldaw',
+    empty: 'Entek çat ýok', selectChat: 'Çat saýlaň', placeholder: 'Jogap ýazyň…',
+    loadOlder: 'Öňki habarlary ýükle', readOnly: 'Bu çat administrator üçin diňe okamak',
+    support: 'Goldaw', you: 'Siz', attachment: 'Goşundy', openPage: 'Çatlar sahypasyny aç',
+  },
+
+  tariffRequests: {
+    title: 'Tarif arzalary',
+    pending: 'Garaşylýar', approved: 'Tassyklandy', rejected: 'Ret edildi', all: 'Hemmesi',
+    shop: 'Dükan', change: 'Tarif üýtgetmek', date: 'Sene',
+    approve: 'Tassykla', reject: 'Ret et', comment: 'Bellik (hökman däl)', reason: 'Sebäp (hökman däl)',
+    noRequests: 'Tarif arzalary ýok', rejectTitle: 'Arzany ret et', approveTitle: 'Arzany tassykla',
+    approveText: 'Dükana soralan tarif berler.',
+    approvedMsg: 'Arza tassyklandy', rejectedMsg: 'Arza ret edildi',
+    request: 'Bu tarif üçin arza ber', requestTitle: 'Tarif üýtgetmek arzasy', send: 'Arzany ugrat',
+    sent: 'Arza ugradyldy', myRequests: 'Meniň arzalarym',
+    pendingBanner: '“{{plan}}” tarifi üçin arzaňyz seljerilmegine garaşýar',
+    adminComment: 'Administratoryň bellik',
+  },
+
   shopTypeRequests: {
     title: 'Görnüş üýtgetme arzalary',
     pending: 'Garaşylýar', approved: 'Tassyklanan', rejected: 'Ret edildi',
@@ -591,7 +622,7 @@ export default {
     statsToday: 'Bugün', statsWeek: 'Şu hepde', statsMonth: 'Şu aý',
     ordersCount: '{{count}} sargyt',
     transactionHistory: 'Amallar taryhy', noTransactions: 'Entek amal ýok',
-    txnOrderCredit: 'Sargyt tölegi', txnCommission: 'Mbium komissiýasy', txnPayoutDebit: 'Pul geçirildi', txnPayoutReversal: 'Sargyt ýatyryldy - serişde yzyna alyndy',
+    txnOrderCredit: 'Sargyt tölegi', txnCommission: 'Mbium komissiýasy', txnPayoutDebit: 'Pul geçirildi', txnPayoutReversal: 'Sargyt ýatyryldy - serişde yzyna alyndy', txnExternalDebit: 'Live / hyzmat tölegi',
     payoutMethod: 'Töleg usuly', methodCard: 'Karta', methodCash: 'Nagt',
     cardNumber: 'Karta belgisi', cardNumberPlaceholder: '9999 9999 9999 9999',
     enterCardNumber: 'Karta belgisini giriziň',

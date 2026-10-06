@@ -65,6 +65,22 @@ module.exports = {
         },
     },
 
+    '/buyer/reels/{id}/view': {
+        post: {
+            tags: ['Buyer — Reels'],
+            summary: 'Record a view of a reel (call when the reel is played in the feed)',
+            description:
+                'The feed (`GET /buyer/reels`) does not count views — the app calls this once per play. ' +
+                'Send the bearer token when logged in: a buyer counts once per reel. ' +
+                'Without a token every call counts. Returns the updated `view_count`.',
+            parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
+            responses: {
+                200: { description: 'Updated count', ...json({ type: 'object', properties: { view_count: { type: 'integer' } } }) },
+                404: { description: 'Not found' },
+            },
+        },
+    },
+
     '/buyer/reels/{id}/share': {
         post: {
             tags: ['Buyer — Reels'],

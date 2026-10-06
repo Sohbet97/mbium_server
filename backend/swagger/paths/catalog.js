@@ -79,6 +79,25 @@ module.exports = {
     },
 
     // ── Products ─────────────────────────────────────────────────────────────────
+    "/admin/products/image-labels": {
+        post: {
+            tags: [tag],
+            summary: "Detect labels in a photo (Google Vision) for the product list's photo filter",
+            description: "Send the photo as multipart `image` (max 8 MB). Google Vision detects labels and Gemini turns them into search words in Turkmen, Russian and English (falls back to the raw English labels if Gemini is unavailable). Pass `primary` as `labels` and `extra` as `labels_extra` to `GET /admin/products`. Needs `GOOGLE_VISION_API_KEY` (503 otherwise).",
+            security,
+            requestBody: { required: true, content: { "multipart/form-data": { schema: { type: "object", required: ["image"], properties: { image: { type: "string", format: "binary" } } } } } },
+            responses: {
+                200: { description: "Search words", content: { "application/json": { schema: { type: "object", properties: {
+                    labels:  { type: "array", items: { type: "string" }, description: "Raw Vision labels (English)" },
+                    primary: { type: "array", items: { type: "string" }, description: "Product-type words in tk/ru/en — use as `labels`" },
+                    extra:   { type: "array", items: { type: "string" }, description: "Extra words — use as `labels_extra`" },
+                } } } } },
+                400: { description: "image missing" },
+                502: { description: "Google Vision request failed" },
+                503: { description: "Photo search is not configured" },
+            },
+        },
+    },
     "/admin/products": {
         get: {
             tags: [tag],
@@ -86,6 +105,8 @@ module.exports = {
             security,
             parameters: [
                 { in: "query", name: "text", schema: { type: "string" }, description: "Search name/SKU" },
+                { in: "query", name: "labels", schema: { type: "string" }, example: "Shoe,Footwear", description: "Photo search: comma-separated product-type words (`primary` from `POST /admin/products/image-labels`, Turkmen/Russian/English). Matches products containing ANY of them in name/name_ru/name_eng/SKU/description." },
+                { in: "query", name: "labels_extra", schema: { type: "string" }, description: "Photo search: extra words (`extra` from image-labels). Not a filter — only ranks products that matched `labels` higher. Without `sort`, results with `labels` are ordered by relevance." },
                 { in: "query", name: "category_id", schema: { type: "integer" }, description: "Recursively includes products of all child categories, at any nesting depth." },
                 { in: "query", name: "shop_id", schema: { type: "integer" } },
                 { in: "query", name: "brand_id", schema: { type: "integer" } },

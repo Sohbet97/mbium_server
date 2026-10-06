@@ -4,6 +4,7 @@ const Permissions = require("../../utils/permissions");
 
 const plansRouter = require("./routes/plans");
 const subscriptionsRouter = require("./routes/subscriptions");
+const tariffRequestsRouter = require("./routes/tariff-requests");
 
 const subscriptionsModuleRouter = require("express").Router();
 
@@ -19,5 +20,6 @@ subscriptionsModuleRouter.use(
 
 subscriptionsModuleRouter.use("/plans", plansRouter);
 subscriptionsModuleRouter.use("/shop-subscriptions", subscriptionsRouter);
+subscriptionsModuleRouter.use("/tariff/request", tariffRequestsRouter);
 
 module.exports = subscriptionsModuleRouter;

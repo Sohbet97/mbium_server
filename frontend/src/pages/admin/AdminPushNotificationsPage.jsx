@@ -265,7 +265,7 @@ function CampaignTable({ campaigns, total, page, setPage, t }) {
             <tbody>
               {campaigns.map(c => (
                 <tr key={c.id} className="border-b last:border-0 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.created_at)}</td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.sent_at ?? c.createdAt ?? c.created_at)}</td>
                   <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                     {c.shop ? c.shop.name : <span className="text-xs italic text-slate-400">{t('adminPn.platformWide')}</span>}
                   </td>

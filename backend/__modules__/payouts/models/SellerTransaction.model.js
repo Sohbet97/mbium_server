@@ -7,6 +7,7 @@ const SELLER_TRANSACTION_TYPES = {
     PAYOUT_REVERSAL: "PAYOUT_REVERSAL",
     PURCHASE_DEBIT: "PURCHASE_DEBIT",
     PURCHASE_REFUND: "PURCHASE_REFUND",
+    EXTERNAL_DEBIT: "EXTERNAL_DEBIT",
 };
 
 const SELLER_TRANSACTION_STATUSES = {
@@ -63,6 +64,14 @@ module.exports = (sequelize) => {
         },
         note: {
             type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        reason: {
+            type: DataTypes.STRING(50),
+            allowNull: true,
+        },
+        reference_id: {
+            type: DataTypes.STRING(100),
             allowNull: true,
         },
     }, {

@@ -57,15 +57,19 @@ class ReelService {
         )
     }
 
+    // Returns the reel's current view_count after counting this view
     static async recordView(reelId, userId) {
-        if (!userId) return db.Reel.increment('view_count', { where: { id: reelId } })
-
-        const [, created] = await db.ReelView.findOrCreate({
-            where: { user_id: userId, reel_id: reelId },
-            defaults: { user_id: userId, reel_id: reelId },
-        })
-        if (created) await db.Reel.increment('view_count', { where: { id: reelId } })
-        return { created }
+        let counted = true
+        if (userId) {
+            const [, created] = await db.ReelView.findOrCreate({
+                where: { user_id: userId, reel_id: reelId },
+                defaults: { user_id: userId, reel_id: reelId },
+            })
+            counted = created
+        }
+        if (counted) await db.Reel.increment('view_count', { where: { id: reelId } })
+        const reel = await db.Reel.findByPk(reelId, { attributes: ['view_count'] })
+        return reel?.view_count ?? 0
     }
 
     static async incrementShares(id) {

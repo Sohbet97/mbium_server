@@ -150,4 +150,60 @@ module.exports = {
             },
         },
     },
+    // ── Tariff change requests ────────────────────────────────────────────────────
+    "/seller/tariff/request": {
+        post: {
+            tags: ["Tariff requests"],
+            summary: "Request a tariff (plan) change for the shop",
+            description: "Only one `pending` request per shop. Requesting the shop's current tariff returns 400; a second pending request returns 409. Tariffs come from `GET /seller/plans`.",
+            security,
+            requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["tariff_id"], properties: { tariff_id: { type: "integer" }, comment: { type: "string" } } } } } },
+            responses: {
+                201: { description: "Request created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/TariffRequest" } } } } } },
+                400: { description: "Validation error or tariff already active" },
+                404: { description: "Tariff not found / inactive" },
+                409: { description: "A pending request already exists" },
+            },
+        },
+        get: {
+            tags: ["Tariff requests"],
+            summary: "This shop's tariff requests and their status",
+            security,
+            parameters: [
+                { in: "query", name: "limit", schema: { type: "integer" } },
+                { in: "query", name: "skip",  schema: { type: "integer" } },
+            ],
+            responses: { 200: { description: "Requests, newest first", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/TariffRequest" } }, count: { type: "integer" } } } } } } },
+        },
+    },
+    "/admin/tariff/request": {
+        get: {
+            tags: ["Tariff requests"],
+            summary: "All tariff requests",
+            security,
+            parameters: [
+                { in: "query", name: "status",  schema: { type: "string", enum: ["pending", "approved", "rejected"] } },
+                { in: "query", name: "shop_id", schema: { type: "integer" } },
+                { in: "query", name: "limit",   schema: { type: "integer" } },
+                { in: "query", name: "skip",    schema: { type: "integer" } },
+            ],
+            responses: { 200: { description: "Requests, newest first", content: { "application/json": { schema: { type: "object", properties: { data: { type: "array", items: { $ref: "#/components/schemas/TariffRequest" } }, count: { type: "integer" } } } } } } },
+        },
+    },
+    "/admin/tariff/request/{id}": {
+        put: {
+            tags: ["Tariff requests"],
+            summary: "Approve or reject a tariff request",
+            description: "On `approved` the shop's tariff is switched to the requested one (through the subscription service, so history is kept). Only `pending` requests can be processed.",
+            security,
+            parameters: [idParam],
+            requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["status"], properties: { status: { type: "string", enum: ["approved", "rejected"] }, comment: { type: "string" } } } } } },
+            responses: {
+                200: { description: "Updated request", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/TariffRequest" } } } } } },
+                400: { description: "Invalid status" },
+                404: { description: "Not found" },
+                409: { description: "Already processed" },
+            },
+        },
+    },
 };

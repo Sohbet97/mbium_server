@@ -193,6 +193,57 @@ class PayoutService {
         });
     }
 
+    // Debit requested by another project (Live) through POST /seller/balance/debit.
+    // Idempotent per (shop, reference_id): a repeated call returns the first result and never
+    // debits twice. The conditional decrement keeps the balance from ever going negative.
+    static async debitExternal(shopId, { amount, reason, reference_id }) {
+        const amt = Math.round(Number(amount) * 100) / 100;
+        const toResult = (tx) => ({ balance: parseFloat(tx.balance_after), transaction_id: tx.id });
+
+        const findExisting = async () => {
+            const tx = await db.SellerTransaction.findOne({
+                where: { shop_id: shopId, reference_id, type: SELLER_TRANSACTION_TYPES.EXTERNAL_DEBIT },
+            });
+            if (tx && Math.abs(parseFloat(tx.amount)) !== amt) {
+                throw ApiError.Conflict("Bu reference_id başga mukdar bilen eýýäm ulanyldy");
+            }
+            return tx;
+        };
+
+        const existing = await findExisting();
+        if (existing) return toResult(existing);
+
+        try {
+            return await db.sequelize.transaction(async (t) => {
+                const [affected] = await db.SellerBalance.update(
+                    { available_balance: db.sequelize.literal(`available_balance - ${amt}`) },
+                    { where: { shop_id: shopId, available_balance: { [Op.gte]: amt } }, transaction: t }
+                );
+                if (!affected) throw ApiError.BadRequest("Balans ýeterlik däl");
+
+                const balance = await db.SellerBalance.findOne({ where: { shop_id: shopId }, transaction: t });
+                const tx = await db.SellerTransaction.create({
+                    shop_id: shopId,
+                    type: SELLER_TRANSACTION_TYPES.EXTERNAL_DEBIT,
+                    amount: -amt,
+                    status: SELLER_TRANSACTION_STATUSES.AVAILABLE,
+                    balance_after: balance.available_balance,
+                    reason,
+                    reference_id,
+                    note: `${reason} - ${reference_id}`,
+                }, { transaction: t });
+                return toResult(tx);
+            });
+        } catch (e) {
+            // Two concurrent requests with the same reference_id: the loser rolled back, return the winner
+            if (e.name === "SequelizeUniqueConstraintError") {
+                const tx = await findExisting();
+                if (tx) return toResult(tx);
+            }
+            throw e;
+        }
+    }
+
     // Returns a previously debited purchase amount to the shop's available balance.
     static async refundPurchase(shopId, amount, referenceId = null, note = null) {
         const amt = parseFloat(amount);

@@ -60,3 +60,17 @@ for f in migrations/078_banner_placements_payment.sql migrations/079_ai_settings
   PGPASSWORD='P@ssword*12345' psql -h localhost -p 5432 -U postgres -d mbium -f "$f" || break
 done
 ****
+
+cd backend
+for f in migrations/080_category_thumbnail.sql migrations/081_seller_debit.sql migrations/082_tariff_requests.sql migrations/083_guide.sql; do
+  echo "== $f =="
+  PGPASSWORD='P@ssword*12345' psql -h localhost -p 5432 -U postgres -d mbium -f "$f" || break
+done
+
+# After 080: fill thumbnails for existing categories (one-off)
+node utils/backfill-category-thumbnails.js
+
+# After 083: new permissions GUIDE_* (364-367) and CHAT_* (368-369) — refresh the Superadmin role,
+# then tick them for other roles in Admin → Roles
+node -e "require('dotenv').config(); const db=require('./models'); db.sequelize.authenticate().then(()=>require('./seeders/00-superadmin')(db)).then(()=>process.exit(0))"
+****

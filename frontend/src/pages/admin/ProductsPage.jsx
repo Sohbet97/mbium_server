@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Plus, Search, RefreshCw, MoreHorizontal, Package, X, Check, Ban } from 'lucide-react'
+import { Plus, Search, RefreshCw, MoreHorizontal, Package, X, Check, Ban, Camera, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -46,6 +46,10 @@ export default function ProductsPage() {
   const [moderationFilter, setModerationFilter] = useState('')
   const [colorFilter, setColorFilter] = useState([])
   const [colors, setColors] = useState([])
+  const [imageLabels, setImageLabels] = useState([])        // product-type words (a product must match one)
+  const [imageExtra, setImageExtra] = useState([])          // extra words, only used for ordering
+  const [imageSearching, setImageSearching] = useState(false)
+  const photoInputRef = useRef(null)
   const [loading, setLoading] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [selectedIds, setSelectedIds] = useState([])
@@ -53,6 +57,26 @@ export default function ProductsPage() {
   const limit = 20
 
   function fetchProducts() { setRefreshKey((k) => k + 1) }
+
+  async function handlePhoto(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setImageSearching(true)
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      const { data } = await AdminApi.products.imageLabels(fd)
+      if (!data.primary?.length) { toast.error(t('products.photoNoLabels')); return }
+      setImageLabels(data.primary)
+      setImageExtra(data.extra ?? [])
+      setPage(1)
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? t('toast.error'))
+    } finally {
+      setImageSearching(false)
+    }
+  }
 
   function toggleSelectAll() {
     setSelectedIds((prev) => prev.length === products.length ? [] : products.map((p) => p.id))
@@ -93,6 +117,10 @@ export default function ProductsPage() {
         if (categoryFilter) params.category_id = categoryFilter
         if (moderationFilter !== '') params.moderation_status = moderationFilter
         if (colorFilter.length) params.color_hex = colorFilter.join(',')
+        if (imageLabels.length) {
+          params.labels = imageLabels.join(',')
+          if (imageExtra.length) params.labels_extra = imageExtra.join(',')
+        }
         const { data } = await AdminApi.products.getAll(params)
         if (!cancelled) {
           setProducts(data?.data ?? data.data?.products ?? [])
@@ -104,7 +132,7 @@ export default function ProductsPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [page, debouncedSearch, shopFilter, categoryFilter, moderationFilter, colorFilter, refreshKey])
+  }, [page, debouncedSearch, shopFilter, categoryFilter, moderationFilter, colorFilter, imageLabels, imageExtra, refreshKey])
 
   useEffect(() => {
     Promise.all([
@@ -154,6 +182,17 @@ export default function ProductsPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
+        <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhoto} />
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-9 w-9"
+          title={t('products.photoSearch')}
+          disabled={imageSearching}
+          onClick={() => photoInputRef.current?.click()}
+        >
+          {imageSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+        </Button>
         <Select value={shopFilter} onChange={(e) => { setShopFilter(e.target.value); setPage(1) }} className="w-44">
           <option value="">{t('products.filterShop')}</option>
           {shops.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -177,6 +216,18 @@ export default function ProductsPage() {
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         </Button>
       </div>
+
+      {imageLabels.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap text-sm">
+          <Camera className="h-4 w-4 text-slate-400" />
+          <span className="text-slate-500">{t('products.photoLabels')}:</span>
+          {imageLabels.map((l) => <Badge key={l}>{l}</Badge>)}
+          {imageExtra.map((l) => <Badge key={l} variant="outline">{l}</Badge>)}
+          <Button variant="ghost" size="sm" className="h-7 gap-1" onClick={() => { setImageLabels([]); setImageExtra([]); setPage(1) }}>
+            <X className="h-3.5 w-3.5" /> {t('products.photoClear')}
+          </Button>
+        </div>
+      )}
 
       {selectedIds.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap rounded-md border bg-slate-50 dark:bg-black px-4 py-2.5">

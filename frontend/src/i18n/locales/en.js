@@ -131,6 +131,7 @@ export default {
   },
 
   products: {
+    photoSearch: 'Search by photo', photoLabels: 'Photo search', photoClear: 'Clear', photoNoLabels: 'Nothing recognised in this photo',
     title: 'Products', totalCount: '{{count}} products',
     addProduct: 'Add Product', editProduct: 'Edit Product', createProduct: 'Create Product',
     searchPlaceholder: 'Search products…',
@@ -377,6 +378,36 @@ export default {
     title: 'Shop Applications',
   },
 
+  guide: {
+    title: 'Guide', add: 'Add guide', edit: 'Edit guide', titleField: 'Title', description: 'Description',
+    video: 'Video', thumbnail: 'Thumbnail', order: 'Order', status: 'Status',
+    draft: 'Inactive', published: 'Active', empty: 'No guide entries yet',
+    chooseVideo: 'Choose / upload video', changeVideo: 'Change video',
+    chooseImage: 'Choose / upload image', changeImage: 'Change image', remove: 'Remove',
+    titleRequired: 'Title is required', deleteConfirm: 'Delete this guide entry?',
+  },
+
+  chats: {
+    title: 'Chats', tab_all: 'All', tab_shop: 'Shop', tab_product: 'Product', tab_support: 'Support',
+    empty: 'No chats yet', selectChat: 'Select a chat', placeholder: 'Write a reply…',
+    loadOlder: 'Load older messages', readOnly: 'This chat is read-only for admins',
+    support: 'Support', you: 'You', attachment: 'Attachment', openPage: 'Open Chats page',
+  },
+
+  tariffRequests: {
+    title: 'Tariff Requests',
+    pending: 'Pending', approved: 'Approved', rejected: 'Rejected', all: 'All',
+    shop: 'Shop', change: 'Tariff change', date: 'Date',
+    approve: 'Approve', reject: 'Reject', comment: 'Comment (optional)', reason: 'Reason (optional)',
+    noRequests: 'No tariff requests', rejectTitle: 'Reject request', approveTitle: 'Approve request',
+    approveText: 'The shop will be switched to the requested tariff.',
+    approvedMsg: 'Request approved', rejectedMsg: 'Request rejected',
+    request: 'Request this tariff', requestTitle: 'Request tariff change', send: 'Send request',
+    sent: 'Request sent', myRequests: 'My requests',
+    pendingBanner: 'Your request for “{{plan}}” is waiting for review',
+    adminComment: 'Admin comment',
+  },
+
   shopTypeRequests: {
     title: 'Shop Type Requests',
     pending: 'Pending', approved: 'Approved', rejected: 'Rejected',
@@ -592,7 +623,7 @@ export default {
     statsToday: 'Today', statsWeek: 'This Week', statsMonth: 'This Month',
     ordersCount: '{{count}} orders',
     transactionHistory: 'Transaction History', noTransactions: 'No transactions yet',
-    txnOrderCredit: 'Order payment', txnCommission: 'Mbium commission', txnPayoutDebit: 'Payout sent', txnPayoutReversal: 'Order cancelled - refund reversed',
+    txnOrderCredit: 'Order payment', txnCommission: 'Mbium commission', txnPayoutDebit: 'Payout sent', txnPayoutReversal: 'Order cancelled - refund reversed', txnExternalDebit: 'Live / service charge',
     payoutMethod: 'Payout method', methodCard: 'Card', methodCash: 'Cash',
     cardNumber: 'Card number', cardNumberPlaceholder: '9999 9999 9999 9999',
     enterCardNumber: 'Enter card number',

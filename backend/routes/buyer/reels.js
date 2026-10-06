@@ -40,6 +40,17 @@ router.get('/:id', async (req, res, next) => {
     } catch (e) { next(e) }
 })
 
+// POST /buyer/reels/:id/view  — record that the reel was watched (call once per play from the feed)
+// Logged-in buyers count once per reel; anonymous calls count every time.
+router.post('/:id/view', async (req, res, next) => {
+    try {
+        const model = await ReelService.getById(req.params.id)
+        if (!model || !model.is_active || model.moderation_status !== 1) return res.status(404).json({ message: 'Reel tapylmady' })
+        const view_count = await ReelService.recordView(model.id, req.user?.id)
+        return res.json({ view_count })
+    } catch (e) { next(e) }
+})
+
 // POST /buyer/reels/:id/share  — record a share
 router.post('/:id/share', async (req, res, next) => {
     try {

@@ -13,6 +13,8 @@ const SizeService     = require('../../__modules__/sizes/services/SizeService');
 const ColorService    = require('../../__modules__/colors/services/ColorService');
 const SupplierService = require('../../__modules__/suppliers/services/SupplierService');
 const SearchService   = require('../../services/search');
+const ImageSearchService = require('../../services/image-search');
+const { searchImageUpload } = require('../../utils/upload');
 const CATALOG_CONSTANTS = require('../../__modules__/catalog/utils/constants');
 
 // ── Sort helper ───────────────────────────────────────────────────────────────
@@ -97,6 +99,16 @@ router.get('/search', async (req, res, next) => {
             shopLimit:     Math.min(Number(shop_limit)     || 8,  20),
         })
         return res.json(result)
+    } catch (e) { next(e) }
+})
+
+// POST /buyer/catalog/search/image  (multipart: image, page, limit)
+router.post('/search/image', searchImageUpload.single('image'), async (req, res, next) => {
+    try {
+        if (!req.file) throw ApiError.BadRequest('image is required')
+        const page  = Math.max(parseInt(req.body.page  ?? req.query.page)  || 1, 1)
+        const limit = Math.min(Math.max(parseInt(req.body.limit ?? req.query.limit) || 20, 1), 50)
+        return res.json(await ImageSearchService.searchByImage(req.file.buffer, { page, limit, mimeType: req.file.mimetype }))
     } catch (e) { next(e) }
 })
 

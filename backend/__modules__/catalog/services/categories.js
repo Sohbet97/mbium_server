@@ -1,9 +1,49 @@
+const path = require("path");
+const fs = require("fs");
+const { v4: uuidv4 } = require("uuid");
 const { Op } = require("sequelize");
 const db = require("../../../models");
 const CATALOG_CONSTANTS = require("../utils/constants");
 const { STATUSE_ACTIVE } = require("../../../utils/statuses");
+const { uploadBuffer, deleteFile, urlToPath } = require("../../../utils/firebase");
+
+let sharp;
+try { sharp = require("sharp"); } catch { sharp = null; }
+
+const MEDIA_BASE = path.resolve(process.cwd(), "storage", "media");
+const OWN_THUMB_PREFIX = "cat_thumb_";
 
 class CategoryService {
+    // Small version of a category image. Reuses the media library thumbnail when the image
+    // comes from there; otherwise generates one from the local file. Null when impossible.
+    static async buildThumbnail(image) {
+        if (!image) return null;
+
+        const media = await db.Media.findOne({ where: { url: image }, attributes: ["thumbnail_url"] });
+        if (media?.thumbnail_url) return media.thumbnail_url;
+
+        if (!sharp) return null;
+        try {
+            const filePath = path.join(MEDIA_BASE, urlToPath(image).replace(/^media\//, ""));
+            if (!filePath.startsWith(MEDIA_BASE) || !fs.existsSync(filePath)) return null;
+            const buffer = await sharp(filePath)
+                .resize(480, 480, { fit: "inside", withoutEnlargement: true })
+                .webp({ quality: 75 })
+                .toBuffer();
+            return await uploadBuffer(buffer, `media/thumbs/${OWN_THUMB_PREFIX}${uuidv4()}.webp`, "image/webp");
+        } catch (e) {
+            console.error("[category] thumbnail error:", e.message);
+            return null;
+        }
+    }
+
+    // Only thumbnails this service generated are ours to delete; media-library ones belong to Media
+    static async removeOwnThumbnail(thumbnail) {
+        if (thumbnail && path.basename(thumbnail).startsWith(OWN_THUMB_PREFIX)) {
+            await deleteFile(urlToPath(thumbnail));
+        }
+    }
+
     static async get(filter = {}, limit, sort = CATALOG_CONSTANTS.CATEGORY_SORT, skip = 0, paranoid = true) {
         return db.Category.findAll({
             where: filter,
@@ -78,6 +118,7 @@ class CategoryService {
             slug: req.body?.slug,
             icon: req.body?.icon,
             image: req.body?.image,
+            thumbnail: await this.buildThumbnail(req.body?.image),
             order: req.body?.order ?? null,
             status: req.body?.status ?? 0,
             createdBy: req.user?.id,
@@ -100,20 +141,28 @@ class CategoryService {
     }
 
     static async update(id, req) {
-        return db.Category.update(
-            {
-                parent_id: req.body?.parent_id || null,
-                name: req.body?.name,
-                name_ru: req.body?.name_ru,
-                name_eng: req.body?.name_eng,
-                slug: req.body?.slug,
-                icon: req.body?.icon,
-                image: req.body?.image,
-                order: req.body?.order ?? null,
-                status: req.body?.status,
-            },
-            { where: { id } }
-        );
+        const fields = {
+            parent_id: req.body?.parent_id || null,
+            name: req.body?.name,
+            name_ru: req.body?.name_ru,
+            name_eng: req.body?.name_eng,
+            slug: req.body?.slug,
+            icon: req.body?.icon,
+            image: req.body?.image,
+            order: req.body?.order ?? null,
+            status: req.body?.status,
+        };
+
+        // Rebuild the thumbnail only when the image is actually being set or replaced
+        if (req.body && "image" in req.body) {
+            const current = await db.Category.findOne({ where: { id }, attributes: ["image", "thumbnail"], paranoid: false });
+            if (current && current.image !== req.body.image) {
+                fields.thumbnail = await this.buildThumbnail(req.body.image);
+                await this.removeOwnThumbnail(current.thumbnail);
+            }
+        }
+
+        return db.Category.update(fields, { where: { id } });
     }
 
     static async delete(id, force = false) {

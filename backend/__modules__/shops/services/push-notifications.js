@@ -96,25 +96,48 @@ class PushNotificationService {
                 { title, body, imageUrl },
                 data ?? {}
             )
+            // "Sent" only when FCM actually accepted at least one message
             await campaign.update({
-                status:        1,
+                status:        result.successCount > 0 ? 1 : 2,
                 sent_at:       new Date(),
                 success_count: result.successCount,
                 fail_count:    result.failureCount,
             })
+            if (result.invalidTokens?.length) {
+                await this._pruneTokens(result.invalidTokens)
+                    .catch(e => console.warn('[Push] token prune failed:', e.message))
+            }
         } catch (err) {
-            await campaign.update({ status: 2 })
+            await campaign.update({ status: 2, sent_at: new Date(), fail_count: tokens.length })
+            console.error('[Push] dispatch failed:', err.message)
             throw err
         }
 
         return campaign
     }
 
-    static async send(shopId, createdBy, { title, body, imageUrl, data }, plan) {
+    // Remove tokens FCM reported as permanently invalid from every user that holds them
+    static async _pruneTokens(badTokens) {
+        await db.sequelize.query(
+            `UPDATE users
+                SET device_tokens = COALESCE((
+                    SELECT jsonb_agg(t) FROM jsonb_array_elements(device_tokens) AS t
+                    WHERE (t #>> '{}') <> ALL(ARRAY[:bad]::text[])
+                ), '[]'::jsonb)
+              WHERE device_tokens ?| ARRAY[:bad]::text[]`,
+            { replacements: { bad: badTokens } }
+        )
+    }
+
+    static async send(shopId, createdBy, { title, body, imageUrl, data, target }, plan) {
         const used = await this.getMonthlyCount(shopId)
         PlanLimits.assertQuota(plan, 'push_notif_monthly', used)
 
-        return this._dispatch(shopId, createdBy, { title, body, imageUrl, data })
+        // A seller may only reach their own customers (or specific users), never the whole platform
+        const type = target?.type
+        const scoped = !type || type === 'all' ? { ...target, type: 'ordered' } : target
+
+        return this._dispatch(shopId, createdBy, { title, body, imageUrl, data, target: scoped })
     }
 
     // Admin send — no quota check; shop_id may be null for platform-wide blasts

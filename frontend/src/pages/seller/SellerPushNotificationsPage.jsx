@@ -299,7 +299,7 @@ function CampaignHistory({ campaigns, total, page, setPage, loading, t }) {
             <tbody>
               {campaigns.map(c => (
                 <tr key={c.id} className="border-b last:border-0 dark:border-white/[0.06] hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.created_at)}</td>
+                  <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtDate(c.sent_at ?? c.createdAt ?? c.created_at)}</td>
                   <td className="px-4 py-3 dark:text-white max-w-[200px] truncate" title={c.title}>{c.title}</td>
                   <td className="px-4 py-3"><StatusBadge status={c.status} t={t} /></td>
                   <td className="px-4 py-3 text-right dark:text-slate-300">{c.recipient_count}</td>

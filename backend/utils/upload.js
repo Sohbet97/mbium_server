@@ -90,6 +90,16 @@ exports.shopLogoUpload = multer({
 });
 // ─────────────────────────────────────────────────────────────────────────────
 
+// In-memory single image (buyer photo search) — never written to disk
+exports.searchImageUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 8 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) cb(null, true);
+        else cb(new Error('Diňe surat faýllary rugsat edilýär'));
+    },
+});
+
 const AVATARS_DIR = path.join(CONSTANTS.PUBLIC_FOLDER, "avatars");
 if (!fs.existsSync(AVATARS_DIR)) fs.mkdirSync(AVATARS_DIR, { recursive: true });
 
