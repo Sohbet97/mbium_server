@@ -21,6 +21,8 @@ module.exports = (sequelize) => {
         timestamps: true,
         paranoid: false,
         updatedAt: false,
+        // migrations 060/061 created the column as created_at
+        createdAt: 'created_at',
         indexes: [
             { unique: true, fields: ['user_id', 'shop_id'] },
             { fields: ['user_id'] },

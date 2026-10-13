@@ -557,6 +557,15 @@ export class SellerApi {
     getAll: (params) => http.get(s('/tariff/request'), { params }),
     create: (data)   => http.post(s('/tariff/request'), data),
   }
+  static comments = {
+    getAll:       (params)        => http.get(s('/comments'), { params }),
+    reject:       (id)            => http.patch(s(`/comments/${id}/status`), { status: 'rejected' }),
+    reply:        (id, body)      => http.post(s(`/comments/${id}/reply`), { body }),
+    deleteReply:  (id)            => http.delete(s(`/comments/${id}`)),
+    getReviews:   (params)        => http.get(s('/comments/reviews'), { params }),
+    replyReview:  (id, content)   => http.post(s(`/comments/reviews/${id}/reply`), { content }),
+    deleteReviewReply: (id)       => http.delete(s(`/comments/reviews/${id}/reply`)),
+  }
   static plans = {
     getAll:          () => http.get(s('/plans')),
     getSubscription: () => http.get(s('/plans/subscription')),

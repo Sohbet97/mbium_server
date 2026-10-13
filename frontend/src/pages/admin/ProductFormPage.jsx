@@ -19,6 +19,7 @@ import { SearchSelect } from '@/components/common/SearchSelect'
 import { ColorSelect } from '@/components/common/ColorSelect'
 import { AdminApi } from '@/lib/api'
 import { ProductMediaManager } from '@/components/media/ProductMediaManager'
+import { AdminProduct3DMediaManager } from '@/components/media/SellerProduct3DMediaManager'
 import { PriceTierManager } from '@/components/common/PriceTierManager'
 import { toast } from 'sonner'
 
@@ -271,6 +272,18 @@ export default function ProductFormPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* 3D Models (edit mode only) */}
+          {isEdit && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">{t('products.models3d', '3D Models')}</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <AdminProduct3DMediaManager productId={id} />
+              </CardContent>
+            </Card>
+          )}
 
           {/* Category */}
           <Card>

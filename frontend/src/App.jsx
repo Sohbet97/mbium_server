@@ -48,6 +48,7 @@ import SellerShopPage from '@/pages/seller/SellerShopPage'
 import SellerDiscountsPage from '@/pages/seller/SellerDiscountsPage'
 import SellerPayoutsPage from '@/pages/seller/SellerPayoutsPage'
 import SellerBuyerRequestsPage from '@/pages/seller/SellerBuyerRequestsPage'
+import SellerCommentsPage from '@/pages/seller/SellerCommentsPage'
 import SellerCoinsPage from '@/pages/seller/SellerCoinsPage'
 import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
 import SellerProductVariantPage from '@/pages/seller/SellerProductVariantPage'
@@ -167,6 +168,7 @@ const router = createBrowserRouter([
           { path: 'discounts',  element: <SellerDiscountsPage /> },
           { path: 'payouts',    element: <SellerPayoutsPage /> },
           { path: 'buyer-requests', element: <SellerBuyerRequestsPage /> },
+          { path: 'comments', element: <SellerCommentsPage /> },
           { path: 'coins',      element: <SellerCoinsPage /> },
           { path: 'media',        element: <SellerMediaPage /> },
           { path: 'banners',      element: <SellerBannersPage /> },

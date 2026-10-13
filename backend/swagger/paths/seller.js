@@ -956,4 +956,108 @@ module.exports = {
             responses: { 200: { description: "Deleted" } },
         },
     },
+
+    // ── Comments & Reviews on the shop's own products ─────────────────────────────
+    "/seller/comments": {
+        get: {
+            tags: ["Seller"],
+            summary: "List root comments on the shop's products (with replies)",
+            security,
+            parameters: [
+                shopHeader,
+                { in: "query", name: "status", schema: { type: "string", enum: ["pending", "approved", "rejected"] } },
+                { in: "query", name: "product_id", schema: { type: "integer" } },
+                { in: "query", name: "page", schema: { type: "integer", default: 1 } },
+                { in: "query", name: "limit", schema: { type: "integer", default: 20 } },
+            ],
+            responses: {
+                200: {
+                    description: "Comments",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/Comment" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/seller/comments/{id}/status": {
+        patch: {
+            tags: ["Seller"],
+            summary: "Hide a comment on own product (sellers may only set 'rejected')",
+            security,
+            parameters: [idParam, shopHeader],
+            requestBody: { required: true, content: { "application/json": { schema: {
+                type: "object", required: ["status"], properties: { status: { type: "string", enum: ["rejected"] } },
+            } } } },
+            responses: { 200: { description: "Hidden" }, 400: { description: "Status other than 'rejected'" }, 404: { description: "Comment not found on this shop's products" } },
+        },
+    },
+    "/seller/comments/{id}/reply": {
+        post: {
+            tags: ["Seller"],
+            summary: "Reply to an approved root comment as the seller (auto-approved)",
+            security,
+            parameters: [idParam, shopHeader],
+            requestBody: { required: true, content: { "application/json": { schema: {
+                type: "object", required: ["body"], properties: { body: { type: "string" } },
+            } } } },
+            responses: {
+                201: { description: "Reply created", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/Comment" } } } } } },
+                400: { description: "Empty body, target is itself a reply, or target not approved" },
+                404: { description: "Comment not found on this shop's products" },
+            },
+        },
+    },
+    "/seller/comments/{id}": {
+        delete: {
+            tags: ["Seller"],
+            summary: "Delete one of the seller's own replies",
+            security,
+            parameters: [idParam, shopHeader],
+            responses: { 200: { description: "Deleted" }, 403: { description: "Not the seller's own reply" }, 404: { description: "Not found" } },
+        },
+    },
+    "/seller/comments/reviews": {
+        get: {
+            tags: ["Seller"],
+            summary: "List approved reviews on the shop's products",
+            security,
+            parameters: [
+                shopHeader,
+                { in: "query", name: "rating", schema: { type: "integer", minimum: 1, maximum: 5 } },
+                { in: "query", name: "replied", schema: { type: "string", enum: ["true", "false"] }, description: "Only answered / only unanswered" },
+                { in: "query", name: "page", schema: { type: "integer", default: 1 } },
+                { in: "query", name: "limit", schema: { type: "integer", default: 20 } },
+            ],
+            responses: {
+                200: {
+                    description: "Reviews (each with `reply` when answered)",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data: { type: "array", items: { $ref: "#/components/schemas/Review" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+    "/seller/comments/reviews/{id}/reply": {
+        post: {
+            tags: ["Seller"],
+            summary: "Reply to a review (one reply per review)",
+            security,
+            parameters: [idParam, shopHeader],
+            requestBody: { required: true, content: { "application/json": { schema: {
+                type: "object", required: ["content"], properties: { content: { type: "string" } },
+            } } } },
+            responses: { 201: { description: "Reply created" }, 404: { description: "Review not found on this shop's products" }, 409: { description: "Already replied" } },
+        },
+        delete: {
+            tags: ["Seller"],
+            summary: "Delete the shop's reply to a review",
+            security,
+            parameters: [idParam, shopHeader],
+            responses: { 200: { description: "Deleted" }, 404: { description: "Review not found on this shop's products" } },
+        },
+    },
 };

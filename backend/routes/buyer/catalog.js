@@ -171,6 +171,8 @@ router.get('/shops', async (req, res, next) => {
         const filter = { is_active: true };
         if (req.query.text) filter[Op.and] = [shopTextFilter(req.query.text)]
         if (req.query.type_id) filter.type_id = req.query.type_id;
+        if (req.query.region_id) filter.region_id = req.query.region_id;
+        if (req.query.city_id) filter.city_id = req.query.city_id;
         const [data, count] = await Promise.all([
             ShopService.get(filter, limit, resolveShopSort(), skip),
             ShopService.getCount(filter),

@@ -30,6 +30,7 @@ router.use('/chat',                require('../../__modules__/chats/routes/panel
 router.use('/analytics',           require('./analytics'));
 router.use('/warehouses',          require('./warehouses'));
 router.use('/reels',               require('./reels'));
+router.use('/comments',            require('./comments'));
 router.use('/buyer-requests',      require('./buyer-requests'));
 router.use('/pending-counts',      require('./pending-counts'));
 

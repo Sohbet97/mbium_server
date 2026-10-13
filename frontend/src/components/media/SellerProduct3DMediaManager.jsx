@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, Trash2, Loader2, Upload, Pencil, Check, X, ExternalLink, CheckCircle, Search } from 'lucide-react'
-import { SellerApi } from '@/lib/api'
+import { AdminApi, SellerApi } from '@/lib/api'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
@@ -21,7 +21,7 @@ function fileFormat(m) {
   return (m?.mime_type?.split('/')?.[1] || m?.original_name?.split('.').pop() || '').toUpperCase()
 }
 
-function Seller3DPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS }) {
+function Seller3DPickerModal({ api, open, onClose, onSelect, remaining = MAX_ITEMS }) {
   const [items, setItems]     = useState([])
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -32,7 +32,7 @@ function Seller3DPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS })
   async function fetchItems(text) {
     setLoading(true)
     try {
-      const { data } = await SellerApi.media.list({ limit: 80, type: '3d', search: text || undefined })
+      const { data } = await api.media.list({ limit: 80, type: '3d', search: text || undefined })
       setItems(data.data ?? [])
     } finally {
       setLoading(false)
@@ -61,7 +61,7 @@ function Seller3DPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS })
       await Promise.all(files.map((f) => {
         const fd = new FormData()
         fd.append('file', f)
-        return SellerApi.media.upload(fd)
+        return api.media.upload(fd)
       }))
       toast.success(`${files.length} faýl ýüklendi`)
       await fetchItems(search)
@@ -195,7 +195,7 @@ function Seller3DPickerModal({ open, onClose, onSelect, remaining = MAX_ITEMS })
 
 // Product-wide 3D models — stored as product_media rows with role='3d' and
 // variant_id=null, so a single upload/selection applies to the whole product, not one variant.
-export function SellerProduct3DMediaManager({ productId }) {
+export function SellerProduct3DMediaManager({ productId, api = SellerApi }) {
   const [items, setItems]     = useState([])
   const [loading, setLoading] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -205,8 +205,8 @@ export function SellerProduct3DMediaManager({ productId }) {
   async function load() {
     setLoading(true)
     try {
-      const { data } = await SellerApi.media.getProductMedia(productId, null)
-      setItems((data.data ?? []).filter((pm) => pm.role === '3d'))
+      const { data } = await api.media.getProductMedia(productId, null)
+      setItems((data.data ?? []).filter((pm) => pm.role === '3d' && !pm.variant_id))
     } catch { toast.error('3D modeller ýüklenip bolmady') }
     finally   { setLoading(false) }
   }
@@ -217,7 +217,7 @@ export function SellerProduct3DMediaManager({ productId }) {
     if (!selected.length) return
     try {
       await Promise.all(selected.map((m) =>
-        SellerApi.media.attachToProduct(productId, { media_id: m.id, role: '3d' }, null)
+        api.media.attachToProduct(productId, { media_id: m.id, role: '3d' }, null)
       ))
       await load()
     } catch (e) {
@@ -228,7 +228,7 @@ export function SellerProduct3DMediaManager({ productId }) {
   async function handleDelete(mediaId) {
     if (!confirm('3D modeli pozmak?')) return
     try {
-      await SellerApi.media.detachFromProduct(productId, mediaId, null)
+      await api.media.detachFromProduct(productId, mediaId, null)
       setItems((prev) => prev.filter((it) => it.media_id !== mediaId))
     } catch { toast.error('Pozup bolmady') }
   }
@@ -240,7 +240,7 @@ export function SellerProduct3DMediaManager({ productId }) {
 
   async function saveTitle(item) {
     try {
-      await SellerApi.media.update(item.media_id, { alt_text: titleDraft || null })
+      await api.media.update(item.media_id, { alt_text: titleDraft || null })
       setItems((prev) => prev.map((it) =>
         it.media_id === item.media_id ? { ...it, media: { ...it.media, alt_text: titleDraft || null } } : it
       ))
@@ -356,6 +356,7 @@ export function SellerProduct3DMediaManager({ productId }) {
       )}
 
       <Seller3DPickerModal
+        api={api}
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         onSelect={handleSelect}
@@ -363,4 +364,8 @@ export function SellerProduct3DMediaManager({ productId }) {
       />
     </div>
   )
+}
+
+export function AdminProduct3DMediaManager({ productId }) {
+  return <SellerProduct3DMediaManager productId={productId} api={AdminApi} />
 }

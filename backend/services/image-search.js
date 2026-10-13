@@ -1,3 +1,4 @@
+const { Op } = require('sequelize')
 const axios = require('axios')
 const { GoogleGenerativeAI } = require('@google/generative-ai')
 const ApiError = require('../exceptions/api-error')
@@ -81,15 +82,34 @@ async function detectKeywords(buffer, mimeType = 'image/jpeg') {
 }
 
 // Same shape as the text search, plus the keywords that drove it
+// The keyword search returns bare ranked rows. Re-fetch them through ProductService.get so the
+// response has the same shape as the other buyer product endpoints (images, shop, brand, variants…),
+// then restore the search ranking (ProductService.get applies its own sort).
+async function enrichProducts(ranked) {
+    if (!ranked.length) return []
+    const ProductService = require('../__modules__/catalog/services/products')
+    const full = await ProductService.get({ id: { [Op.in]: ranked.map((r) => r.id) } })
+    const byId = new Map(full.map((p) => [p.id, p]))
+    return ranked
+        .map((r) => {
+            const product = byId.get(r.id)
+            if (!product) return null
+            const json = typeof product.toJSON === 'function' ? product.toJSON() : product
+            return { ...json, slug: r.slug, is_turbo: r.is_turbo, rank: r.rank }
+        })
+        .filter(Boolean)
+}
+
 async function searchByImage(buffer, { page = 1, limit = 20, mimeType } = {}) {
     const { labels, primary, extra } = await detectKeywords(buffer, mimeType)
     const tsQuery = SearchService.buildTsQueryAny(primary)
     if (!tsQuery) return { products: [], categories: [], shops: [], query: '', labels, keywords: { primary, extra }, page, limit }
 
-    const [products, categories] = await Promise.all([
+    const [ranked, categories] = await Promise.all([
         SearchService.searchProductsByKeywords(primary, extra, { limit, offset: (page - 1) * limit }),
         SearchService.searchCategories(tsQuery, { limit: 8 }),
     ])
+    const products = await enrichProducts(ranked)
 
     return { products, categories, shops: [], query: primary.join(' '), labels, keywords: { primary, extra }, page, limit }
 }

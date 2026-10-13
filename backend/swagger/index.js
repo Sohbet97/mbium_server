@@ -57,7 +57,7 @@ const swaggerSpec = {
     },
     servers: [
         { url: "http://localhost:4000", description: "Local dev" },
-        { url: "https://mbium.com/api", description: "Mbium server" },
+        { url: "https://admin.mbium.com/api", description: "Mbium server" },
     ],
     security: [],
     components: {

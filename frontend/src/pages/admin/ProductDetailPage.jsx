@@ -22,6 +22,7 @@ import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
 import { absUrl } from '@/lib/utils'
 import { ProductMediaManager } from '@/components/media/ProductMediaManager'
+import { AdminProduct3DMediaManager } from '@/components/media/SellerProduct3DMediaManager'
 import { PriceTierManager } from '@/components/common/PriceTierManager'
 import { ModerationBadge } from '@/components/common/ModerationBadge'
 import { AttributeEditor } from '@/components/common/AttributeEditor'
@@ -866,7 +867,15 @@ export default function ProductDetailPage() {
           <InfoTab product={product} shops={shops} categories={categories} onRefresh={refresh} />
         </TabsContent>
         <TabsContent value="images">
-          <ProductMediaManager productId={product.id} />
+          <div className="space-y-6">
+            <ProductMediaManager productId={product.id} />
+            <Card>
+              <CardHeader><CardTitle className="text-sm">{t('products.models3d', '3D Models')}</CardTitle></CardHeader>
+              <CardContent>
+                <AdminProduct3DMediaManager productId={product.id} />
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         <TabsContent value="variants">
           <VariantsTab productId={product.id} variants={product.variants ?? []} onRefresh={refresh} />

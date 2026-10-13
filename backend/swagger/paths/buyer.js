@@ -243,6 +243,8 @@ module.exports = {
                 ...paginationParams,
                 { in: "query", name: "text",    schema: { type: "string" }, description: "Search by name" },
                 { in: "query", name: "type_id", schema: { type: "integer" } },
+                { in: "query", name: "region_id", schema: { type: "integer" }, description: "Filter by region" },
+                { in: "query", name: "city_id",   schema: { type: "integer" }, description: "Filter by city" },
             ],
             responses: {
                 200: {
