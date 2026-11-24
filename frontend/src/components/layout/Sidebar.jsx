@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, Shield, Store, MapPin, Settings, LogOut,
   PanelLeftClose, PanelLeftOpen, Tag, Package, ChevronDown,
-  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift, Palette, Film, Handshake, Search, X,
+  ShoppingCart, Star, Percent, Layers, Images, LayoutTemplate, Truck, CreditCard, ClipboardList, Bot, ShoppingBag, Bell, ScrollText, BarChart2, Building2, Coins, Megaphone, Heart, Award, Factory, MessageSquare, FileCheck, Ruler, PackageCheck, Zap, Clapperboard, Gift, Palette, Film, Handshake, Search, X, FileText,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -41,6 +41,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/shop-type-requests', label: t('nav.shopTypeRequests'), icon: Tag, perm: null, countKey: 'shopTypeRequests' },
     { to: '/admin/chats', label: t('chats.title'), icon: MessageSquare, perm: Permissions.CHAT_GET, countKey: 'chats' },
     { to: '/admin/guide', label: t('guide.title'), icon: Film, perm: Permissions.GUIDE_GET },
+    { to: '/admin/pages', label: t('nav.pages', 'Pages'), icon: FileText, perm: Permissions.PAGE_GET },
     { to: '/admin/tariff-requests', label: t('tariffRequests.title'), icon: ClipboardList, perm: Permissions.PLAN_GET, countKey: 'tariffRequests' },
     { to: '/admin/shop-types', label: t('nav.shopTypes'), icon: Store, perm: null },
     { to: '/admin/orders', label: t('nav.orders'), icon: ShoppingCart, perm: Permissions.ORDER_GET },
@@ -53,6 +54,7 @@ export function Sidebar({ collapsed, onToggle }) {
     { to: '/admin/analytics',          label: t('nav.analytics', 'Analytics'), icon: BarChart2, perm: Permissions.ANALYTICS_GET },
     { to: '/admin/warehouses',         label: t('nav.warehouses', 'Warehouses'), icon: Building2, perm: Permissions.WAREHOUSE_GET },
     { to: '/admin/coins',              label: t('nav.coins', 'Coins'), icon: Coins, perm: Permissions.COIN_GET },
+    { to: '/admin/ads',                label: t('nav.ads', 'Ad tasks'), icon: Megaphone, perm: Permissions.AD_GET },
     { to: '/admin/turbo',              label: t('nav.turbo', 'Turbo'), icon: Zap, perm: Permissions.TURBO_GET },
     { to: '/admin/gifts',              label: t('nav.gifts', 'Gifts'), icon: Gift, perm: Permissions.GIFT_TYPE_GET },
     { to: '/admin/favorites',          label: t('nav.favorites', 'Favorites'), icon: Heart, perm: Permissions.PRODUCT_GET },

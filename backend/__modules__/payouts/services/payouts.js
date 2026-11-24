@@ -91,6 +91,38 @@ class PayoutService {
         return balance;
     }
 
+    // Credits the shop for a reel gift, net of platform commission, into the same 24h hold
+    // as orders. referenceId ("gift:<reel_gift_id>") ties the ledger rows to the gift.
+    static async creditGiftPending(shopId, referenceId, commissionAmount, shopAmount, note) {
+        const balance = await this.getOrCreateBalance(shopId);
+        const availableAt = new Date(Date.now() + HOLD_HOURS * 60 * 60 * 1000);
+
+        if (commissionAmount > 0) {
+            await db.SellerTransaction.create({
+                shop_id: shopId,
+                type: SELLER_TRANSACTION_TYPES.COMMISSION,
+                amount: -commissionAmount,
+                status: SELLER_TRANSACTION_STATUSES.AVAILABLE,
+                reference_id: referenceId,
+                note: `Mbium komissiýasy - ${note}`,
+            });
+        }
+
+        await balance.increment("pending_balance", { by: shopAmount });
+        await balance.reload();
+
+        return db.SellerTransaction.create({
+            shop_id: shopId,
+            type: SELLER_TRANSACTION_TYPES.GIFT_CREDIT,
+            amount: shopAmount,
+            status: SELLER_TRANSACTION_STATUSES.PENDING,
+            available_at: availableAt,
+            balance_after: balance.pending_balance,
+            reference_id: referenceId,
+            note,
+        });
+    }
+
     // Reverses an order's credit on cancel/refund — whether it's still on hold (PENDING,
     // decrement pending_balance) or already released (AVAILABLE, decrement available_balance,
     // which can go negative if it was already paid out — an acceptable, auditable debt).
@@ -126,12 +158,12 @@ class PayoutService {
         });
     }
 
-    // Moves due (available_at <= now) pending order credits into available balance.
+    // Moves due (available_at <= now) pending order and gift credits into available balance.
     // Called periodically by the release-pending-balances cron job.
     static async releaseDueHolds() {
         const due = await db.SellerTransaction.findAll({
             where: {
-                type: SELLER_TRANSACTION_TYPES.ORDER_CREDIT,
+                type: { [Op.in]: [SELLER_TRANSACTION_TYPES.ORDER_CREDIT, SELLER_TRANSACTION_TYPES.GIFT_CREDIT] },
                 status: SELLER_TRANSACTION_STATUSES.PENDING,
                 available_at: { [Op.lte]: new Date() },
             },

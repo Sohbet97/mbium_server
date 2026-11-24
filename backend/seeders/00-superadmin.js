@@ -50,6 +50,13 @@ const ALL_PERMISSIONS = [
     340, 341, 342, 343, // Sizes
     344, 345, 346, 347, // Delivery Types
     348, 349, 350, 351, // Turbo
+    352, 353, 354, 355, // Gift Creators
+    356, 357, 358, 359, // Gift Types
+    360, 361, 362, 363, // Colors
+    364, 365, 366, 367, // Guide
+    368, 369, 370,      // Chats (get, post, delete)
+    371, 372, 373, 374, // Ads
+    375, 376,           // Static pages (privacy policy)
 ];
 
 const ADMIN_PHONE    = '61000000';

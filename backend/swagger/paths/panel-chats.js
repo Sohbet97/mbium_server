@@ -67,6 +67,31 @@ function paths(prefix, tag, who) {
                 responses: { 200: { description: 'OK' }, 404: { description: 'Chat not found or not accessible' } },
             },
         },
+        [`${base}/{id}/messages/{messageId}`]: {
+            delete: {
+                tags: [tag], summary: 'Delete a message', security,
+                description: (prefix === 'admin'
+                    ? 'Admins (CHAT_DELETE) can delete any message.'
+                    : 'Sellers can only delete messages they sent (403 otherwise).')
+                    + ' Other participants receive a `message.deleted` socket event `{ chat_id, message_id }`.',
+                parameters: [idParam, { in: 'path', name: 'messageId', required: true, schema: { type: 'integer' } }],
+                responses: { 200: { description: 'Deleted' }, 403: { description: 'Not allowed' }, 404: { description: 'Chat or message not found' } },
+            },
+        },
+        [`${base}/{id}`]: {
+            delete: prefix === 'admin' ? {
+                tags: [tag], summary: 'Delete a chat with all its messages', security,
+                description: 'Requires CHAT_DELETE. Participants receive a `chat.deleted` socket event `{ chat_id }`.',
+                parameters: [idParam],
+                responses: { 200: { description: 'Deleted' }, 403: { description: 'Missing CHAT_DELETE' }, 404: { description: 'Chat not found' } },
+            } : {
+                tags: [tag], summary: 'Hide a buyer chat for this seller', security,
+                description: 'Nothing is deleted: messages up to now are hidden for the calling seller only, and the buyer keeps the full history. ' +
+                    'The chat reappears in the list (with only newer messages) when a new message arrives. Support chats cannot be hidden (400).',
+                parameters: [idParam],
+                responses: { 200: { description: 'Hidden' }, 400: { description: 'Support chat' }, 404: { description: 'Chat not found or not accessible' } },
+            },
+        },
     }
 }
 

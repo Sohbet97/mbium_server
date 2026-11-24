@@ -1,7 +1,7 @@
 -- Reel gifts: buyer sends an animated gift (gift_types) on a reel, paid in coins.
--- Revenue share (70% creator / 30% platform commission) lands on the gift's
--- gift_creator, NOT the shop that posted the reel — shop_id here is denormalized
--- from the reel purely for "which shop's reels collect gifts" analytics.
+-- Revenue share: originally 70% to the gift's gift_creator. Since then 70% goes to the
+-- shop that posted the reel (seller_transactions GIFT_CREDIT, 24h hold) and 30% is platform
+-- commission; gift_creator_id is kept as a snapshot only.
 
 CREATE TABLE IF NOT EXISTS reel_gifts (
     id                     SERIAL PRIMARY KEY,

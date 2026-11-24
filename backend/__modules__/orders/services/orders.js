@@ -15,6 +15,8 @@ const STATUS_PROCESSING = 2;
 const STATUS_DELIVERED = 4;
 const STATUS_CANCELLED = 10;
 const STATUS_REFUNDED = 11;
+const STATUS_SHIPPED = 3;
+const STATUS_CLOSED = 5;
 
 class OrderService {
     // Build where clause + optional customer include-where for search/date filters
@@ -278,6 +280,17 @@ class OrderService {
         }
     }
 
+    // Closes a shipped or delivered order. A shipped order is marked delivered first so the
+    // delivery side effects (shop credit + commission, buyer coins, sold count) still run.
+    static async close(orderId, currentStatus, note, changedBy, io) {
+        if (currentStatus === STATUS_SHIPPED) {
+            await this.updateStatus(orderId, STATUS_DELIVERED, note, changedBy, io);
+        } else if (currentStatus !== STATUS_DELIVERED) {
+            throw ApiError.NotAllowed("Diňe ugradylan ýa-da gowşurylan sargyt ýapylyp bilner");
+        }
+        await this.updateStatus(orderId, STATUS_CLOSED, note, changedBy, io);
+    }
+
     static async _notifySaleCompleted(order, io) {
         const shop = await db.Shop.findByPk(order.shop_id, { attributes: ["id", "owner_id", "name"] });
         if (!shop) return;
@@ -408,7 +421,9 @@ class OrderService {
     }
 
     static async delete(id, force = false) {
-        return db.Order.destroy({ where: { id }, force });
+        const deleted = await db.Order.destroy({ where: { id }, force });
+        if (!deleted) throw ApiError.NotFound("Sargyt tapylmady");
+        return deleted;
     }
 
     static async addPayment(orderId, data) {

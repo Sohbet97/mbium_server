@@ -8,7 +8,9 @@ const tariffRequestsRouter = require("./routes/tariff-requests");
 
 const subscriptionsModuleRouter = require("express").Router();
 
+// Guard only this module's paths: a path-less use() would apply it to every admin route mounted after it
 subscriptionsModuleRouter.use(
+    ["/plans", "/shop-subscriptions", "/tariff/request"],
     authorizationMiddleware,
     routeGuard({
         GET:    Permissions.PLAN_GET,

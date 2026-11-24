@@ -19,6 +19,10 @@ async function fetchFullProfile() {
     }
   } else if (model?.shop && !activeShopId) {
     localStorage.setItem('activeShopId', model.shop.id)
+  } else if (activeShop) {
+    // Keep the shop chosen in the top bar after a reload: the panel shows model.shop while
+    // API calls send the stored id (X-Shop-Id), so both must be the same shop.
+    return { ...model, shop: activeShop }
   }
 
   return model

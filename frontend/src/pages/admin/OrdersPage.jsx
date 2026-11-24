@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   ShoppingCart, RefreshCw, ChevronRight, X,
   CreditCard, Clock, CheckCircle, Truck, Package,
-  XCircle, RotateCcw, DollarSign,
+  XCircle, RotateCcw, DollarSign, Trash2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/dialog'
 import { FormField } from '@/components/common/FormField'
 import { AdminApi } from '@/lib/api'
+import { useAuth } from '@/store/auth'
+import { hasPerm, Permissions } from '@/lib/permissions'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -161,7 +163,7 @@ function AddPaymentModal({ open, orderId, onClose, onSaved }) {
 }
 
 /* ── Order Detail Panel ── */
-function OrderDetail({ order, onClose, onRefresh }) {
+function OrderDetail({ order, onClose, onRefresh, onDelete }) {
   const { t } = useTranslation()
   const [statusModal, setStatusModal] = useState(false)
   const [paymentModal, setPaymentModal] = useState(false)
@@ -282,6 +284,12 @@ function OrderDetail({ order, onClose, onRefresh }) {
         <Button size="sm" className="flex-1" onClick={() => setPaymentModal(true)}>
           <DollarSign className="h-3.5 w-3.5 mr-1.5" />{t('orders.addPayment')}
         </Button>
+        {onDelete && (
+          <Button size="sm" variant="outline" onClick={() => onDelete(order)} title={t('common.delete')}
+            className="text-red-600 border-red-200 hover:bg-red-50 dark:border-red-900/40 dark:hover:bg-red-900/20">
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
 
       <UpdateStatusModal
@@ -316,6 +324,9 @@ export default function OrdersPage() {
 
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
+
+  const { user } = useAuth()
+  const canDelete = hasPerm(user, Permissions.ORDER_DELETE)
 
   const fetchOrders = useCallback(async () => {
     setLoading(true)
@@ -361,7 +372,22 @@ export default function OrdersPage() {
     } catch { }
   }
 
+  async function deleteOrder(order) {
+    if (!window.confirm(t('orders.confirmDelete'))) return
+    try {
+      await AdminApi.orders.delete(order.id)
+      toast.success(t('toast.deleted'))
+      if (selectedOrder?.id === order.id) setSelectedOrder(null)
+      // Step back a page when the last row of the current page is removed
+      if (orders.length === 1 && page > 1) setPage((p) => p - 1)
+      else fetchOrders()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    }
+  }
+
   const totalPages = Math.ceil(count / PAGE_SIZE)
+  const colCount = canDelete ? 7 : 6
 
   return (
     <div className="flex h-full overflow-hidden gap-4">
@@ -401,13 +427,14 @@ export default function OrdersPage() {
                   <th className="text-right px-4 py-3 font-medium">{t('orders.colTotal')}</th>
                   <th className="text-left px-4 py-3 font-medium">{t('orders.colStatus')}</th>
                   <th className="text-left px-4 py-3 font-medium">{t('orders.colDate')}</th>
+                  {canDelete && <th className="w-10" />}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
-                  <tr><td colSpan={6} className="text-center py-12 text-slate-400">{t('common.loading')}</td></tr>
+                  <tr><td colSpan={colCount} className="text-center py-12 text-slate-400">{t('common.loading')}</td></tr>
                 ) : orders.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-12 text-slate-400">{t('common.noResults')}</td></tr>
+                  <tr><td colSpan={colCount} className="text-center py-12 text-slate-400">{t('common.noResults')}</td></tr>
                 ) : orders.map((order) => (
                   <tr
                     key={order.id}
@@ -428,6 +455,18 @@ export default function OrdersPage() {
                     </td>
                     <td className="px-4 py-3"><StatusBadge status={order.status} type="order" /></td>
                     <td className="px-4 py-3 text-slate-400 text-xs">{new Date(order.createdAt).toLocaleDateString()}</td>
+                    {canDelete && (
+                      <td className="px-2 py-3 text-right">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteOrder(order) }}
+                          title={t('common.delete')}
+                          aria-label={t('common.delete')}
+                          className="p-1.5 rounded text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -462,6 +501,7 @@ export default function OrdersPage() {
                 order={selectedOrder}
                 onClose={() => setSelectedOrder(null)}
                 onRefresh={refreshDetail}
+                onDelete={canDelete ? deleteOrder : undefined}
               />
             )}
           </CardContent>

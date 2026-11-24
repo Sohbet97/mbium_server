@@ -18,6 +18,7 @@ router.use('/products',   require('./products'));
 router.use('/orders',     require('./orders'));
 router.use('/payouts',    require('./payouts'));
 router.use('/balance',    require('./balance'));
+router.use('/ad',         require('../../__modules__/ads/routes/ads.seller.routes'));
 router.use('/tariff',     require('./tariff-request'));
 router.use('/discounts',  require('./discounts'));
 router.use('/flash-sales', require('./flash-sales'));

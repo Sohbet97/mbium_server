@@ -109,7 +109,7 @@ class ReelService {
             defaults: { user_id: userId, reel_id: reelId },
         })
         if (created) await db.Reel.increment('like_count', { where: { id: reelId } })
-        return { created }
+        return { created, shopId: reel.shop_id }
     }
 
     static async unlike(userId, reelId) {

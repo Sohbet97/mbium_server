@@ -24,6 +24,8 @@ const SELLER_TRANSITIONS = {
   0: [1, 10],  // pending   → confirm | cancel
   1: [2, 10],  // confirmed → processing | cancel
   2: [3],      // processing → ship
+  3: [4, 5],   // shipped    → delivered | close
+  4: [5],      // delivered  → close
 }
 
 const PAGE = 20
@@ -291,7 +293,8 @@ function OrderDetail({ orderId, onClose, onStatusChange }) {
   }
   const ACTION_LABELS = {
     1: t('seller.actionConfirm'), 2: t('seller.actionProcess'),
-    3: t('seller.actionShip'),   10: t('seller.actionCancel'),
+    3: t('seller.actionShip'),   4: t('seller.actionDeliver'),
+    5: t('seller.actionClose'),  10: t('seller.actionCancel'),
   }
 
   function load() {

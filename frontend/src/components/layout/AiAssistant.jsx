@@ -96,7 +96,7 @@ function InputBar({ value, onChange, onKeyDown, onSend, onStop, streaming, place
 // ── AI Chat tab ───────────────────────────────────────────────────────────────
 function AiTab() {
   const { t, i18n } = useTranslation()
-  const { messages, addMessage, updateLastAssistant, clearMessages } = useAiAssistant()
+  const { messages, addMessage, updateLastAssistant, clearMessages, currentConvId, setCurrentConvId } = useAiAssistant()
 
   const [input, setInput]             = useState('')
   const [streaming, setStreaming]     = useState(false)
@@ -105,7 +105,6 @@ function AiTab() {
 
   // Conversation persistence
   const [conversations, setConversations] = useState([])
-  const [currentConvId, setCurrentConvId] = useState(null)
   const [showHistory, setShowHistory]     = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
 

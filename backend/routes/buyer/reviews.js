@@ -2,6 +2,8 @@ const router = require('express').Router();
 const ApiError = require('../../exceptions/api-error');
 const { FUNCTIONS } = require('../../utils/functions');
 const ReviewService = require('../../__modules__/reviews/services/reviews');
+const AdService = require('../../__modules__/ads/services/ads');
+const db = require('../../models');
 
 // GET /buyer/reviews  – reviews authored by current user
 router.get('/', async (req, res, next) => {
@@ -25,7 +27,11 @@ router.post('/', async (req, res, next) => {
         if (!product_id) throw ApiError.BadRequest('product_id hökman');
         if (!rating || rating < 1 || rating > 5) throw ApiError.BadRequest('Baha 1-5 aralygynda bolmaly');
         const model = await ReviewService.create(req.user.id, req.body);
-        return res.status(201).json({ model });
+        const product = await db.Product.findByPk(model.product_id, { attributes: ['id', 'shop_id'] });
+        const reward = product
+            ? await AdService.tryReward(req.user.id, 'review', product.id, { shopId: product.shop_id, reviewId: model.id })
+            : null;
+        return res.status(201).json({ model, reward });
     } catch (e) { next(e); }
 });
 

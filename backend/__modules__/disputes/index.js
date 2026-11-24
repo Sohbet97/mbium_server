@@ -6,7 +6,9 @@ const disputeRouter = require("./routes/dispute");
 
 const disputesModuleRouter = require("express").Router();
 
+// Guard only this module's paths: a path-less use() would apply it to every admin route mounted after it
 disputesModuleRouter.use(
+    "/disputes",
     authorizationMiddleware,
     routeGuard({
         GET: Permissions.DISPUTE_GET,

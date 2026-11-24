@@ -6,7 +6,9 @@ const reviewRouter = require("./routes/review");
 
 const reviewsModuleRouter = require("express").Router();
 
+// Guard only this module's paths: a path-less use() would apply it to every admin route mounted after it
 reviewsModuleRouter.use(
+    "/reviews",
     authorizationMiddleware,
     routeGuard({
         GET: Permissions.REVIEW_GET,

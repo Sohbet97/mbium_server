@@ -417,7 +417,7 @@ module.exports = {
         post: {
             tags: ["Buyer — Shops"],
             summary: "Follow a shop",
-            description: "Idempotent — following an already-followed shop returns 200 instead of erroring.",
+            description: "Idempotent — following an already-followed shop returns 200 instead of erroring. Response includes `reward`: `{ campaign_id, ball, status }` when an active ad campaign pays for this action (status `pending` = waiting for moderation), otherwise `null`. Only a new follow can earn a reward.",
             security,
             parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
             responses: {

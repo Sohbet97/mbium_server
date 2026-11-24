@@ -46,8 +46,19 @@ router.post('/:id/cancel', async (req, res, next) => {
         if (!order || order.user_id !== req.user.id) throw ApiError.NotFound('Sargyt tapylmady');
         // Only pending (0) or confirmed (1) orders can be cancelled by buyer
         if (order.status > 1) throw ApiError.NotAllowed('Bu sargyt ýatyrylmagy mümkin däl');
-        await OrderService.updateStatus(order.id, 9, req.body.note ?? null, req.user.id, req.app.io);
+        await OrderService.updateStatus(order.id, 10, req.body.note ?? null, req.user.id, req.app.io);
         return res.sendStatus(200);
+    } catch (e) { next(e); }
+});
+
+// POST /buyer/orders/:id/close — buyer confirms they received the order (shipped or delivered → closed)
+router.post('/:id/close', async (req, res, next) => {
+    try {
+        const order = await OrderService.getById(req.params.id);
+        if (!order || order.user_id !== req.user.id) throw ApiError.NotFound('Sargyt tapylmady');
+        if (![3, 4].includes(order.status)) throw ApiError.NotAllowed('Bu sargyt ýapylyp bilinmeýär');
+        await OrderService.close(order.id, order.status, req.body?.note ?? null, req.user.id, req.app.io);
+        return res.status(200).json({ model: await OrderService.getById(order.id) });
     } catch (e) { next(e); }
 });
 

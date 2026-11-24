@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Coins, Plus, Pencil, Trash2, Check, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { AdminApi } from '@/lib/api'
+import { useAuth } from '@/store/auth'
+import { hasPerm, Permissions } from '@/lib/permissions'
 import { toast } from 'sonner'
 
 const PAGE = 20
@@ -33,6 +35,40 @@ function TypeBadge({ type }) {
 }
 
 function fmt(n) { return Number(n ?? 0).toLocaleString() }
+
+function useCanDelete() {
+  const { user } = useAuth()
+  return hasPerm(user, Permissions.COIN_DELETE)
+}
+
+function DeleteButton({ onClick, disabled }) {
+  const { t } = useTranslation()
+  return (
+    <button onClick={onClick} disabled={disabled} title={t('common.delete')} aria-label={t('common.delete')}
+      className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 opacity-60 hover:opacity-100 text-red-500 disabled:opacity-30">
+      {disabled ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+    </button>
+  )
+}
+
+// Confirms, deletes, then reloads; steps back a page when the last row of the page is removed
+function useDeleteRow({ remove, confirmKey, rows, page, setPage, load }) {
+  const { t } = useTranslation()
+  const [deleting, setDeleting] = useState(null)
+  async function handleDelete(key) {
+    if (!window.confirm(t(confirmKey))) return
+    setDeleting(key)
+    try {
+      await remove(key)
+      toast.success(t('toast.deleted'))
+      if (rows.length === 1 && page > 0) setPage((p) => p - 1)
+      else load()
+    } catch (e) {
+      toast.error(e.response?.data?.message ?? t('toast.error'))
+    } finally { setDeleting(null) }
+  }
+  return { deleting, handleDelete }
+}
 
 // ── Grant Modal ───────────────────────────────────────────────────────────────
 
@@ -253,6 +289,7 @@ function WalletsTab() {
   const [page, setPage] = useState(0)
   const [grantOpen, setGrantOpen] = useState(false)
   const [historyUser, setHistoryUser] = useState(null)
+  const canDelete = useCanDelete()
 
   const load = useCallback(() => {
     setLoading(true)
@@ -263,6 +300,10 @@ function WalletsTab() {
   }, [page, t])
 
   useEffect(() => { load() }, [load])
+
+  const { deleting, handleDelete } = useDeleteRow({
+    remove: AdminApi.coins.deleteWallet, confirmKey: 'coins.confirmDeleteWallet', rows, page, setPage, load,
+  })
 
   const pages = Math.ceil(count / PAGE)
 
@@ -302,10 +343,13 @@ function WalletsTab() {
                   <td className="px-4 py-3 text-right font-mono font-bold text-indigo-500">{fmt(w.balance)}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs text-green-500">+{fmt(w.total_earned)}</td>
                   <td className="px-4 py-3 text-right font-mono text-xs text-red-400">-{fmt(w.total_spent)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <button onClick={() => setHistoryUser(w)} className="text-xs underline opacity-50 hover:opacity-100">
-                      {t('coins.history')}
-                    </button>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 justify-end">
+                      <button onClick={() => setHistoryUser(w)} className="text-xs underline opacity-50 hover:opacity-100">
+                        {t('coins.history')}
+                      </button>
+                      {canDelete && <DeleteButton onClick={() => handleDelete(w.user_id)} disabled={deleting === w.user_id} />}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -437,6 +481,7 @@ function TopupsTab() {
   const [page, setPage] = useState(0)
   const [filter, setFilter] = useState('')
   const [processing, setProcessing] = useState(null)
+  const canDelete = useCanDelete()
 
   const load = useCallback(() => {
     setLoading(true)
@@ -449,6 +494,10 @@ function TopupsTab() {
   }, [page, filter, t])
 
   useEffect(() => { load() }, [load])
+
+  const { deleting, handleDelete } = useDeleteRow({
+    remove: AdminApi.coins.deleteTopup, confirmKey: 'coins.confirmDeleteTopup', rows, page, setPage, load,
+  })
 
   async function handle(id, status) {
     setProcessing(id)
@@ -507,8 +556,9 @@ function TopupsTab() {
                   </td>
                   <td className="px-4 py-3"><Badge status={r.status} /></td>
                   <td className="px-4 py-3">
+                    <div className="flex items-center gap-1 justify-end">
                     {r.status === 'PENDING' && (
-                      <div className="flex items-center gap-1 justify-end">
+                      <>
                         <button onClick={() => handle(r.id, 'APPROVED')} disabled={processing === r.id}
                           className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-600 hover:bg-green-700 text-white disabled:opacity-50">
                           {processing === r.id ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
@@ -518,8 +568,10 @@ function TopupsTab() {
                           className="flex items-center gap-1 px-2 py-1 rounded text-xs bg-red-600 hover:bg-red-700 text-white disabled:opacity-50">
                           <X size={11} />{t('coins.reject')}
                         </button>
-                      </div>
+                      </>
                     )}
+                    {canDelete && <DeleteButton onClick={() => handleDelete(r.id)} disabled={deleting === r.id} />}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -553,6 +605,7 @@ function TransactionsTab() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(0)
   const [type, setType] = useState('')
+  const canDelete = useCanDelete()
 
   const load = useCallback(() => {
     setLoading(true)
@@ -565,6 +618,10 @@ function TransactionsTab() {
   }, [page, type, t])
 
   useEffect(() => { load() }, [load])
+
+  const { deleting, handleDelete } = useDeleteRow({
+    remove: AdminApi.coins.deleteTransaction, confirmKey: 'coins.confirmDeleteTransaction', rows, page, setPage, load,
+  })
 
   const pages = Math.ceil(count / PAGE)
 
@@ -594,6 +651,7 @@ function TransactionsTab() {
                 <th className="text-left px-4 py-2">Source</th>
                 <th className="text-right px-4 py-2">Amount</th>
                 <th className="text-right px-4 py-2">Balance</th>
+                {canDelete && <th className="px-4 py-2" />}
               </tr>
             </thead>
             <tbody>
@@ -610,6 +668,11 @@ function TransactionsTab() {
                     {r.amount > 0 ? '+' : ''}{fmt(r.amount)}
                   </td>
                   <td className="px-4 py-3 text-right font-mono text-xs opacity-60">{fmt(r.balance_after)}</td>
+                  {canDelete && (
+                    <td className="px-4 py-3 text-right">
+                      <DeleteButton onClick={() => handleDelete(r.id)} disabled={deleting === r.id} />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

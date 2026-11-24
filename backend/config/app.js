@@ -22,6 +22,7 @@ const authRouter   = require("../routes/auth/auth");
 const sellerRouter = require("../routes/seller");
 const buyerRouter  = require("../routes/buyer");
 const GuideController = require("../__modules__/guide/controllers/GuideController");
+const StaticPageController = require("../__modules__/pages/controllers/StaticPageController");
 
 const { CONSTANTS } = require("./constants");
 
@@ -163,6 +164,9 @@ app.use(["/admin",  "/api/admin"],  adminRouter);
 app.use(["/seller", "/api/seller"], sellerRouter);
 app.use(["/buyer",  "/api/buyer"],  buyerRouter);
 app.get(["/guide", "/api/guide"], GuideController.listPublished);
+// Public HTML pages for the app's WebView and the website (privacy policy, …)
+app.get(["/pages/:slug", "/api/pages/:slug"], StaticPageController.renderHtml);
+app.get(["/privacy", "/api/privacy"], (req, res, next) => { req.pageSlug = "privacy"; next(); }, StaticPageController.renderHtml);
 app.use(errorMiddleware);
 
 module.exports = { app };

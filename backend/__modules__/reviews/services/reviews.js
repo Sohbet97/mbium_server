@@ -86,11 +86,16 @@ class ReviewService {
     }
 
     static async updateStatus(id, status) {
-        return db.Review.update({ status }, { where: { id } });
+        const result = await db.Review.update({ status }, { where: { id } });
+        // A hidden review can't earn an ad reward
+        if (Number(status) !== 1) await require("../../ads/services/ads").rejectPendingForReview(Number(id));
+        return result;
     }
 
     static async delete(id, force = false) {
-        return db.Review.destroy({ where: { id }, force });
+        const result = await db.Review.destroy({ where: { id }, force });
+        await require("../../ads/services/ads").rejectPendingForReview(Number(id));
+        return result;
     }
 
     static async getReply(reviewId) {

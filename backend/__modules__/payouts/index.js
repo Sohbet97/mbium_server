@@ -7,7 +7,9 @@ const payoutRequestRouter = require("./routes/payout-request");
 
 const payoutsModuleRouter = require("express").Router();
 
+// Guard only this module's paths: a path-less use() would apply it to every admin route mounted after it
 payoutsModuleRouter.use(
+    "/payouts",
     authorizationMiddleware,
     routeGuard({
         GET: Permissions.PAYOUT_GET,

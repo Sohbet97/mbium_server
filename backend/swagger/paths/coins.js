@@ -31,6 +31,23 @@ module.exports = {
             parameters: [{ in: "path", name: "userId", required: true, schema: { type: "string", format: "uuid" } }],
             responses: { 200: { description: "Balance and history (last 50)" } },
         },
+        delete: {
+            tags: [tag],
+            summary: "Delete a user's wallet together with all of their coin transactions",
+            security,
+            parameters: [{ in: "path", name: "userId", required: true, schema: { type: "string", format: "uuid" } }],
+            responses: { 200: { description: "Deleted" }, 403: { description: "Missing COIN_DELETE" }, 404: { description: "Wallet not found" } },
+        },
+    },
+    "/admin/coins/transactions/{id}": {
+        delete: {
+            tags: [tag],
+            summary: "Delete a coin transaction and revert its amount on the wallet",
+            description: "Fails with 400 when reverting a credit would make the balance negative (the coins were already spent). balance_after of later transactions is not rewritten.",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Deleted" }, 400: { description: "Balance would become negative" }, 403: { description: "Missing COIN_DELETE" }, 404: { description: "Transaction not found" } },
+        },
     },
 
     // ── Admin — Grant / Deduct ────────────────────────────────────────────────
@@ -137,6 +154,15 @@ module.exports = {
                 } } } },
             },
             responses: { 200: { description: "Updated top-up request" } },
+        },
+    },
+    "/admin/coins/topups/{id}": {
+        delete: {
+            tags: [tag],
+            summary: "Delete a top-up request (coins already credited by an approved request stay)",
+            security,
+            parameters: [{ in: "path", name: "id", required: true, schema: { type: "integer" } }],
+            responses: { 200: { description: "Deleted" }, 403: { description: "Missing COIN_DELETE" }, 404: { description: "Top-up request not found" } },
         },
     },
     // Note: buyer-facing /buyer/coins/balance, /history, /topup are documented in paths/buyer.js.

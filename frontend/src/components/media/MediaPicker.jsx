@@ -58,7 +58,14 @@ export function MediaPicker({ open, onClose, onSelect, multiple = false, filterT
     finally  { setLoading(false) }
   }, [search, type])
 
-  useEffect(() => { if (open) { setSelected([]); load(1) } }, [open])
+  // The picker usually stays mounted while its caller switches filterType (e.g. the Guide form
+  // opens it for a video, then for a thumbnail), so re-sync the type every time it opens.
+  useEffect(() => {
+    if (!open) return
+    setSelected([])
+    setType(filterType)
+    load(1, search, filterType)
+  }, [open, filterType])
 
   function handleSearchChange(v) {
     setSearch(v)

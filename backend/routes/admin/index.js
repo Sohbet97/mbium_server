@@ -50,6 +50,8 @@ const deliveryTypesModuleRouter = require("../../__modules__/delivery-types")
 const turboModuleRouter         = require("../../__modules__/turbo")
 const giftCreatorsModuleRouter  = require("../../__modules__/giftCreators")
 const giftTypesAdminRouter      = require("../../__modules__/reels/giftTypes.admin")
+const adsModuleRouter           = require("../../__modules__/ads")
+const pagesModuleRouter         = require("../../__modules__/pages")
 //#endregion
 
 //#region Routes
@@ -88,7 +90,7 @@ adminRouter.use('/push-notifications', require('./push-notifications'))
 adminRouter.use('/support', require('./support'))
 adminRouter.use(
   '/chat',
-  routeGuard({ GET: Permissions.CHAT_GET, POST: Permissions.CHAT_POST, PUT: Permissions.CHAT_POST }),
+  routeGuard({ GET: Permissions.CHAT_GET, POST: Permissions.CHAT_POST, PUT: Permissions.CHAT_POST, DELETE: Permissions.CHAT_DELETE }),
   require('../../__modules__/chats/routes/panel-chats.routes')('admin')
 )
 adminRouter.use(auditModuleRouter)
@@ -108,6 +110,8 @@ adminRouter.use(deliveryTypesModuleRouter)
 adminRouter.use(turboModuleRouter)
 adminRouter.use(giftCreatorsModuleRouter)
 adminRouter.use(giftTypesAdminRouter)
+adminRouter.use(adsModuleRouter)
+adminRouter.use(pagesModuleRouter)
 //#endregion
 
 module.exports = adminRouter;

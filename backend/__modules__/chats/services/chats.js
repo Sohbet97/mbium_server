@@ -205,19 +205,24 @@ class ChatService {
 
         const messages = await db.ChatMessage.findAll({
             where,
-            include: [{ model: db.ChatMessageRead, as: "reads", where: { user_id: userId }, required: false }],
+            include: [{ model: db.ChatMessageRead, as: "reads", attributes: ["user_id"], required: false }],
             order: [["id", "DESC"]],
             limit,
         });
 
-        const items = messages.reverse().map((m) => ({
-            id: m.id,
-            text: m.text,
-            attachment_url: m.file || null,
-            is_mine: m.createdBy === userId,
-            sent_at: m.createdAt,
-            status: m.reads?.length ? "read" : (m.status === 1 ? "delivered" : "sent"),
-        }));
+        const items = messages.reverse().map((m) => {
+            const isMine = m.createdBy === userId;
+            // My message is "read" once someone else has read it; theirs, once I have
+            const read = (m.reads ?? []).some((r) => (isMine ? r.user_id !== userId : r.user_id === userId));
+            return {
+                id: m.id,
+                text: m.text,
+                attachment_url: m.file || null,
+                is_mine: isMine,
+                sent_at: m.createdAt,
+                status: read ? "read" : (m.status === 1 ? "delivered" : "sent"),
+            };
+        });
 
         const next_cursor = messages.length === limit ? Cursor.encode(String(messages[0].id)) : null;
         return { items, next_cursor };

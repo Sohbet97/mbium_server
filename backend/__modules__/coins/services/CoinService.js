@@ -4,10 +4,11 @@ const ApiError = require("../../../exceptions/api-error");
 
 class CoinService {
 
-    static async ensureWallet(userId) {
+    static async ensureWallet(userId, transaction = undefined) {
         const [wallet] = await db.UserCoinBalance.findOrCreate({
             where: { user_id: userId },
             defaults: { user_id: userId, balance: 0, total_earned: 0, total_spent: 0 },
+            transaction,
         });
         return wallet;
     }
@@ -41,13 +42,14 @@ class CoinService {
         });
     }
 
-    static async credit(userId, amount, source, referenceId = null, note = null, createdBy = null) {
+    // Pass { transaction } to credit inside a caller's DB transaction (committed by the caller)
+    static async credit(userId, amount, source, referenceId = null, note = null, createdBy = null, { transaction: outer } = {}) {
         if (!Number.isInteger(amount) || amount < 1)
             throw ApiError.BadRequest("Coin amount must be a positive integer");
 
-        const t = await db.sequelize.transaction();
+        const t = outer ?? await db.sequelize.transaction();
         try {
-            await this.ensureWallet(userId);
+            await this.ensureWallet(userId, t);
 
             await db.UserCoinBalance.increment(
                 { balance: amount, total_earned: amount },
@@ -70,10 +72,10 @@ class CoinService {
                 created_by: createdBy ?? null,
             }, { transaction: t });
 
-            await t.commit();
+            if (!outer) await t.commit();
             return wallet;
         } catch (err) {
-            await t.rollback();
+            if (!outer) await t.rollback();
             throw err;
         }
     }
@@ -204,6 +206,40 @@ class CoinService {
         });
     }
 
+    // Removes the wallet together with its ledger, so a later credit starts from a clean history
+    static async deleteWallet(userId) {
+        const wallet = await db.UserCoinBalance.findOne({ where: { user_id: userId } });
+        if (!wallet) throw ApiError.NotFound("Wallet not found");
+        await db.sequelize.transaction(async (transaction) => {
+            await db.CoinTransaction.destroy({ where: { user_id: userId }, transaction });
+            await wallet.destroy({ transaction });
+        });
+    }
+
+    // Deleting a ledger entry reverts its effect on the wallet
+    static async deleteTransaction(id) {
+        await db.sequelize.transaction(async (transaction) => {
+            const tx = await db.CoinTransaction.findOne({ where: { id }, transaction });
+            if (!tx) throw ApiError.NotFound("Transaction not found");
+
+            const wallet = await db.UserCoinBalance.findOne({
+                where: { user_id: tx.user_id },
+                lock: transaction.LOCK.UPDATE,
+                transaction,
+            });
+            if (wallet) {
+                if (wallet.balance - tx.amount < 0)
+                    throw ApiError.BadRequest("Balance would become negative; the coins were already spent");
+                await wallet.update({
+                    balance: wallet.balance - tx.amount,
+                    total_earned: tx.amount > 0 ? Math.max(wallet.total_earned - tx.amount, 0) : wallet.total_earned,
+                    total_spent:  tx.amount < 0 ? Math.max(wallet.total_spent + tx.amount, 0) : wallet.total_spent,
+                }, { transaction });
+            }
+            await tx.destroy({ transaction });
+        });
+    }
+
     static async getConditions() {
         return db.CoinCondition.findAll({ order: [["id", "ASC"]] });
     }
@@ -269,6 +305,12 @@ class CoinService {
             );
         }
         return topup;
+    }
+
+    // Only removes the request; coins credited by an approved one stay (delete that transaction to revert them)
+    static async deleteTopup(id) {
+        const deleted = await db.CoinTopup.destroy({ where: { id } });
+        if (!deleted) throw ApiError.NotFound("Topup request not found");
     }
 }
 

@@ -22,7 +22,21 @@ class CoinController {
         } catch (e) { next(e); }
     }
 
+    static async deleteWallet(req, res, next) {
+        try {
+            await CoinService.deleteWallet(req.params.userId);
+            res.json({ success: true });
+        } catch (e) { next(e); }
+    }
+
     // ─── Admin: Transactions (all users) ─────────────────────────────────────
+
+    static async deleteTransaction(req, res, next) {
+        try {
+            await CoinService.deleteTransaction(req.params.id);
+            res.json({ success: true });
+        } catch (e) { next(e); }
+    }
 
     static async getAllTransactions(req, res, next) {
         try {
@@ -107,6 +121,13 @@ class CoinController {
                 return res.status(400).json({ message: "status must be APPROVED or REJECTED" });
             const topup = await CoinService.processTopup(req.params.id, status, note, req.user?.id);
             res.json(topup);
+        } catch (e) { next(e); }
+    }
+
+    static async deleteTopup(req, res, next) {
+        try {
+            await CoinService.deleteTopup(req.params.id);
+            res.json({ success: true });
         } catch (e) { next(e); }
     }
 

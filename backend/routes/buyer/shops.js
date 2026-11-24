@@ -1,12 +1,17 @@
 const router = require('express').Router()
 const ShopService = require('../../__modules__/shops/services/shops')
+const AdService = require('../../__modules__/ads/services/ads')
 const { FUNCTIONS } = require('../../utils/functions')
 
 // POST /buyer/shops/:id/follow
 router.post('/:id/follow', async (req, res, next) => {
     try {
         const result = await ShopService.follow(req.user.id, req.params.id)
-        return res.status(result.created ? 201 : 200).json({ following: true })
+        // Only a new follow can earn an ad reward (a follow from before the campaign doesn't)
+        const reward = result.created
+            ? await AdService.tryReward(req.user.id, 'shop_follow', Number(req.params.id), { shopId: Number(req.params.id) })
+            : null
+        return res.status(result.created ? 201 : 200).json({ following: true, reward })
     } catch (e) { next(e) }
 })
 

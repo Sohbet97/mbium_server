@@ -11,6 +11,8 @@ import { toast } from 'sonner'
 import { Camera, FileText, Upload, CheckCircle2, Clock, XCircle, Star, CreditCard, Video, FileImage, Loader2, Tag, RefreshCw, ChevronDown, ChevronRight, LayoutGrid, List, Eye, ExternalLink, Truck, Zap, X } from 'lucide-react'
 import { cn, absUrl as imgUrl } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
+import { ShopLocationFields } from '@/components/shops/ShopLocationFields'
+import { locationPayload } from '@/components/shops/location'
 
 const TIER_CLASS = {
   0: 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300',
@@ -599,6 +601,9 @@ export default function SellerShopPage() {
           phone:          s.phone          ?? '',
           email:          s.email          ?? '',
           address:        s.address        ?? '',
+          region_id:      s.region_id      ?? '',
+          city_id:        s.city_id        ?? '',
+          district_id:    s.district_id    ?? '',
         })
         setIbanForm({
           bank_iban:   s.bank_iban   ?? '',
@@ -620,7 +625,7 @@ export default function SellerShopPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      const { data } = await SellerApi.shop.update(form)
+      const { data } = await SellerApi.shop.update({ ...form, ...locationPayload(form) })
       setShop(data.model)
       toast.success(t('toast.saved'))
     } catch (err) {
@@ -842,6 +847,8 @@ export default function SellerShopPage() {
                     </div>
                   </div>
                 </div>
+
+                <ShopLocationFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
 
                 {/* Address */}
                 <div className="space-y-1.5">

@@ -6,7 +6,9 @@ const deliverRouter = require("./routes/deliver");
 
 const deliversModuleRouter = require("express").Router();
 
+// Guard only this module's paths: a path-less use() would apply it to every admin route mounted after it
 deliversModuleRouter.use(
+    "/delivers",
     authorizationMiddleware,
     routeGuard({
         GET:    Permissions.DELIVER_GET,

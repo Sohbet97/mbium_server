@@ -86,8 +86,8 @@ router.delete('/ai/conversations/:id', authorizationMiddleware, async (req, res,
     } catch (e) { next(e) }
 })
 
-router.use(authorizationMiddleware)
-router.use(routeGuard({
+// Settings and suggestions only; /ai/chat and /ai/conversations above are open to any signed-in panel user
+router.use(['/ai-settings', '/ai-recommendations'], authorizationMiddleware, routeGuard({
     GET:    Permissions.AI_GET,
     POST:   Permissions.AI_POST,
     PUT:    Permissions.AI_PUT,

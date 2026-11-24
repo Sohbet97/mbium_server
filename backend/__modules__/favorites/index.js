@@ -4,7 +4,7 @@ const Permissions = require("../../utils/permissions");
 const db = require("../../models");
 const { FUNCTIONS } = require("../../utils/functions");
 
-router.use(routeGuard({
+router.use("/favorites", routeGuard({
     GET: Permissions.PRODUCT_GET,
 }));
 

@@ -50,6 +50,7 @@ import SellerPayoutsPage from '@/pages/seller/SellerPayoutsPage'
 import SellerBuyerRequestsPage from '@/pages/seller/SellerBuyerRequestsPage'
 import SellerCommentsPage from '@/pages/seller/SellerCommentsPage'
 import SellerCoinsPage from '@/pages/seller/SellerCoinsPage'
+import SellerAdsPage from '@/pages/seller/SellerAdsPage'
 import SellerProductFormPage from '@/pages/seller/SellerProductFormPage'
 import SellerProductVariantPage from '@/pages/seller/SellerProductVariantPage'
 import SellerMediaPage from '@/pages/seller/SellerMediaPage'
@@ -67,6 +68,8 @@ import SellerAnalyticsPage from '@/pages/seller/SellerAnalyticsPage'
 import SellerWarehousesPage from '@/pages/seller/SellerWarehousesPage'
 import SellerAccountPage from '@/pages/admin/AccountPage'
 import AdminCoinsPage from '@/pages/admin/AdminCoinsPage'
+import AdminAdsPage from '@/pages/admin/AdminAdsPage'
+import AdminPagesPage from '@/pages/admin/AdminPagesPage'
 import AdminTurboPage from '@/pages/admin/AdminTurboPage'
 import AdminFavoritesPage from '@/pages/admin/AdminFavoritesPage'
 import ProductTagsPage from '@/pages/admin/ProductTagsPage'
@@ -132,6 +135,8 @@ const router = createBrowserRouter([
           { path: 'analytics',           element: g(Permissions.ANALYTICS_GET, <AdminAnalyticsPage />),           handle: { titleKey: 'analytics.title' } },
           { path: 'warehouses',          element: g(Permissions.WAREHOUSE_GET, <WarehousesPage />),               handle: { titleKey: 'warehouses.title' } },
           { path: 'coins',              element: g(Permissions.COIN_GET, <AdminCoinsPage />),               handle: { titleKey: 'coins.title' } },
+          { path: 'ads',                element: g(Permissions.AD_GET, <AdminAdsPage />),                   handle: { titleKey: 'ads.title' } },
+          { path: 'pages',              element: g(Permissions.PAGE_GET, <AdminPagesPage />),               handle: { titleKey: 'pages.title' } },
           { path: 'turbo',              element: g(Permissions.TURBO_GET, <AdminTurboPage />),              handle: { titleKey: 'turbo.title' } },
           { path: 'favorites',          element: g(Permissions.PRODUCT_GET, <AdminFavoritesPage />),           handle: { titleKey: 'favorites.title' } },
           { path: 'catalog/tags',       element: g(Permissions.PRODUCT_GET, <ProductTagsPage />),              handle: { titleKey: 'productTags.title' } },
@@ -170,6 +175,7 @@ const router = createBrowserRouter([
           { path: 'buyer-requests', element: <SellerBuyerRequestsPage /> },
           { path: 'comments', element: <SellerCommentsPage /> },
           { path: 'coins',      element: <SellerCoinsPage /> },
+          { path: 'ads',        element: <SellerAdsPage /> },
           { path: 'media',        element: <SellerMediaPage /> },
           { path: 'banners',      element: <SellerBannersPage /> },
           { path: 'reels',        element: <SellerReelsPage /> },

@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
+import { ShopLocationFields } from '@/components/shops/ShopLocationFields'
+import { locationPayload } from '@/components/shops/location'
 import { AdminApi } from '@/lib/api'
 import { absUrl } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -122,6 +124,7 @@ function ReassignOwnerModal({ open, shop, onClose, onSaved }) {
 const EMPTY_FORM = {
   name: '', name_ru: '', name_eng: '',
   type_id: '', is_active: true, order: '',
+  region_id: '', city_id: '', district_id: '',
 }
 
 function buildForm(shop) {
@@ -133,6 +136,9 @@ function buildForm(shop) {
     type_id: shop.type_id ?? '',
     is_active: shop.is_active ?? true,
     order: shop.order ?? '',
+    region_id: shop.region_id ?? '',
+    city_id: shop.city_id ?? '',
+    district_id: shop.district_id ?? '',
   }
 }
 
@@ -144,7 +150,7 @@ function ShopModal({ open, shop, shopTypes, onClose, onSaved }) {
 
   function set(field, val) { setForm((f) => ({ ...f, [field]: val })) }
 
-  const isValid = Boolean(form.name.trim() && form.type_id)
+  const isValid = Boolean(form.name.trim() && form.type_id && form.region_id)
 
   async function handleSave() {
     if (!isValid) return
@@ -157,6 +163,7 @@ function ShopModal({ open, shop, shopTypes, onClose, onSaved }) {
         type_id: Number(form.type_id),
         is_active: form.is_active,
         order: form.order !== '' ? Number(form.order) : null,
+        ...locationPayload(form),
       }
       if (shop) {
         await AdminApi.shops.update(shop.id, payload)
@@ -195,6 +202,8 @@ function ShopModal({ open, shop, shopTypes, onClose, onSaved }) {
               ))}
             </Select>
           </FormField>
+
+          <ShopLocationFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} required />
 
           <div className="grid grid-cols-2 gap-4">
             <FormField label={t('shops.order')}>

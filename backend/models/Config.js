@@ -21,6 +21,17 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false,
             defaultValue: 100,
         },
+        // Ad tasks: minimum campaign budget (TMT) and TMT per coin paid to users
+        ad_min_budget: {
+            type: DataTypes.DECIMAL(12, 2),
+            allowNull: false,
+            defaultValue: 100,
+        },
+        ball_rate: {
+            type: DataTypes.DECIMAL(12, 2),
+            allowNull: false,
+            defaultValue: 0.10,
+        },
 
     }, {
         timestamps: true

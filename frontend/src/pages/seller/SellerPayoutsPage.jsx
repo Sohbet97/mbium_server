@@ -18,6 +18,7 @@ const REQUEST_STATUS_COLORS = {
 
 const TXN_TYPE_COLOR = {
   ORDER_CREDIT:    'text-green-600 dark:text-green-400',
+  GIFT_CREDIT:     'text-green-600 dark:text-green-400',
   COMMISSION:      'text-slate-500 dark:text-slate-400',
   PAYOUT_DEBIT:    'text-red-600 dark:text-red-400',
   PAYOUT_REVERSAL: 'text-slate-500 dark:text-slate-400',
@@ -38,6 +39,7 @@ export default function SellerPayoutsPage() {
 
   const TXN_TYPE_LABELS = {
     ORDER_CREDIT:    t('seller.txnOrderCredit'),
+    GIFT_CREDIT:     t('seller.txnGiftCredit'),
     COMMISSION:      t('seller.txnCommission'),
     PAYOUT_DEBIT:    t('seller.txnPayoutDebit'),
     PAYOUT_REVERSAL: t('seller.txnPayoutReversal'),

@@ -5,7 +5,7 @@ const ApiError          = require('../../exceptions/api-error')
 const { FUNCTIONS }     = require('../../utils/functions')
 const GiftCreatorService = require('./services/giftCreators')
 
-router.use(routeGuard({
+router.use('/gift-creators', routeGuard({
     GET:    Permissions.GIFT_CREATOR_GET,
     POST:   Permissions.GIFT_CREATOR_POST,
     PUT:    Permissions.GIFT_CREATOR_PUT,

@@ -1,6 +1,7 @@
 const router          = require('express').Router()
 const ReelService     = require('../../__modules__/reels/services/reels')
 const ReelGiftService = require('../../__modules__/reels/services/reelGifts')
+const AdService       = require('../../__modules__/ads/services/ads')
 const ApiError        = require('../../exceptions/api-error')
 const { FUNCTIONS }   = require('../../utils/functions')
 const authorizationMiddleware = require('../../middlewares/authorization-middleware')
@@ -65,7 +66,10 @@ router.post('/:id/share', async (req, res, next) => {
 router.post('/:id/like', authorizationMiddleware, async (req, res, next) => {
     try {
         const result = await ReelService.like(req.user.id, req.params.id)
-        return res.status(result.created ? 201 : 200).json({ liked: true })
+        const reward = result.created
+            ? await AdService.tryReward(req.user.id, 'reel_like', Number(req.params.id), { shopId: result.shopId })
+            : null
+        return res.status(result.created ? 201 : 200).json({ liked: true, reward })
     } catch (e) { next(e) }
 })
 

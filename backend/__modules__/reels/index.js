@@ -6,7 +6,7 @@ const db               = require('../../models')
 const ReelService      = require('./services/reels')
 const { FUNCTIONS }    = require('../../utils/functions')
 
-router.use(routeGuard({
+router.use('/reels', routeGuard({
     GET:    Permissions.REEL_GET,
     POST:   Permissions.REEL_POST,
     PUT:    Permissions.REEL_PUT,

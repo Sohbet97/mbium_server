@@ -16,7 +16,8 @@ module.exports = async (req, res, next) => {
         const where = { owner_id: req.user.id, is_active: true };
         if (requestedId) where.id = requestedId;
 
-        const shop = await db.Shop.findOne({ where, include });
+        // Without X-Shop-Id, use the same shop /me reports (oldest active), not an arbitrary one
+        const shop = await db.Shop.findOne({ where, include, order: [["createdAt", "ASC"]] });
 
         if (!shop) {
             // Distinguish "no such shop / not yours" from "shop exists but isn't active yet",

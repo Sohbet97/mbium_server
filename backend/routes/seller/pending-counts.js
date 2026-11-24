@@ -22,6 +22,8 @@ router.get('/', async (req, res, next) => {
                                                 WHERE sp.chatroom_id = r.id AND sp.user_id = :userId AND sp.role = 1)))
                    AND EXISTS (SELECT 1 FROM chat_messages m
                                WHERE m.chatroom_id = r.id AND m."createdBy" != :userId
+                                 AND m.id > COALESCE((SELECT me.cleared_up_to FROM chat_room_participants me
+                                                      WHERE me.chatroom_id = r.id AND me.user_id = :userId), 0)
                                  AND NOT EXISTS (SELECT 1 FROM chat_message_reads rd WHERE rd.message_id = m.id AND rd.user_id = :userId))`,
                 { replacements: { shopId, userId: req.user.id }, type: QueryTypes.SELECT }
             ).then((rows) => rows[0]?.n ?? 0),

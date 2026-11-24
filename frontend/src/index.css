@@ -133,3 +133,13 @@
     .divide-slate-200 > * + * { border-color: hsl(var(--border)); }
   }
 }
+
+/* Admin preview of static pages (privacy policy): the same elements the app's web view styles */
+.static-page-preview h2 { font-size: 1.15rem; font-weight: 600; margin: 1.25rem 0 0.5rem; }
+.static-page-preview h3 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.4rem; }
+.static-page-preview h4 { font-weight: 600; margin: 0.8rem 0 0.3rem; }
+.static-page-preview p { margin: 0 0 0.75rem; line-height: 1.6; }
+.static-page-preview ul { list-style: disc; padding-left: 1.4em; margin: 0 0 0.75rem; }
+.static-page-preview ol { list-style: decimal; padding-left: 1.4em; margin: 0 0 0.75rem; }
+.static-page-preview a { color: #2563eb; text-decoration: underline; }
+.static-page-preview hr { border-top: 1px solid hsl(var(--border)); margin: 1rem 0; }

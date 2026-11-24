@@ -5,7 +5,9 @@ const mediaRouter = require('./routes/media')
 
 const mediaModuleRouter = require('express').Router()
 
+// Guard only this module's paths: a path-less use() would apply it to every admin route mounted after it
 mediaModuleRouter.use(
+    '/media',
     authorizationMiddleware,
     routeGuard({
         GET:    Permissions.MEDIA_GET,

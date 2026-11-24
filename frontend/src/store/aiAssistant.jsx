@@ -6,6 +6,9 @@ export function AiAssistantProvider({ children }) {
   const [open, setOpen]               = useState(false)
   const [activeTab, setActiveTab]     = useState('support') // 'support' | 'ai'
   const [messages, setMessages]       = useState([])        // AI tab messages
+  // Saved conversation the messages belong to. Kept here, next to the messages, so closing
+  // and reopening the panel continues the same conversation instead of saving a new one.
+  const [currentConvId, setCurrentConvId] = useState(null)
   const [supportRoom, setSupportRoom] = useState(null)
   const [supportMessages, setSupportMessages] = useState([])
 
@@ -43,6 +46,7 @@ export function AiAssistantProvider({ children }) {
       open, toggle, close,
       activeTab, setActiveTab,
       messages, addMessage, updateLastAssistant, clearMessages,
+      currentConvId, setCurrentConvId,
       supportRoom, setSupportRoom,
       supportMessages, setSupportMessages, appendSupportMessage,
     }}>

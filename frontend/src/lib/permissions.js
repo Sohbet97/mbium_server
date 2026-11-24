@@ -40,6 +40,15 @@ export const Permissions = {
   GUIDE_DELETE: 367,
   CHAT_GET: 368,
   CHAT_POST: 369,
+  CHAT_DELETE: 370,
+  ORDER_DELETE: 36,
+  COIN_DELETE: 319,
+  AD_GET: 371,
+  AD_POST: 372,
+  AD_PUT: 373,
+  AD_DELETE: 374,
+  PAGE_GET: 375,
+  PAGE_PUT: 376,
 }
 
 // Required permission per /admin/* page. `null` = any logged-in admin.
@@ -71,6 +80,7 @@ export const ADMIN_PAGE_PERMISSIONS = {
   analytics: Permissions.ANALYTICS_GET,
   warehouses: Permissions.WAREHOUSE_GET,
   coins: Permissions.COIN_GET,
+  ads: Permissions.AD_GET,
   turbo: Permissions.TURBO_GET,
   favorites: Permissions.PRODUCT_GET,
   tags: Permissions.PRODUCT_GET,
@@ -78,6 +88,7 @@ export const ADMIN_PAGE_PERMISSIONS = {
   sizes: Permissions.SIZE_GET,
   colors: Permissions.COLOR_GET,
   guide: Permissions.GUIDE_GET,
+  pages: Permissions.PAGE_GET,
   deliveryTypes: Permissions.DELIVERY_TYPE_GET,
   suppliers: Permissions.SUPPLIER_GET,
   comments: Permissions.COMMENT_GET,

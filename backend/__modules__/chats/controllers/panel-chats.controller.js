@@ -33,6 +33,24 @@ function build(getScope) {
                 res.json({ success: true });
             } catch (e) { next(e); }
         },
+        async deleteMessage(req, res, next) {
+            try {
+                await PanelChatService.deleteMessage(getScope(req), req.params.id, req.params.messageId, req.app);
+                res.json({ success: true });
+            } catch (e) { next(e); }
+        },
+        async hideRoom(req, res, next) {
+            try {
+                await PanelChatService.hideRoom(getScope(req), req.params.id);
+                res.json({ success: true });
+            } catch (e) { next(e); }
+        },
+        async deleteRoom(req, res, next) {
+            try {
+                await PanelChatService.deleteRoom(getScope(req), req.params.id, req.app);
+                res.json({ success: true });
+            } catch (e) { next(e); }
+        },
     };
 }
 

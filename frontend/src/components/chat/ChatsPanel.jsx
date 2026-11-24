@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Loader2, MessageSquare, Store, Package, LifeBuoy } from 'lucide-react'
+import { Send, Loader2, MessageSquare, Store, Package, LifeBuoy, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useNotifications } from '@/store/notifications'
 import { Button } from '@/components/ui/button'
@@ -19,9 +19,14 @@ const POLL_MS = 20_000
 const personName = (p) => [p?.name, p?.surname].filter(Boolean).join(' ') || '—'
 const fmtTime = (d) => new Date(d).toLocaleString([], { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 
-// api: { list(params), messages(id, params), send(id, data), read(id) }
+// api: { list(params), messages(id, params), send(id, data), read(id), deleteMessage?(id, messageId), deleteChat?(id) }
 // canReply(chat): whether the reply box is shown for this chat
-export function ChatsPanel({ api, canReply = () => true, onReadChange, initialChatId = null }) {
+// canDeleteMessage(message, chat) / canDeleteChat(chat): whether delete buttons are shown
+// chatDeleteHidesOnly: deleting a chat only hides it for this user (seller), so the confirm text says so
+export function ChatsPanel({
+  api, canReply = () => true, canDeleteMessage = () => false, canDeleteChat = () => false, chatDeleteHidesOnly = false,
+  onReadChange, initialChatId = null,
+}) {
   const { t } = useTranslation()
   const { socketRef } = useNotifications() ?? {}
 
@@ -99,9 +104,26 @@ export function ChatsPanel({ api, canReply = () => true, onReadChange, initialCh
         loadMessages(openId).then(() => markRead(openId))
       }
     }
+    const onMessageDeleted = (payload) => {
+      loadList()
+      if (Number(payload?.chat_id) === selectedRef.current) {
+        setMessages((prev) => prev.filter((m) => m.id !== Number(payload?.message_id)))
+      }
+    }
+    const onChatDeleted = (payload) => {
+      loadList()
+      if (Number(payload?.chat_id) === selectedRef.current) selectChat(null)
+    }
     socket.on('message.new', onNew)
     socket.on('support-message', onNew)
-    return () => { socket.off('message.new', onNew); socket.off('support-message', onNew) }
+    socket.on('message.deleted', onMessageDeleted)
+    socket.on('chat.deleted', onChatDeleted)
+    return () => {
+      socket.off('message.new', onNew)
+      socket.off('support-message', onNew)
+      socket.off('message.deleted', onMessageDeleted)
+      socket.off('chat.deleted', onChatDeleted)
+    }
   }, [socketRef, loadList, loadMessages, markRead])
 
   async function send(e) {
@@ -118,6 +140,30 @@ export function ChatsPanel({ api, canReply = () => true, onReadChange, initialCh
       toast.error(err.response?.data?.message ?? t('toast.error'))
     } finally {
       setSending(false)
+    }
+  }
+
+  async function deleteMessage(m) {
+    if (!window.confirm(t('chats.confirmDeleteMessage'))) return
+    try {
+      await api.deleteMessage(selectedId, m.id)
+      setMessages((prev) => prev.filter((x) => x.id !== m.id))
+      loadList()
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? t('toast.error'))
+    }
+  }
+
+  async function deleteChat() {
+    if (!window.confirm(t(chatDeleteHidesOnly ? 'chats.confirmHideChat' : 'chats.confirmDeleteChat'))) return
+    try {
+      await api.deleteChat(selectedId)
+      setChats((cs) => cs.filter((c) => c.id !== selectedId))
+      selectChat(null)
+      toast.success(t('toast.deleted'))
+      onReadChange?.()
+    } catch (err) {
+      toast.error(err.response?.data?.message ?? t('toast.error'))
     }
   }
 
@@ -189,10 +235,17 @@ export function ChatsPanel({ api, canReply = () => true, onReadChange, initialCh
           <>
             <div className="px-4 py-3 border-b dark:border-white/[0.06] flex items-center gap-3">
               <Button variant="ghost" size="sm" className="md:hidden" onClick={() => selectChat(null)}>←</Button>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold truncate dark:text-white">{chatTitle(selected)}</p>
                 {chatSub(selected) && <p className="text-xs text-slate-500 truncate">{chatSub(selected)}</p>}
               </div>
+              {canDeleteChat(selected) && (
+                <Button variant="ghost" size="sm" onClick={deleteChat} title={t('chats.deleteChat')}
+                  className="shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+                  <Trash2 className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-1.5">{t('chats.deleteChat')}</span>
+                </Button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
@@ -205,7 +258,10 @@ export function ChatsPanel({ api, canReply = () => true, onReadChange, initialCh
               )}
               {loadingMsgs && messages.length === 0 && <div className="text-center text-sm text-slate-400">…</div>}
               {messages.map((m) => (
-                <div key={m.id} className={cn('flex', m.is_mine ? 'justify-end' : 'justify-start')}>
+                <div key={m.id} className={cn('group flex items-center gap-1', m.is_mine ? 'justify-end' : 'justify-start')}>
+                  {m.is_mine && canDeleteMessage(m, selected) && (
+                    <DeleteMessageButton label={t('chats.deleteMessage')} onClick={() => deleteMessage(m)} />
+                  )}
                   <div className={cn(
                     'max-w-[75%] rounded-2xl px-3 py-2 text-sm',
                     m.is_mine
@@ -221,6 +277,9 @@ export function ChatsPanel({ api, canReply = () => true, onReadChange, initialCh
                     )}
                     <p className={cn('text-[10px] mt-1', m.is_mine ? 'text-white/70' : 'text-slate-400')}>{fmtTime(m.sent_at)}</p>
                   </div>
+                  {!m.is_mine && canDeleteMessage(m, selected) && (
+                    <DeleteMessageButton label={t('chats.deleteMessage')} onClick={() => deleteMessage(m)} />
+                  )}
                 </div>
               ))}
               <div ref={bottomRef} />
@@ -245,5 +304,20 @@ export function ChatsPanel({ api, canReply = () => true, onReadChange, initialCh
         )}
       </div>
     </div>
+  )
+}
+
+// Shown on hover (always visible on touch screens, which have no hover)
+function DeleteMessageButton({ label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="shrink-0 p-1.5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 transition-opacity"
+    >
+      <Trash2 className="h-3.5 w-3.5" />
+    </button>
   )
 }

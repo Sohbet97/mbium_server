@@ -101,7 +101,7 @@ module.exports = {
         post: {
             tags: ['Buyer — Reels'],
             summary: 'Like a reel',
-            description: 'Idempotent — liking an already-liked reel returns 200 instead of erroring.',
+            description: 'Idempotent — liking an already-liked reel returns 200 instead of erroring. Response includes `reward`: `{ campaign_id, ball, status }` when an active ad campaign pays for this action (status `pending` = waiting for moderation), otherwise `null`.',
             security: [{ bearerAuth: [] }],
             parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
             responses: {
@@ -150,8 +150,9 @@ module.exports = {
             tags: ['Buyer — Reels'],
             summary: 'Send a gift to a reel',
             description:
-                'Debits `gift_type.price_coin` from the buyer\'s coin wallet, credits the gift\'s creator with 70% of ' +
-                '`price_tmt` (30% platform commission) — the reel\'s shop receives nothing from this. ' +
+                'Debits `gift_type.price_coin` from the buyer\'s coin wallet and credits the reel\'s shop with 70% of ' +
+                '`price_tmt` (30% platform commission). The shop\'s share is held 24h in `pending_balance` (like order income), ' +
+                'then becomes withdrawable. ' +
                 'Only reels that are `is_active` and approved (`moderation_status = 1`) can receive gifts.',
             security: [{ bearerAuth: [] }],
             parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'integer' } }],
@@ -241,7 +242,7 @@ module.exports = {
         get: {
             tags: ['Seller — Reels'],
             summary: 'Gifts received on own reel',
-            description: 'Read-only engagement view — the shop does not receive any revenue share from gifts (that goes to the gift\'s creator).',
+            description: 'Gifts sent on the shop\'s reel. The shop receives 70% of each gift\'s `price_tmt` as a `GIFT_CREDIT` in its seller balance (24h hold).',
             security: [{ bearerAuth: [] }],
             parameters: [
                 { in: 'path',  name: 'id',    required: true, schema: { type: 'integer' } },

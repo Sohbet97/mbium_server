@@ -39,6 +39,8 @@ const SELLER_TRANSITIONS = {
     0: [1, 10],  // pending   → confirmed | cancelled
     1: [2, 10],  // confirmed → processing | cancelled
     2: [3],      // processing → shipped
+    3: [4, 5],   // shipped    → delivered | closed (closing passes through delivered)
+    4: [5],      // delivered  → closed
 };
 
 router.patch('/:id/status', async (req, res, next) => {
@@ -51,7 +53,8 @@ router.patch('/:id/status', async (req, res, next) => {
         if (!allowed.includes(Number(status))) {
             throw ApiError.NotAllowed('Bu status geçişine rugsat ýok');
         }
-        await OrderService.updateStatus(model.id, Number(status), note, req.user.id, req.app.io);
+        if (Number(status) === 5) await OrderService.close(model.id, model.status, note, req.user.id, req.app.io);
+        else await OrderService.updateStatus(model.id, Number(status), note, req.user.id, req.app.io);
         const updated = await OrderService.getById(model.id);
         return res.status(200).json({ model: updated });
     } catch (e) { next(e); }

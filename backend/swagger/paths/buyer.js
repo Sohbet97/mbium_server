@@ -591,6 +591,25 @@ module.exports = {
             },
         },
     },
+    "/buyer/orders/{id}/close": {
+        post: {
+            tags: ["Buyer — Orders"],
+            summary: "Confirm receipt and close an order (status 3 shipped or 4 delivered → 5 closed)",
+            description: "A shipped order is recorded as delivered first, so the shop is credited and coins are awarded as usual.",
+            security,
+            parameters: [idParam],
+            requestBody: {
+                content: { "application/json": { schema: { type: "object", properties: {
+                    note: { type: "string" },
+                } } } },
+            },
+            responses: {
+                200: { description: "Order closed; returns the updated order as `model`" },
+                405: { description: "Order is not shipped or delivered" },
+                404: { description: "Not found" },
+            },
+        },
+    },
 
     // ── Delivery Addresses ────────────────────────────────────────────────────────
 
@@ -692,7 +711,7 @@ module.exports = {
                 content: { "application/json": { schema: { $ref: "#/components/schemas/ReviewRequest" } } },
             },
             responses: {
-                201: { description: "Review created" },
+                201: { description: "Review created. Response includes `reward`: `{ campaign_id, ball, status }` when an active ad campaign pays for this action (status `pending` = waiting for moderation), otherwise `null`." },
                 400: { description: "Already reviewed or validation error" },
             },
         },
@@ -793,6 +812,40 @@ module.exports = {
             parameters: [idParam],
             responses: {
                 200: { description: "City", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/City" } } } } } },
+                404: { description: "Not found" },
+            },
+        },
+    },
+
+    "/buyer/locations/districts": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "List districts (etraplar, public)",
+            parameters: [
+                { in: "query", name: "text",   schema: { type: "string" } },
+                { in: "query", name: "region", schema: { type: "integer" }, description: "Filter by region ID" },
+                { in: "query", name: "limit",  schema: { type: "integer" } },
+                { in: "query", name: "skip",   schema: { type: "integer" } },
+            ],
+            responses: {
+                200: {
+                    description: "Districts",
+                    content: { "application/json": { schema: { type: "object", properties: {
+                        data:  { type: "array", items: { $ref: "#/components/schemas/District" } },
+                        count: { type: "integer" },
+                    } } } },
+                },
+            },
+        },
+    },
+
+    "/buyer/locations/districts/{id}": {
+        get: {
+            tags: ["Buyer — Locations"],
+            summary: "Get a single district (public)",
+            parameters: [idParam],
+            responses: {
+                200: { description: "District", content: { "application/json": { schema: { type: "object", properties: { model: { $ref: "#/components/schemas/District" } } } } } },
                 404: { description: "Not found" },
             },
         },

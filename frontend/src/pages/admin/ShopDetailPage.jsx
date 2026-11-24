@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/dialog'
 import { MultiLangInput } from '@/components/common/MultiLangInput'
 import { FormField } from '@/components/common/FormField'
+import { ShopLocationFields } from '@/components/shops/ShopLocationFields'
+import { locationPayload } from '@/components/shops/location'
 import { BlueBadge } from '@/components/common/BlueBadge'
 import { AdminApi } from '@/lib/api'
 import { cn, absUrl } from '@/lib/utils'
@@ -447,6 +449,9 @@ function InfoTab({ shop, shopTypes, onRefresh }) {
       phone: shop.phone ?? '',
       email: shop.email ?? '',
       address: shop.address ?? '',
+      region_id: shop.region_id ?? '',
+      city_id: shop.city_id ?? '',
+      district_id: shop.district_id ?? '',
       logo: shop.logo ?? '',
       description: shop.description ?? '',
       is_active: shop.is_active ?? true,
@@ -468,6 +473,7 @@ function InfoTab({ shop, shopTypes, onRefresh }) {
         phone: form.phone || null,
         email: form.email || null,
         address: form.address || null,
+        ...locationPayload(form),
         logo: form.logo || null,
         description: form.description || null,
         is_active: form.is_active,
@@ -514,6 +520,12 @@ function InfoTab({ shop, shopTypes, onRefresh }) {
               <div className="flex justify-between">
                 <span className="text-slate-500">{t('shops.email')}</span>
                 <span>{shop.email || '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">{t('shops.region')}</span>
+                <span className="text-right max-w-[200px] truncate">
+                  {[shop.region?.name, shop.city?.name, shop.district?.name].filter(Boolean).join(', ') || '—'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">{t('shops.address')}</span>
@@ -596,6 +608,8 @@ function InfoTab({ shop, shopTypes, onRefresh }) {
           <Input type="email" value={form.email} onChange={(e) => set('email', e.target.value)} />
         </FormField>
       </div>
+
+      <ShopLocationFields value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
 
       <FormField label={t('shops.address')}>
         <Input value={form.address} onChange={(e) => set('address', e.target.value)} />

@@ -34,6 +34,8 @@ const sizesPaths          = require("./paths/sizes");
 const colorsPaths         = require("./paths/colors");
 const guidePaths          = require("./paths/guide");
 const panelChatsPaths     = require("./paths/panel-chats");
+const adsPaths            = require("./paths/ads");
+const pagesPaths          = require("./paths/pages");
 const coinsPaths          = require("./paths/coins");
 const favoritesPaths      = require("./paths/favorites");
 const systemPaths         = require("./paths/system");
@@ -178,6 +180,8 @@ const swaggerSpec = {
         ...colorsPaths,
         ...guidePaths,
         ...panelChatsPaths,
+        ...adsPaths,
+        ...pagesPaths,
         ...coinsPaths,
         ...favoritesPaths,
         ...systemPaths,

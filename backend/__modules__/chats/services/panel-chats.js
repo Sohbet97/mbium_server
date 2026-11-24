@@ -63,6 +63,9 @@ class PanelChatService {
             visible.push(`r.type IN (${ROOM_TYPE.SUPPORT}, ${ROOM_TYPE.SHOP_DIALOG})`);
         }
         const conditions = [`(${visible.join(" OR ")})`];
+        // Hidden by this user ("hide conversation") until a newer message arrives
+        conditions.push(`(me.cleared_up_to IS NULL OR EXISTS (
+            SELECT 1 FROM chat_messages mc WHERE mc.chatroom_id = r.id AND mc.id > me.cleared_up_to))`);
 
         if (type === "support") conditions.push(`r.type = ${ROOM_TYPE.SUPPORT}`);
         else if (type === "shop") conditions.push(`r.type = ${ROOM_TYPE.SHOP_DIALOG} AND r.product_id IS NULL`);
@@ -94,6 +97,7 @@ class PanelChatService {
              FROM chat_rooms r
              LEFT JOIN shops s ON s.id = r.shop_id
              LEFT JOIN products p ON p.id = r.product_id
+             LEFT JOIN chat_room_participants me ON me.chatroom_id = r.id AND me.user_id = :userId
              LEFT JOIN LATERAL (
                 SELECT u.id, u.name, u.surname, u.phone_number FROM users u
                 WHERE u.id = CASE WHEN r.type = ${ROOM_TYPE.SUPPORT}
@@ -102,7 +106,7 @@ class PanelChatService {
              ) cu ON true
              LEFT JOIN LATERAL (
                 SELECT text, file, "createdBy", "createdAt" FROM chat_messages m2
-                WHERE m2.chatroom_id = r.id ORDER BY m2.id DESC LIMIT 1
+                WHERE m2.chatroom_id = r.id AND m2.id > COALESCE(me.cleared_up_to, 0) ORDER BY m2.id DESC LIMIT 1
              ) lm ON true
              WHERE ${conditions.join(" AND ")}
              ORDER BY r."updatedAt" DESC, r.id DESC
@@ -136,6 +140,7 @@ class PanelChatService {
     static _unreadSubquery() {
         return `SELECT COUNT(*)::int FROM chat_messages m
                   WHERE m.chatroom_id = r.id AND m."createdBy" != :userId
+                    AND m.id > COALESCE(me.cleared_up_to, 0)
                     AND NOT EXISTS (SELECT 1 FROM chat_message_reads rd WHERE rd.message_id = m.id AND rd.user_id = :userId)`;
     }
 
@@ -144,8 +149,12 @@ class PanelChatService {
         limit = Math.min(Math.max(parseInt(limit) || 30, 1), 100);
 
         const where = { chatroom_id: room.id };
+        const idRange = {};
         const decoded = Cursor.decode(before);
-        if (decoded && !isNaN(parseInt(decoded))) where.id = { [Op.lt]: parseInt(decoded) };
+        if (decoded && !isNaN(parseInt(decoded))) idRange[Op.lt] = parseInt(decoded);
+        const clearedUpTo = await this._clearedUpTo(room.id, scope.userId);
+        if (clearedUpTo != null) idRange[Op.gt] = clearedUpTo;
+        if (Reflect.ownKeys(idRange).length) where.id = idRange;
 
         const messages = await db.ChatMessage.findAll({
             where,
@@ -190,6 +199,71 @@ class PanelChatService {
         if (scope.kind === "admin" && room.type !== ROOM_TYPE.SUPPORT) return;
         await this._ensureParticipant(room, scope.userId, 2);
         await ChatService.markRead(room.id, scope.userId, upToMessageId, app);
+    }
+
+    static async _clearedUpTo(roomId, userId) {
+        const p = await db.ChatRoomParticipant.findOne({ where: { chatroom_id: roomId, user_id: userId }, attributes: ["cleared_up_to"] });
+        return p?.cleared_up_to ?? null;
+    }
+
+    // Seller-side "delete conversation": hides everything up to now for this user only.
+    // The buyer keeps the full history; the room reappears here when a newer message arrives.
+    static async hideRoom(scope, roomId) {
+        const room = await this._getRoom(scope, roomId);
+        if (room.type !== ROOM_TYPE.SHOP_DIALOG) throw ApiError.BadRequest("Goldaw söhbetdeşligini gizläp bolmaýar");
+        const lastId = (await db.ChatMessage.max("id", { where: { chatroom_id: room.id } })) ?? 0;
+        await this._ensureParticipant(room, scope.userId, 2);
+        await db.ChatRoomParticipant.update(
+            { cleared_up_to: lastId },
+            { where: { chatroom_id: room.id, user_id: scope.userId } }
+        );
+    }
+
+    // Admins delete any message; sellers only their own
+    static async deleteMessage(scope, roomId, messageId, app = null) {
+        const room = await this._getRoom(scope, roomId);
+        const id = Number(messageId);
+        const message = Number.isInteger(id) && id > 0
+            ? await db.ChatMessage.findOne({ where: { id, chatroom_id: room.id } })
+            : null;
+        if (!message) throw ApiError.NotFound("Habar tapylmady");
+        if (scope.kind === "seller" && message.createdBy !== scope.userId) {
+            throw ApiError.NotAllowed("Diňe öz habaryňyzy pozup bilersiňiz");
+        }
+
+        await db.sequelize.transaction(async (transaction) => {
+            await db.ChatMessageRead.destroy({ where: { message_id: message.id }, transaction });
+            await message.destroy({ transaction });
+        });
+
+        await this._emitToParticipants(room.id, scope.userId, "message.deleted", { chat_id: room.id, message_id: message.id }, app);
+    }
+
+    // Admin only (route is not mounted for sellers): removes the room with all its messages
+    static async deleteRoom(scope, roomId, app = null) {
+        if (scope.kind !== "admin") throw ApiError.NotAllowed("Diňe administrator çaty pozup biler");
+        const room = await this._getRoom(scope, roomId);
+        const participants = await db.ChatRoomParticipant.findAll({ where: { chatroom_id: room.id }, attributes: ["user_id"] });
+
+        await db.sequelize.transaction(async (transaction) => {
+            await db.sequelize.query(
+                `DELETE FROM chat_message_reads WHERE message_id IN (SELECT id FROM chat_messages WHERE chatroom_id = :id)`,
+                { replacements: { id: room.id }, transaction }
+            );
+            await db.ChatMessage.destroy({ where: { chatroom_id: room.id }, transaction });
+            await db.ChatRoomParticipant.destroy({ where: { chatroom_id: room.id }, transaction });
+            await room.destroy({ transaction });
+        });
+
+        participants
+            .filter((p) => p.user_id !== scope.userId)
+            .forEach((p) => app?.io?.to(String(p.user_id)).emit("chat.deleted", { chat_id: room.id }));
+    }
+
+    static async _emitToParticipants(roomId, exceptUserId, event, payload, app) {
+        if (!app?.io) return;
+        const others = await db.ChatRoomParticipant.findAll({ where: { chatroom_id: roomId, user_id: { [Op.ne]: exceptUserId } } });
+        others.forEach((p) => app.io.to(String(p.user_id)).emit(event, payload));
     }
 }
 

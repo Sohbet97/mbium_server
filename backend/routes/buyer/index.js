@@ -27,7 +27,9 @@ router.use('/ai',          require('./ai'));
 router.use('/shop-types',  require('./shop-types'));
 router.use('/reels',       require('./reels'));
 router.use('/locations',   require('./locations'));
+router.use('/pages',       require('./pages'));
 router.use('/banners',     require('./banners'));
+router.use('/ad',          require('../../__modules__/ads/routes/ads.buyer.routes'));
 
 // Authenticated buyer actions
 router.use('/notifications', authorizationMiddleware, require('./notifications'));

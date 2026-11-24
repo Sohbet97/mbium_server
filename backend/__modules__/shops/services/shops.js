@@ -75,6 +75,9 @@ class ShopService {
         ...(db.DeliveryType ? [{ model: db.DeliveryType, as: "deliveryTypes", through: { attributes: [] } }] : []),
         ...(db.Brand ? [{ model: db.Brand, as: "brands", through: { attributes: [] } }] : []),
         ...(db.Plan ? [{ model: db.Plan, as: "plan", attributes: ["id", "verified_badge"], required: false }] : []),
+        { model: db.Region, as: "region", attributes: ["id", "name"] },
+        { model: db.City, as: "city", attributes: ["id", "name"] },
+        { model: db.District, as: "district", attributes: ["id", "name"] },
       ],
     });
     return this._withBlueBadge(shop);
@@ -108,7 +111,23 @@ class ShopService {
     return shops.map((shop) => this._withBlueBadge(shop));
   }
 
+  // City and district must lie in the chosen region (both tables hang off regions)
+  static async _checkLocation(body) {
+    const regionId = FUNCTIONS.getNumber(body?.region_id) || null;
+    const cityId = FUNCTIONS.getNumber(body?.city_id) || null;
+    const districtId = FUNCTIONS.getNumber(body?.district_id) || null;
+    if (!cityId && !districtId) return;
+    if (!regionId) throw ApiError.BadRequest("Ilki welaýaty saýlaň");
+    const [city, district] = await Promise.all([
+      cityId ? db.City.findByPk(cityId, { attributes: ["region_id"] }) : null,
+      districtId ? db.District.findByPk(districtId, { attributes: ["region_id"] }) : null,
+    ]);
+    if (cityId && city?.region_id !== regionId) throw ApiError.BadRequest("Şäher saýlanan welaýata degişli däl");
+    if (districtId && district?.region_id !== regionId) throw ApiError.BadRequest("Etrap saýlanan welaýata degişli däl");
+  }
+
   static async create(req) {
+    await this._checkLocation(req.body);
     const model = await db.Shop.create({
       type_id:        FUNCTIONS.getNumber(req.body?.type_id) || null,
       owner_id:       req.body?.owner_id ?? req.user?.id,
@@ -127,6 +146,7 @@ class ShopService {
       email:          req.body?.email,
       city_id:        FUNCTIONS.getNumber(req.body?.city_id) || null,
       region_id:      FUNCTIONS.getNumber(req.body?.region_id) || null,
+      district_id:    FUNCTIONS.getNumber(req.body?.district_id) || null,
       is_active:      req.body?.is_active ?? false,
       order:          FUNCTIONS.getNumber(req.body?.order) || null,
       // KYC fields
@@ -146,12 +166,14 @@ class ShopService {
 
   static async update(id, req) {
     if (!id) return;
+    if (req.body?.region_id !== undefined) await this._checkLocation(req.body);
     await db.Shop.update(
       {
         ...(req.body?.owner_id  !== undefined && { owner_id:  req.body.owner_id || null }),
         ...(req.body?.type_id   !== undefined && { type_id:   FUNCTIONS.getNumber(req.body.type_id)   || null }),
         ...(req.body?.city_id   !== undefined && { city_id:   FUNCTIONS.getNumber(req.body.city_id)   || null }),
         ...(req.body?.region_id !== undefined && { region_id: FUNCTIONS.getNumber(req.body.region_id) || null }),
+        ...(req.body?.district_id !== undefined && { district_id: FUNCTIONS.getNumber(req.body.district_id) || null }),
         name:           req.body?.name,
         name_ru:        req.body?.name_ru,
         name_eng:       req.body?.name_eng,

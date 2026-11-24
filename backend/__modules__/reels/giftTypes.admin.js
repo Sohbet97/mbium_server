@@ -8,7 +8,7 @@ const ReelGiftService = require('./services/reelGifts')
 
 // Separate router from reels/index.js — that one's routeGuard gates the whole router on
 // REEL_* permissions, but gift-types needs its own GIFT_TYPE_* permission set.
-router.use(routeGuard({
+router.use(['/gift-types', '/reel-gifts'], routeGuard({
     GET:    Permissions.GIFT_TYPE_GET,
     POST:   Permissions.GIFT_TYPE_POST,
     PUT:    Permissions.GIFT_TYPE_PUT,

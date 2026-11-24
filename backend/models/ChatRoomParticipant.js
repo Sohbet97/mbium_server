@@ -30,6 +30,11 @@ module.exports = (sequelize, Sequelize) => {
         left_at: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        // Messages with id <= this are hidden for this participant ("hide conversation")
+        cleared_up_to: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     }, {
         timestamps: false,

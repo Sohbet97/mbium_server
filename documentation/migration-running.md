@@ -74,3 +74,19 @@ node utils/backfill-category-thumbnails.js
 # then tick them for other roles in Admin → Roles
 node -e "require('dotenv').config(); const db=require('./models'); db.sequelize.authenticate().then(()=>require('./seeders/00-superadmin')(db)).then(()=>process.exit(0))"
 ****
+
+cd backend
+for f in migrations/084_chat_delete_permission.sql migrations/085_chat_participant_cleared.sql migrations/086_ad_tasks.sql migrations/087_shop_district.sql migrations/088_static_pages.sql; do
+  echo "== $f =="
+  PGPASSWORD='P@ssword*12345' psql -h localhost -p 5432 -U postgres -d mbium -f "$f" || break
+done
+
+# 084: CHAT_DELETE (370) for superadmin
+# 085: chat_room_participants.cleared_up_to (seller "hide conversation")
+# 086: ad tasks tables, configurations.ad_min_budget / ball_rate, 3 task types, AD_* (371-374) for superadmin
+# 087: shops.district_id (deploy together with the backend: the Shop model reads this column)
+# 088: static_pages + PAGE_GET/PAGE_PUT (375-376) for superadmin; privacy policy draft is NOT published —
+#      review it in Admin → Pages (replace support@mbium.com), then switch on "Published"
+# All five are safe to re-run. Superadmin gets the new permissions from the SQL itself;
+# tick them for other roles in Admin → Roles.
+****

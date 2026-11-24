@@ -56,7 +56,9 @@ const PERM_GROUPS = [
   { label: 'Gift Types',     perms: [356, 357, 358, 359] },
   { label: 'Colors',         perms: [360, 361, 362, 363] },
   { label: 'Guide',          perms: [364, 365, 366, 367] },
-  { label: 'Chats',          perms: [368, 369, null, null] },
+  { label: 'Chats',          perms: [368, 369, null, 370] },
+  { label: 'Ads',            perms: [371, 372, 373, 374] },
+  { label: 'Pages',          perms: [375, null, 376, null] },
 ]
 
 const ALL_PERMS = PERM_GROUPS.flatMap((g) => g.perms).filter(Boolean)

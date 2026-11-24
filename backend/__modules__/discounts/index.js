@@ -7,7 +7,9 @@ const flashSaleRouter = require("./routes/flash-sale");
 
 const discountsModuleRouter = require("express").Router();
 
+// Guard only this module's paths: a path-less use() would apply it to every admin route mounted after it
 discountsModuleRouter.use(
+    ["/discounts", "/flash-sales"],
     authorizationMiddleware,
     routeGuard({
         GET: Permissions.DISCOUNT_GET,

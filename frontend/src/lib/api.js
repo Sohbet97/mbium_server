@@ -173,11 +173,32 @@ export class AdminApi {
   }
   static delivers = crud(PATHS.DELIVERS)
   static guide = crud('/guide')
+  static pages = {
+    getAll:  ()             => http.get(a('/pages')),
+    getOne:  (slug)         => http.get(a(`/pages/${slug}`)),
+    update:  (slug, data)   => http.put(a(`/pages/${slug}`), data),
+    preview: (content)      => http.post(a('/pages/preview'), { content }),
+  }
+  static ads = {
+    getSettings:        ()         => http.get(a('/ad/settings')),
+    updateSettings:     (data)     => http.put(a('/ad/settings'), data),
+    getTaskTypes:       ()         => http.get(a('/ad/task-type')),
+    createTaskType:     (data)     => http.post(a('/ad/task-type'), data),
+    updateTaskType:     (id, data) => http.put(a(`/ad/task-type/${id}`), data),
+    deleteTaskType:     (id)       => http.delete(a(`/ad/task-type/${id}`)),
+    getCampaigns:       (params)   => http.get(a('/ad/campaign'), { params }),
+    getCampaign:        (id)       => http.get(a(`/ad/campaign/${id}`)),
+    reviewCampaign:     (id, data) => http.put(a(`/ad/campaign/${id}`), data),
+    getCompletions:     (params)   => http.get(a('/ad/completion'), { params }),
+    moderateCompletion: (id, data) => http.put(a(`/ad/completion/${id}`), data),
+  }
   static chat = {
     list:     (params)       => http.get(a('/chat'), { params }),
     messages: (id, params)   => http.get(a(`/chat/${id}/messages`), { params }),
     send:     (id, data)     => http.post(a(`/chat/${id}/messages`), data),
     read:     (id)           => http.put(a(`/chat/${id}/read`), {}),
+    deleteMessage: (id, messageId) => http.delete(a(`/chat/${id}/messages/${messageId}`)),
+    deleteChat:    (id)            => http.delete(a(`/chat/${id}`)),
   }
   static tariffRequests = {
     getAll: (params)       => http.get(a('/tariff/request'), { params }),
@@ -283,7 +304,9 @@ export class AdminApi {
   static coins = {
     getBalances:       (params)   => http.get(a(`${PATHS.COINS}/balances`), { params }),
     getBalance:        (userId)   => http.get(a(`${PATHS.COINS}/balances/${userId}`)),
+    deleteWallet:      (userId)   => http.delete(a(`${PATHS.COINS}/balances/${userId}`)),
     getTransactions:   (params)   => http.get(a(`${PATHS.COINS}/transactions`), { params }),
+    deleteTransaction: (id)       => http.delete(a(`${PATHS.COINS}/transactions/${id}`)),
     grant:             (data)     => http.post(a(`${PATHS.COINS}/grant`), data),
     deduct:            (data)     => http.post(a(`${PATHS.COINS}/deduct`), data),
     getConditions:     (params)   => http.get(a(`${PATHS.COINS}/conditions`), { params }),
@@ -292,6 +315,7 @@ export class AdminApi {
     deleteCondition:   (id)       => http.delete(a(`${PATHS.COINS}/conditions/${id}`)),
     getTopups:         (params)   => http.get(a(`${PATHS.COINS}/topups`), { params }),
     updateTopupStatus: (id, data) => http.patch(a(`${PATHS.COINS}/topups/${id}/status`), data),
+    deleteTopup:       (id)       => http.delete(a(`${PATHS.COINS}/topups/${id}`)),
   }
   static favorites = {
     getAll: (params) => http.get(a(`${PATHS.FAVORITES}`), { params }),
@@ -393,6 +417,11 @@ export class AdminApi {
 const b = (path) => `/buyer${path}`
 
 export class BuyerApi {
+  static locations = {
+    regions:   (params) => http.get(b('/locations/regions'), { params }),
+    cities:    (params) => http.get(b('/locations/cities'), { params }),
+    districts: (params) => http.get(b('/locations/districts'), { params }),
+  }
   static favorites = {
     getAll:  (params)     => http.get(b(`${PATHS.FAVORITES}`), { params }),
     add:     (productId)  => http.post(b(`${PATHS.FAVORITES}/${productId}`)),
@@ -589,11 +618,20 @@ export class SellerApi {
     updateProductMedia: (productId, mediaId, data, variantId) => http.patch(s(`/media/product/${productId}/${mediaId}`), { ...data, variant_id: variantId ?? undefined }),
     detachFromProduct:  (productId, mediaId, variantId)   => http.delete(s(`/media/product/${productId}/${mediaId}`), { params: variantId != null ? { variant_id: variantId } : {} }),
   }
+  static ads = {
+    getTaskTypes:   ()             => http.get(s('/ad/task-type')),
+    getCampaigns:   (params)       => http.get(s('/ad/campaign'), { params }),
+    createCampaign: (data)         => http.post(s('/ad/campaign'), data),
+    getCampaign:    (id)           => http.get(s(`/ad/campaign/${id}`)),
+    getCompletions: (id, params)   => http.get(s(`/ad/campaign/${id}/completion`), { params }),
+  }
   static chat = {
     list:     (params)       => http.get(s('/chat'), { params }),
     messages: (id, params)   => http.get(s(`/chat/${id}/messages`), { params }),
     send:     (id, data)     => http.post(s(`/chat/${id}/messages`), data),
     read:     (id)           => http.put(s(`/chat/${id}/read`), {}),
+    deleteMessage: (id, messageId) => http.delete(s(`/chat/${id}/messages/${messageId}`)),
+    deleteChat:    (id)            => http.delete(s(`/chat/${id}`)), // hides it for this seller only
   }
   static support = {
     getRoom:     ()     => http.get(s('/support/room')),

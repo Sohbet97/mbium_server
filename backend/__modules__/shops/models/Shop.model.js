@@ -73,6 +73,11 @@ module.exports = (sequelize) => {
             allowNull: true,
             references: { model: "regions", key: "id" }
         },
+        district_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: { model: "districts", key: "id" }
+        },
         phone: {
             type: DataTypes.STRING(20),
             allowNull: true
@@ -159,6 +164,7 @@ module.exports = (sequelize) => {
             { fields: ["is_active"] },
             { fields: ["region_id"] },
             { fields: ["city_id"] },
+            { fields: ["district_id"] },
             { fields: ["verification_status"] },
             { fields: ["turbo_active", "turbo_boosted_at"] },
         ]
@@ -170,6 +176,7 @@ module.exports = (sequelize) => {
         Model.belongsTo(db.ShopType, { as: "type", foreignKey: "type_id" });
         Model.belongsTo(db.Region, { as: "region", foreignKey: "region_id" });
         Model.belongsTo(db.City, { as: "city", foreignKey: "city_id" });
+        Model.belongsTo(db.District, { as: "district", foreignKey: "district_id" });
         Model.belongsTo(db.User, { as: "verifier", foreignKey: "verified_by" });
         if (db.Plan) {
             Model.belongsTo(db.Plan, { foreignKey: "plan_id", as: "plan" });

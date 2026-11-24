@@ -194,6 +194,15 @@ class Permissions {
 
     static CHAT_GET  = 368
     static CHAT_POST = 369
+    static CHAT_DELETE = 370
+
+    static AD_GET    = 371
+    static AD_POST   = 372
+    static AD_PUT    = 373
+    static AD_DELETE = 374
+
+    static PAGE_GET  = 375
+    static PAGE_PUT  = 376
 }
 
 module.exports = Permissions
